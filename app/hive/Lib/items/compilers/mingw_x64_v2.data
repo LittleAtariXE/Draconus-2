@@ -1,0 +1,32 @@
+#!name##MinGW_x64_v2
+#!itemType##compiler
+#!info##MinGW-x64 cross compiler. Compiler NASM code to exe windows.
+#!compilerMCNAME##MinGW_X64
+#!Var##MGWN_NO_STD##-nostdlib -s##Parameters to avoid including the standard library in the linker. You can add additional parameters or remove them entirely, in which case the function will not be used.##str
+#!Var##MGWN_EXEC_SHOW##console##'console' - the executable runs as a console program. 'gui' - the executable's output is not displayed.##str
+
+{% set __COMP_EXEC = "nasm -f win64" %}
+{% set __LINK_EXEC = "x86_64-w64-mingw32-gcc -m64" %}
+{% set __LIB_EXEC = "x86_64-w64-mingw32-ar rcs" %}
+{% set __DEFAULT_EXEC_SHOW_CONSOLE = "-Wl,-e,main" %}
+{% set __OUTPUT_COMP_FTYPE = ".o" %}
+{% set __DEFAULT_DLL = "-lkernel32 -lmsvcrt -luser32 -lshell32 -lws2_32 -lshlwapi" %}
+{% if MGWN_EXEC_SHOW == "console" %}
+    {% set __EXEC_SHOW = "-Wl,-e,main" %}
+{% else %}
+    {% set __EXEC_SHOW = "-Wl,-e,WinMain -mwindows" %}
+{% endif %}
+
+
+
+
+{
+    "NAME" : "MingGW_x64_Nasm",
+    "COMPILER_NAME" : "MinGW_X64",
+    "NO_STD_LIB" : "{{MGWN_NO_STD}}",
+    "EXEC_SHOW" : "{{__EXEC_SHOW}}",
+    "OUTPUT_COMPILER_FNAME" : "{{__MODULE_NAME}}{{__OUTPUT_COMP_FTYPE}}",
+    "COMPILER_CMD" : "{{__COMP_EXEC}} {{__SRC_FILE_NAME}} -o {{__MODULE_NAME}}.o",
+    "LINKER_CMD" : "{{__LINK_EXEC}} {{MGWN_NO_STD}} -o {{__FINAL_OUTPUT_FNAME}} {{__MODULE_NAME}}.o {{__EXEC_SHOW}} {{__EXTRA_LIBRARY_STR}} {{__DEFAULT_DLL}}",
+    "LINKER_LIB_CMD" : "{{__LIB_EXEC}} {{__FINAL_OUTPUT_FNAME}} {{__MODULE_NAME}}.o {{__EXTRA_LIBRARY_STR}}"
+}

@@ -1,0 +1,17 @@
+#!name##CppTest
+#!itemType##worm
+#!info##CPP program for test
+#!lang##cpp
+#!itemTags##WIN
+#!Wprocess##BasicAsm
+#!inFile##HelloLib_H##myheader.h
+#!inFile##HelloLib_CPP##myheader.cpp
+
+#include <iostream>
+#include "myheader.h"
+
+int main() {
+    std::cout << getHelloText() << std::endl;
+    return 0;
+}
+

@@ -1,0 +1,27 @@
+#!name##NasmMod
+#!itemType##module
+#!info##Module in nasm for test
+#!lang##nasm
+#!hiveType##LIB
+#!itemTags##WIN
+#!fileType##lib
+#!modProcess##BUILD_CODE##COMPILE
+#!addNameComp##True
+#!modCompiler##MinGW_x64_v2
+#!Var##NM_ala##Siema##Display text##str
+#!Var##NM_empty##_NULL##second text##str
+
+section .data
+fmt:    db  "{{NM_ala}}", 10, 0    ; null-terminated format string
+
+section .text
+global mylib_print     ; eksportowana nazwa
+extern printf          ; funkcja z C runtime
+
+mylib_print:
+    sub     rsp, 40
+    lea     rcx, [rel fmt]   ; pierwszy argument printf -> RCX
+    xor     eax, eax         ; RAX = 0 (liczba SSE regs used) dla varargs
+    call    printf
+    add     rsp, 40
+    ret

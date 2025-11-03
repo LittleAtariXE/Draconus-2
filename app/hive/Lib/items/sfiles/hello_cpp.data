@@ -1,0 +1,12 @@
+#!name##HelloLib_CPP
+#!itemType##sfile
+#!info##CPP Hello function
+#!addNameComp##True
+
+#include "myheader.h"
+
+// Definicja funkcji zadeklarowanej w .h
+std::string getHelloText() {
+    return "Hello World";
+}
+

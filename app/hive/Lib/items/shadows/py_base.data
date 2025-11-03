@@ -1,0 +1,7 @@
+#!name##PyBase64
+#!itemType##shadow
+#!hiveType##PySh
+#!info##Converts all code to base64 encoded code, adds 'execute...' trigger by default
+#!lang##python
+
+

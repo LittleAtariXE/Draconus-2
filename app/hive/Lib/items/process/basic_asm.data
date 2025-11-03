@@ -1,0 +1,8 @@
+#!name##BasicAsm
+#!itemType##Wprocess
+#!info##Build assembler exe.
+
+
+[BUILD_CODE]
+[COMPILE]
+[DONE]

@@ -1,0 +1,5 @@
+#!name##WinShell
+#!itemType##Wprocess
+#!info##Process for building windows x64 shellcode.
+
+[BUILD_CODE]

@@ -1,0 +1,15 @@
+#!name##MGW
+#!itemType##compiler
+#!info##MinGW-x64 cross compiler. Module compiler test
+
+
+{
+    "NAME" : "MGW",
+    "COMPILER_NAME" : "MinGW_X64",
+    "COMPILER" : {
+        "COMPILER_EXEC" : "nasm -f win64",
+        "SRC_FILE_NAME" : "{{__SRC_FILE_NAME}}",
+        "OUTPUT_FILETYPE" : ".o",
+        "OUTPUT_FILENAME" : "{{__MODULE_NAME}}"
+    }
+}

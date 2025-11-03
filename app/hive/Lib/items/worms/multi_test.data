@@ -1,0 +1,25 @@
+#!name##MultiTest
+#!itemType##worm
+#!info##Import difrent modules
+#!lang##nasm
+#!itemTags##WIN
+#!Wprocess##AsmLib
+#!Var##first##ala##variable for test##str
+#!reqMod##AsmLib
+#!wormCompiler##MinGW_x64_v2
+
+extern printf
+extern ExitProcess
+
+section .data
+    my_text: db "{{first}}", 10, 0
+
+section .text
+    global main
+
+main:
+    sub rsp, 40
+    mov rcx, my_text
+    call printf
+    mov rcx, 0
+    call ExitProcess

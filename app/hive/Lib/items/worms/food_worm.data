@@ -1,0 +1,16 @@
+#!name##Kiszka
+#!itemType##worm
+#!info##Worm to test FOOD
+#!lang##python
+#!itemTags##WIN
+#!Wprocess##BasicPy
+#!foodAdd##CharFood##KICHA_FOOD
+#!Var##Ktext##Ala ma kota##Jakis Tekst##str
+#!wormCompiler##PyInstaller
+#!typeAccept##PySh
+
+DATA = "{{Ktext}}"
+
+WORM_FOOD = "{{KICHA_FOOD}}"
+
+print(WORM_FOOD)

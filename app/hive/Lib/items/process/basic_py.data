@@ -1,0 +1,6 @@
+#!name##BasicPy
+#!itemType##Wprocess
+#!info##Build python exe.
+
+[BUILD_CODE]
+[SHADOW_CODE]

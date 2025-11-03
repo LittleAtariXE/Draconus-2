@@ -1,0 +1,19 @@
+#!name##ZweiIn
+#!itemType##sfile
+#!info##include second file for nasm code
+
+section .data
+    lib_text2: db "Hello from include22222", 10, 0
+
+section .text
+begin2:
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 40
+    mov rcx, lib_text2
+    call printf
+    add rsp, 40
+    
+    pop rbp
+    ret

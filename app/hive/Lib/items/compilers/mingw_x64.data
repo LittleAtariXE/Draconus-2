@@ -1,0 +1,26 @@
+#!name##MinGW_x64_Nasm
+#!itemType##compiler
+#!info##MinGW-x64 cross compiler. Compiler NASM code to exe windows.
+#!compilerMCNAME##MinGW_X64
+#!Var##MGWN_NO_STD##-nostdlib -s##Parameters to avoid including the standard library in the linker. You can add additional parameters or remove them entirely, in which case the function will not be used.##str
+#!Var##MGWN_EXEC_SHOW##console##'console' - the executable runs as a console program. 'gui' - the executable's output is not displayed.##str
+
+{
+    "NAME" : "MingGW_x64_Nasm",
+    "COMPILER_NAME" : "MinGW_X64",
+    "MASTER_WORM_NAME" : "{{__MASTER_WORM_NAME}}",
+    "EXEC_SHOW" : "{{MGWN_EXEC_SHOW}}",
+    "STATIC_LIB_EXEC" : "x86_64-w64-mingw32-ar rcs",
+    "COMPILER" : {
+        "COMPILER_EXEC" : "nasm -f win64",
+        "SRC_FILE_NAME" : "{{__SRC_FILE_NAME}}",
+        "OUTPUT_FILETYPE" : ".o",
+        "OUTPUT_FILENAME" : "{{__MODULE_NAME}}"
+    },
+    "LINKER" : {
+        "COMPILER_EXEC" : "x86_64-w64-mingw32-gcc -m64",
+        "SRC_FILE_NAME" : "{{__MODULE_NAME}}.o",
+        "NO_STD_LIB" : "{{MGWN_NO_STD}}",
+        "DEFAULT_DLL" : "-lkernel32 -lmsvcrt -luser32 -lshell32 -lws2_32 -lshlwapi"
+    }
+}

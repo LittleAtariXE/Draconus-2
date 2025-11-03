@@ -1,0 +1,15 @@
+#!name##JudoHonor
+#!itemType##support
+#!info##Support module Judo for Python
+#!lang##Python
+#!hiveType##PySM
+
+
+
+class JudoHonor:
+    def __init__(self):
+        self.ala = "Hello World"
+    
+    def RUN(self):
+        print(self.ala)
+        

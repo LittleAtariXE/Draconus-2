@@ -1,0 +1,27 @@
+#!name##Pajtek
+#!itemType##worm
+#!info##Python Worm for test
+#!lang##Python
+#!itemTags##WIN
+#!typeAccept##PySM
+#!Var##PAJ_text##Ala ma kota##Jakis tekst##str
+#!Wprocess##BasicPy
+#!reqMod##Kapiszon##JudoHonor
+#!wormCompiler##PyInstaller
+
+
+import socket
+from threading import Thread
+
+class Pajczes:
+    def __init__(self):
+        self.text = "{{PAJ_text}}"
+        self.modules = {{_PY_MODULES}}
+
+    def RUN(self):
+        print(self.text)
+
+
+if __name__ == "__main__":
+    pp = Pajczes()
+    pp.RUN()

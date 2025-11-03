@@ -1,0 +1,8 @@
+#!name##AsmLib
+#!itemType##Wprocess
+#!info##Build assembler exe with library.
+
+[BUILD_LIB]
+[BUILD_CODE]
+[COMPILE]
+[DONE]

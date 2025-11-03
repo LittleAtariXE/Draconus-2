@@ -1,0 +1,26 @@
+#!name##PayTest
+#!itemType##worm
+#!info##Worm with payloads
+#!lang##nasm
+#!itemTags##WIN
+#!Wprocess##BasicPay
+#!wormCompiler##MinGW_x64_v2
+#!payloadSpace##PAYLOAD##My first evil payload
+#!aapayloadProcess##PAYLOAD##build_code
+
+extern ExitProcess
+extern printf
+
+
+section .data
+    my_text: db "{{PAYLOAD}}", 10, 0
+
+section .text
+    global main
+
+main:
+    sub rsp, 40
+    mov rcx, my_text
+    call printf
+    mov rcx, 0
+    call ExitProcess

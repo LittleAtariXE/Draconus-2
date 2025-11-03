@@ -46,10 +46,13 @@ class Queen:
     def test(self) -> None:
         self.msg("msg", "Test HIVE")
         conf = {}
+        print(self.conf.DEFAULT_COMPILER_CORE)
+        print(self.conf.COMPILER_CONTAINER_NAME)
+        print(self.conf.DEFAULT_LINKER_DLL)
         #self.master_compiler.coreInstall("CrossCompCore")
-        self.rawBuilder.setWormName("pejjjj")
-        self.rawBuilder.Add("worm", "PayTest")
-        self.rawBuilder.Add("payload", "PyRevTcp")
+        self.rawBuilder.setWormName("cepepe")
+        self.rawBuilder.Add("worm", "Kapucyn")
+        # self.rawBuilder.Add("payload", "PyRevTcp")
         # self.rawBuilder.Add("scode", "MsgBoxA")
         #self.rawBuilder.Add("worm", "Asmek")
         # self.rawBuilder.Add("worm", "Montezuma")

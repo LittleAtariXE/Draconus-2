@@ -305,6 +305,11 @@ class WormConstructor:
 
     def process_Compile(self, raw_object: RawExe) -> RawExe:
         raw_object.last_process_name = "Process Compile"
+        if not raw_object.compilerItem:
+            self.msg("error", f"[!!] ERROR: No compiler for module: '{raw_object.master_module.name}'. [!!]", sender=self.name)
+            raw_object.last_process_error = f"ERROR: No compiler for module: '{raw_object.master_module.name}'"
+            raw_object.last_error = 1
+            return raw_object
         comp = RawCompiler(raw_object, raw_object.compilerItem)
         raw_object.raw_compiler = comp
         # dual-base rendering

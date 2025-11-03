@@ -75,7 +75,7 @@ class RawExe:
   
 
     @property
-    def compilerItem(self) -> object:
+    def compilerItem(self) -> Union[object, None]:
         if self.master_module == self.master_raw.worm_master:
             return self.master_raw.worm_master_compiler
         else:
@@ -93,6 +93,10 @@ class RawExe:
     @property
     def MASTER_WORM(self) -> RawExe:
         return self.master_raw.worm_MASTER
+    
+    @property
+    def linkerRequiredFiles(self) -> list:
+        return self._check_req_files()
     
     @property
     def addToModuleCompilerCMD(self) -> list:
@@ -130,6 +134,19 @@ class RawExe:
 
                     crm.add(raw.final_output_name)
         return list(crm)
+    
+    def _check_req_files(self) -> list:
+        crf = set()
+        for mod in self.modules:
+            if mod.addNameComp:
+                name = self.master_module.inFile.get(mod.name)
+                if not name:
+                    crf.add(mod.name)
+                else:
+                    crf.add(name)
+        return list(crf)
+    
+
         
     
     def build_file_ext(self, module: object) -> str:

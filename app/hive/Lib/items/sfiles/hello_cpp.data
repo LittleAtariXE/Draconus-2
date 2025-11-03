@@ -2,11 +2,12 @@
 #!itemType##sfile
 #!info##CPP Hello function
 #!addNameComp##True
+#!Var##HEL_text##Hey Hey##Text to display##str
 
 #include "myheader.h"
 
 // Definicja funkcji zadeklarowanej w .h
 std::string getHelloText() {
-    return "Hello World";
+    return "{{HEL_text}}";
 }
 

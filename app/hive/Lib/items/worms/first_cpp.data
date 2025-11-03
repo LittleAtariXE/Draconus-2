@@ -1,9 +1,10 @@
-#!name##CppTest
+#!name##Kapucyn
 #!itemType##worm
 #!info##CPP program for test
 #!lang##cpp
 #!itemTags##WIN
 #!Wprocess##BasicAsm
+#!wormCompiler##Basic-CPP
 #!inFile##HelloLib_H##myheader.h
 #!inFile##HelloLib_CPP##myheader.cpp
 

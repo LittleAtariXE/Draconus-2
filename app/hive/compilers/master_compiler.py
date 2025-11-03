@@ -5,6 +5,7 @@ from .core.multi_comp import CrossCompCore
 from .compilers.mingw_x64 import MinGW_X64
 from .compilers.py_compiler import PyCompiler
 from .compilers.mingw_x64_scode import ShellCodeExtractor
+from .compilers.mingw_universal import MinGW_All
 
 if TYPE_CHECKING:
     from ..queen import Queen
@@ -18,8 +19,9 @@ class MasterCompiler:
     def __init__(self, queen: Queen):
         self.name = "MasterCompiler"
         self.queen = queen
+        self._conf = self.queen.conf
         self.msg = self.queen.msg
-        self.cores = {}
+        self.compilerCore = None
         self.compilers = {}
 
 
@@ -27,8 +29,34 @@ class MasterCompiler:
         self.DIR_HIVE_IN_DOCKER = self.queen.conf.DIR_HIVE_IN_DOCKER_IMAGE
         self.PYTHON_PIP_LIBRARY_LINUX = PYTHON_PIP_LIBRARY_LINUX
         self.PYTHON_PIP_LIBRARY_WINDOWS = PYTHON_PIP_LIBRARY_WINDOWS
+
+        self.DEFAULT_COMPILER_CORE = self._conf.DEFAULT_COMPILER_CORE
+        self.COMPILER_CONTAINER_NAME = self._conf.COMPILER_CONTAINER_NAME
+    
+    def _prepareCore(self, core_name: str) -> Union[object, None]:
+        match core_name:
+            case CrossCompCore.CORE_NAME:
+                return CrossCompCore
+            case _:
+                return None
     
     def mountCore(self) -> None:
+        self.msg("msg", "Init....", sender=self.name)
+        core = self._prepareCore(self.DEFAULT_COMPILER_CORE)
+        if not core:
+            self.msg("error", f"[!!] ERROR: Compiler Core: '{self.DEFAULT_COMPILER_CORE}' does not exists. [!!]", sender=self.name)
+            return
+        self.compilerCore = core(self)
+        self.msg("msg", f"Mount core: '{self.compilerCore.CORE_NAME}' successfull.", sender=self.name)
+        mingw = MinGW_All(self.compilerCore, self)
+        self.compilers[mingw.name] = mingw
+
+        return
+
+
+
+
+
         CC_core = CrossCompCore(self)
         if not CC_core.status:
             self.msg("error", f"WARNING: Cross Compiler Core is not installed.", sender=self.name)

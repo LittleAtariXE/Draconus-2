@@ -58,11 +58,7 @@ class Builder:
             "tcp_socket_separator" : basic.get("tcp_socket_separator"),
             "sender_socket_to" : 60,
             "tcp_raw_buffer_to" : int(basic.get("TCP_RAW_BUFFER_TIMEOUT")),
-            "payload_default_encode" : basic.get("PAYLOAD_DEFAULT_ENCODE"),
             "console_screen" : console_scr,
-            "default_compiler_nasm64" : basic.get("NASM64_COMPILER"),
-            "default_compiler_cpp" : basic.get("CPP_COMPILER"),
-            "default_compiler_python" : basic.get("PYTHON_COMPILER"),
             "draconus_logs_file_name" : basic.get("DRACONUS_LOGS_FILE_NAME"),
             "hive_logs_file_name" : basic.get("HIVE_LOGS_FILE_NAME"),
             "msg_color_basic" : basic.get("BASIC_MSG"),
@@ -88,6 +84,9 @@ class Builder:
 
         self.TCP_RAW_BUFFER_TIMEOUT = int(basic.get("TCP_RAW_BUFFER_TIMEOUT"))
         
+        self.DEFAULT_COMPILER_CORE = basic.get("DEFAULT_COMPILER_CORE")
+        self.COMPILER_CONTAINER_NAME = basic.get("COMPILER_CONTAINER_NAME")
+        self.DEFAULT_LINKER_DLL = self._build_dll_list(basic.get("DEFAULT_LINKER_DLL"))
 
         main.update(dconf)
         self.update_config(main)
@@ -145,5 +144,12 @@ class Builder:
                 print("ERROR: while creating directories: ", e)
 
 
+    def _build_dll_list(self, dlls: str) -> list:
+        dll_list = []
+        for d in dlls.split(","):
+            if d == "" or d == " ":
+                continue
+            dll_list.append(d)
+        return dll_list
 
 

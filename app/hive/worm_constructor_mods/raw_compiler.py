@@ -39,6 +39,9 @@ class RawCompiler:
         cvar["__WORK_DIR_DOCKER"] = os.path.join(cvar["__HIVE_DOCKER"], cvar["__MASTER_WORM_NAME"])
         cvar["__DEF_FILE_NAME"] = self.raw_exe.dll_def_file_name
         cvar["__DLL_ENTRY_POINT"] = self.raw_exe.dll_entry_point
+        cvar["__DEFAULT_DLL_LIST"] = self.raw_exe.master_raw.DEFAULT_LINKER_DLL_LIST
+        cvar["__LINKER_EXTRA_FILE"] = self.raw_exe.linkerRequiredFiles
+        cvar["__LINKER_EXTRA_FILE_STR"] = " ".join(cvar["__LINKER_EXTRA_FILE"])
         return cvar
     
     def _buildExtraLib(self) -> tuple(list, str):

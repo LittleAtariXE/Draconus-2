@@ -26,6 +26,8 @@ class MasterRaw:
         ### 
         self.DIR_HIVE_IN_DOCKER = self.WC.DIR_HIVE_IN_DOCKER_IMAGE
         self.DIR_READY_APP_IN_DOCKER = os.path.join(self.DIR_HIVE_IN_DOCKER, f'{self.worm_name}{self.options.get("DIR_READY_SUFFIX")}')
+        ### default DLL list for linker
+        self.DEFAULT_LINKER_DLL_LIST = self.WC.queen.conf.DEFAULT_LINKER_DLL
         ###
 
         # lib items

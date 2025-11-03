@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from ..master_compiler import MasterCompiler
 
 class CrossCompCore:
+    CORE_NAME = "CrossComp"
     def __init__(self, master_compiler: MasterCompiler):
         self.name = "CrossComp"
         self.master = master_compiler
@@ -21,7 +22,7 @@ class CrossCompCore:
         # docker image
         self.DOCKER_IMAGE = "littleatarixe/wine_py:1.0"
         # docker container name
-        self.DOCKER_CONTAINER_NAME = "crosscomp2"
+        self.DOCKER_CONTAINER_NAME = self.master.COMPILER_CONTAINER_NAME
         # default DLL
         self.DEFAULT_DLL = "-lkernel32 -lmsvcrt -luser32 -lshell32 -lws2_32 -lshlwapi"
         self.STATIC_LINK = "-static-libstdc++ -static-libgcc"

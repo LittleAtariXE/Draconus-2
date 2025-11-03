@@ -59,7 +59,7 @@ class RawLibItem:
         # Item source code language
         # Python, Nasm, cpp, c, None
         #   lang##Python
-        self.lang = None
+        self.lang = "Unknown"
 
         # Module owner. #   'owner'
         #   owner##Rat
@@ -119,6 +119,15 @@ class RawLibItem:
 
 
         ######################################################################################
+
+        ################################### DLL FILES ###############################################
+        # Building the DEF file
+        # List of functions exported to the DEF file #  'dllDef'
+        # dllDef##[func_name1]##[func_name2].... etc
+        self.dllDef = []
+
+
+        ##################################################################################################
 
         ################# INCLUDE FILES #########################################
         # All additional code files

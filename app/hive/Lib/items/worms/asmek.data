@@ -1,17 +1,17 @@
 #!name##Asmek
 #!itemType##worm
-#!info##Two compilators test
+#!info##NASM worm for testing
 #!lang##nasm
 #!itemTags##WIN
-#!Wprocess##BasicAsm
+#!Wprocess##AsmLib
 #!Var##first##ala##variable for test##str
 #!wormCompiler##MinGW_x64_v2
-#!aaareqMod##LibComp
+#!reqMod##KupaDLL
 
 
 extern ExitProcess
 extern printf
-
+extern Hello
 
 section .data
     my_text: db "{{first}}", 10, 0
@@ -23,5 +23,6 @@ main:
     sub rsp, 40
     mov rcx, my_text
     call printf
+    call Hello
     mov rcx, 0
     call ExitProcess

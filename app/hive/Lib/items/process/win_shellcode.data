@@ -3,3 +3,5 @@
 #!info##Process for building windows x64 shellcode.
 
 [BUILD_CODE]
+[COMPILE]
+[SCODE_EXTRACT]

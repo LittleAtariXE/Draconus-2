@@ -1,0 +1,23 @@
+#!name##Libek
+#!itemType##worm
+#!info##Worm as library
+#!lang##nasm
+#!fileType##lib
+#!Var##LIB_text##Siemano##Text to display##str
+#!Wprocess##BasicAsm
+#!wormCompiler##MinGW_x64_v2
+
+section .data
+fmt:    db  "{{LIB_text}}", 10, 0    ; null-terminated format string
+
+section .text
+global mylib_print     ; eksportowana nazwa
+extern printf          ; funkcja z C runtime
+
+mylib_print:
+    sub     rsp, 40
+    lea     rcx, [rel fmt]   ; pierwszy argument printf -> RCX
+    xor     eax, eax         ; RAX = 0 (liczba SSE regs used) dla varargs
+    call    printf
+    add     rsp, 40
+    ret

@@ -129,7 +129,7 @@ class WormConstructor:
             case "build_code":
                 return self.process_BuildCode
             case "build_lib":
-                return self.process_BuildStaticLib
+                return self.process_BuildLib
             case "compile":
                 return self.process_Compile
             case "done":
@@ -138,6 +138,8 @@ class WormConstructor:
                 return self.process_BuildPayload
             case "shadow_code":
                 return self.process_ShadowCode
+            case "scode_extract":
+                return self.process_ExtractShellcode
             case _:
                 return self.process_Empty
 
@@ -211,6 +213,46 @@ class WormConstructor:
 
     #############################################################################################################
 
+    def process_BuildLib(self, raw_exe: RawExe) -> RawExe:
+        raw_exe.last_process_name = "Process Build Library"
+        self.msg("msg", "Building Library...", sender=self.name)
+        slib_count = len(raw_exe.master_raw.worm_list_LIB)
+        dlib_count = len(raw_exe.master_raw.worm_list_DLL)
+        if slib_count == 0 and dlib_count == 0:
+            self.msg("msg", "No Library to build.", sender=self.name)
+            return raw_exe
+        self.msg("msg", f"Static Library to build: {slib_count}", sender=self.name)
+        self.msg("msg", f"Dynamic Library to build: {dlib_count}", sender=self.name)
+        # first Static Lib
+        if slib_count > 0:
+            self.process_BuildStaticLib(raw_exe)
+        if dlib_count > 0:
+            self.process_BuildDynamicLib(raw_exe)
+        return raw_exe
+    
+    def process_BuildDynamicLib(self, raw_exe: RawExe) -> RawExe:
+        raw_exe.last_process_name = "Process Build Dynamic Library"
+        self.msg("msg", "Building Dynamic Library...", sender=self.name)
+        for dll in raw_exe.master_raw.worm_list_DLL:
+            self._buildDynamicLib(dll)
+        return raw_exe
+    
+    def _buildDynamicLib(self, raw_exe: RawExe) -> RawExe:
+        raw_exe.last_process_name = "Build Dynamic Library"
+        self.msg("msg", f"Building Dynamic Library: {raw_exe.FILE_NAME}", sender=self.name)
+        self._buildDefFile(raw_exe)
+        self.executeProcessList(raw_exe, raw_exe.module_process)
+        return raw_exe
+    
+    def _buildDefFile(self, raw_exe: RawExe) -> RawExe:
+        raw_exe.last_process_name = "Build DEF file"
+        self.msg("msg", f"Building DEF file: {raw_exe.dll_def_file_name}", sender=self.name)
+        def_template = f"LIBRARY {raw_exe.final_output_name}\nEXPORTS\n"
+        for ex_func in raw_exe.dll_def_func:
+            def_template += f"\t{ex_func}\n"
+        self.saveFile(raw_exe.dll_def_file_path, def_template)
+        return raw_exe
+
     def process_BuildStaticLib(self, raw_object: RawExe) -> RawExe:
         raw_object.last_process_name = "Process Build Static Library"
         self.msg("msg", "Building static library....", sender=self.name)
@@ -272,11 +314,18 @@ class WormConstructor:
         if not check:
             self.msg("error", raw_object.last_process_error, sender=self.name)
             return raw_object
+        # check for extra step
+        self._checkExtraStep(raw_object)
         self.masterCompiler.startCompile(raw_object)
-
-
-      
         return raw_object
+    
+    def _checkExtraStep(self, raw_exe: RawExe) -> RawExe:
+        # check Master Worm
+        if raw_exe == raw_exe.MASTER_WORM:
+            if raw_exe.master_module.fileType == "dll":
+                self._buildDefFile(raw_exe)
+        
+        return raw_exe
     
 
     ###################################################################################
@@ -325,6 +374,42 @@ class WormConstructor:
             if mod.itemType == "shadow":
                 self._shadow_code(raw_exe, mod)
         
+        return raw_exe
+    
+    def process_ExtractShellcode(self, raw_exe: RawExe) -> RawExe:
+        raw_exe.last_process_name = "Process Extract Shellcode"
+        self.msg("msg", "Extracting shellcode...", sender=self.name)
+        if not os.path.exists(raw_exe.final_bin_path):
+            self.msg("error", f"[!!] ERROR: Shellcode file path: '{raw_exe.final_shellcode_path}' does not exists. [!!]", sender=self.name)
+            return raw_exe
+        
+        bin_path = Path(raw_exe.final_bin_path)
+        try:
+            shell_byte = bin_path.read_bytes()
+        except Exception as e:
+            self.msg("error", f"[!!] ERROR reading bytes from bin file: {e} [!!]", sender=self.name)
+            return raw_exe
+        
+        # /x01 /xa3 format ( C-style string escapes )
+        data = "".join(f"\\x{byte:02x}" for byte in shell_byte)
+        fpath = os.path.join(raw_exe.fpath_dir_output, f"{raw_exe.NAME}_shellcode_string_escape.txt")
+        self.saveFile(fpath, data)
+
+        # 0x01, 0xA3 format ( C-array / byte array )
+        data = ", ".join(f"0x{byte:02x}" for byte in shell_byte)
+        fpath = os.path.join(raw_exe.fpath_dir_output, f"{raw_exe.NAME}_shellcode_byte_array.txt")
+        self.saveFile(fpath, data)
+
+        # 31c05068b8 format ( Hex-dump )
+        data = "".join(f"{byte:02x}" for byte in shell_byte)
+        fpath = os.path.join(raw_exe.fpath_dir_output, f"{raw_exe.NAME}_shellcode_hexdump.txt")
+        self.saveFile(fpath, data)
+
+        self.msg("msg", f"Shellcode built. Shellcode length: {len(shell_byte)} bytes.", sender=self.name)
+        self.msg("msg", f"Shellcode files saved. Check {raw_exe.fpath_dir_output} directory.", sender=self.name)
+
+
+
         return raw_exe
 
 

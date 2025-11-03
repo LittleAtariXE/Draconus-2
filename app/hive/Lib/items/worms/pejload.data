@@ -6,7 +6,7 @@
 #!Wprocess##BasicPay
 #!wormCompiler##MinGW_x64_v2
 #!payloadSpace##PAYLOAD##My first evil payload
-#!aapayloadProcess##PAYLOAD##build_code
+
 
 extern ExitProcess
 extern printf

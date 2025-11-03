@@ -82,6 +82,8 @@ class RawItemConstructor:
                     raw_mod.addExeComp = self.fGetBool(head[1])
                 case "modName":
                     raw_mod.modName = head[1]
+                case "dllDef":
+                    raw_mod.dllDef.extend(head[1:])
                 case "compilerCore":
                     raw_mod.compilerCore = head[1]
                 case "wormCompiler":

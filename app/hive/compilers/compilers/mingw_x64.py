@@ -35,6 +35,16 @@ class MinGW_X64:
         self.ecmd(f'{enter_dir} {cmd["LINKER_LIB_CMD"]}')
         self.ecmd(f'{enter_dir} chmod 777 *')
     
+    # def compileDynamicLIB(self, raw_exe: RawExe, comp: RawCompiler) -> None:
+    #     self.msg("msg", f"Build Dynamic Library: {raw_exe.FILE_NAME}....", sender=self.name)
+    
+    def compileDynamicLib(self, cmd: dict, enter_dir: str) -> None:
+        self.msg("dev", cmd["COMPILER_CMD"], sender=self.name)
+        self.ecmd(f'{enter_dir} {cmd["COMPILER_CMD"]}')
+        self.msg("dev", cmd["LINKER_DLL_CMD"], sender=self.name)
+        self.ecmd(f'{enter_dir} {cmd["LINKER_DLL_CMD"]}')
+        self.ecmd(f'{enter_dir} chmod 777 *')
+    
     def compileMod(self, raw_exe: RawExe, comp: RawCompiler) -> RawExe:
         self.msg("msg", f"Start compilation: {raw_exe.FILE_NAME}....", sender=self.name)
         enter_dir = f"cd {self.DIR_WORK_OUT}/{comp.conf['__MASTER_WORM_NAME']} &&"
@@ -43,9 +53,12 @@ class MinGW_X64:
         match raw_exe.master_module.fileType:
             case "lib":
                 self.compileStaticLIB(comp.conf, enter_dir)
+            case "dll":
+                self.msg("msg", f"Compile Dynamic Library: {raw_exe.final_output_name}", sender=self.name)
+                self.compileDynamicLib(comp.conf, enter_dir)
             case _:
                 self.compileEXE(comp.conf, enter_dir)
-        
+        self.msg("msg", "Compile Done.", sender=self.name)
         self.msg("msg", "Stopping compiler....", sender=self.name)
         self.compiler.stop()
         return raw_exe

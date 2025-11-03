@@ -26,7 +26,11 @@ class NasmCoder:
     
     def addCode(self, raw_code: str, code_file_name: str) -> None:
         fpath = os.path.join(self.output_dir, code_file_name)
-        self.raw_code[fpath] = raw_code
+        rcode = self.raw_code.get(fpath)
+        if rcode:
+            self.raw_code[fpath] += raw_code
+        else:
+            self.raw_code[fpath] = raw_code
 
 
 class CppCoder:
@@ -166,11 +170,13 @@ class Coder:
 
     def buildNasmCode(self, raw_lib_item_list: list, work_output_dir: str, master_file_name: str) -> dict:
         nasm_code = NasmCoder(self, work_output_dir)
+        nasm_lang = ["nasm", "asm"]
         for rl in raw_lib_item_list:
-            if rl.supportFileCodeName:
-                nasm_code.addCode(rl.raw_code, rl.supportFileCodeName)
-            else:
-                nasm_code.addCode(rl.raw_code, master_file_name)
+            if rl.lang.lower() in nasm_lang:
+                if rl.supportFileCodeName:
+                    nasm_code.addCode(rl.raw_code, rl.supportFileCodeName)
+                else:
+                    nasm_code.addCode(rl.raw_code, master_file_name)
         return nasm_code.raw_code
     
     def buildCppCode(self, raw_lib_item_list: list, work_output_dir: str, master_file_name: str) -> dict:

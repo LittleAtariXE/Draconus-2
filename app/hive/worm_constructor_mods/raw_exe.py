@@ -54,7 +54,16 @@ class RawExe:
         ### Final Output file
         self.final_output_name = f"{self.NAME}.{self._output_file_type}"
         self.final_output_fpath = os.path.join(self.fpath_dir_output, self.final_output_name)
+        self.final_bin_path = None
 
+        ### Shellcodes
+        
+
+        ### DLL
+        self.dll_def_func = self._collect_def_func()
+        self.dll_def_file_name = f"{self.NAME}.def"
+        self.dll_def_file_path = os.path.join(self.fpath_dir_output, self.dll_def_file_name)
+        self.dll_entry_point = "-Wl,--entry=DllMain"
         
         ### LOGS
         self.last_error = 0
@@ -170,7 +179,12 @@ class RawExe:
             if mod_name.fileType == "PY_MOD":
                 self.VAR["_PY_MODULES"].append(mod_name.name)
             
-        
+    
+    def _collect_def_func(self) -> list:
+        def_func = []
+        for mod in self.modules:
+            def_func.extend(mod.dllDef)
+        return def_func
 
 
 

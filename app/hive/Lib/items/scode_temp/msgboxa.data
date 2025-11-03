@@ -3,7 +3,7 @@
 #!info##Generates shellcode that displays a MessageBoxA popup with the specified text, defaulting to "Hello World". The message box is displayed as an error-type window.
 #!hiveType##SCode
 #!Var##MBA_text##HelloWorld##Text that will be displayed in the window##str
-
+#!lang##nasm
 
 {% set MBA_BUILD = asmTOOL.PutStackCode(MBA_text, registry="rcx", shadow_space_enter=40)%}
 

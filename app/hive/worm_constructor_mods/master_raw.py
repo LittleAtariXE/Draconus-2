@@ -6,6 +6,7 @@ from .raw_exe import RawExe
 
 if TYPE_CHECKING:
     from app.hive.worm_construtor import WormConstructor
+    from app.hive.Lib.src.items_src.raw_lib_item import RawLibItem
 
 
 class MasterRaw:
@@ -43,7 +44,7 @@ class MasterRaw:
 
         # RawExe
         self.worm_list_LIB = self.worm_split["lib"]
-        self.worm_list_DLL = []
+        self.worm_list_DLL = self.worm_split["dll"]
         self.worm_list_MASTER = self.worm_split["master"]
         self.worm_list_PAYLOAD = self.worm_split["payload"]
 
@@ -68,6 +69,20 @@ class MasterRaw:
                 ra[rw.final_output_name] = rw.final_output_fpath
         return ra
 
+
+
+    ################################# SPLIT WORM ######################################################
+
+
+    def _set_master_worm_type(self, module: RawLibItem) -> str:
+        if not module.fileType:
+            return "exe"
+        elif module.fileType == "dll":
+            return "dll"
+        elif module.fileType == "lib":
+            return "lib"
+        else:
+            return "exe"
         
     def _makeSplitWorm(self, modules_list: list) -> dict:
         worm = {}
@@ -78,7 +93,8 @@ class MasterRaw:
         mod_used = []
         for mod in modules_list:
             if mod.itemType == "worm":
-                raw = RawExe(self.WC, self, mod, "worm")
+                output_ftype = self._set_master_worm_type(mod)
+                raw = RawExe(self.WC, self, mod, "worm", output_ftype)
                 worm["master"].append(raw)
                 continue
             if mod.fileType:
@@ -114,6 +130,7 @@ class MasterRaw:
     def prepareWorm(self, raw_split: dict) -> dict:
         worm = {}
         worm["lib"] = self._prepareStaticLib(raw_split["lib"])
+        worm["dll"] = self._prepareDynamicLib(raw_split["dll"])
         worm["master"] = self._prepareMasterWorm(raw_split["master"])
         worm["payload"] = self._preparePayloads(raw_split["payload"])
         return worm
@@ -129,6 +146,9 @@ class MasterRaw:
         
         first.extend(last)
         return first
+    
+    def _prepareDynamicLib(self, raw_exe_list: list) -> list:
+        return self._prepareStaticLib(raw_exe_list)
     
     def _prepareMasterWorm(self, raw_exe_list: list) -> list:
         return raw_exe_list
@@ -155,99 +175,4 @@ class MasterRaw:
 
         for mod in mods:
             mod.update()
-        
-    
- 
-
-
-# class MasterRaw:
-#     def __init__(self, worm_constructor: WormConstructor, worm_options: dict, variables: Optional[dict] = {}):
-#         self.WC = worm_constructor
-#         self.RWB = self.WC.RWB
-#         self.options = worm_options
-#         self.VAR = variables
-
-#         self.allMods = self.RWB.wormAllMods
-
-#         self.worm_name = self.options.get("WORM_NAME")
-#         self.dir_output = self.options.get("DIR_OUTPUT")
-#         self.dir_ready_app = os.path.join(self.dir_output, f"{self.worm_name}{self.options['DIR_READY_SUFFIX']}")
-
-
-#         self.main_compiler = None
-#         self.worm_process = self.RWB.RAW.wprocess
-#         self.worm_process_step = self.worm_process.process_sheme
-#         self.worm_process_execute = []
-#         self.worm_master = self.RWB.RAW.master_worm
-
-
-#         self.worm_split = self.build_raw_template()
-#         self.worm_raw_child = self.buildRawChild()
-#         self.worm_raw_child_only = self.worm_raw_child[:-1]
-#         self.worm_raw_child_master = self.worm_raw_child[-1]
-#         self.WORM = []
-    
-
-
-#     def build_raw_template(self) -> dict:
-#         # Splits the worm if individual modules require separate compilation.
-#         _main = [self.worm_master]
-#         _lib = []
-#         _dll  = []
-#         for mod in self.allMods:
-#             if mod.fileType:
-#                 match mod.fileType.lower():
-#                     case "lib":
-#                         _lib.append(mod)
-#                     case "dll":
-#                         _dll.append(mod)
-        
-#         sworm = {
-#             "MAIN" : _main,
-#             "DLL" : _dll,
-#             "LIB" : _lib,
-#         }
-
-#         return sworm
-    
-#     def _buildRawLib(self, module: object) -> RawExe:
-#         mod_list = [module]
-#         child = self.RWB.wormGetChild(module)
-#         # add support file
-#         for mod in child:
-#             if mod.itemType == "sfile":
-#                 mod_list.append(mod)
-#         raw_worm = RawExe(self.WC, self, mod_list, "lib", "lib")
-#         return raw_worm
-    
-#     def _buildRawMaster(self, module: object) -> RawExe:
-#         mod_list = [module]
-#         child = self.RWB.wormGetChild(module)
-#         # add support file
-#         for mod in child:
-#             if mod.itemType == "sfile":
-#                 mod_list.append(mod)
-#         raw_worm = RawExe(self.WC, self, mod_list, output_file_type="exe")
-#         return raw_worm
-
-
-
-#     def buildRawChild(self) -> list:
-#         raw_worm_child = []
-#         for mod in self.worm_split["LIB"]:
-#             raw_lib = self._buildRawLib(mod)
-#             raw_worm_child.append(raw_lib)
-        
-#         for master in self.worm_split["MAIN"]:
-#             raw_exe = self._buildRawMaster(master)
-#             raw_worm_child.append(raw_exe)
-        
-#         return raw_worm_child
-    
-    
-        
-
-
-        
-
         

@@ -1,0 +1,39 @@
+#!name##KupaDLL
+#!itemType##support
+#!info##First Dynamic Library for NASM
+#!lang##nasm
+#!fileType##dll
+#!hiveType##DLL
+#!Var##k_text##DzienDobry##Jakis tekst##str
+#!modProcess##BUILD_CODE##COMPILE
+#!addNameComp##True
+#!modCompiler##MinGW_x64_v2
+#!dllDef##Hello
+#!readyApp##True
+
+
+global DllMain
+global Hello
+
+extern printf
+
+section .data
+    my_text: db "{{k_text}}", 10, 0
+
+section .text
+
+DllMain:
+    mov rax, 1
+    ret
+
+Hello:
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 40
+    mov rcx, my_text
+    call printf
+    add rsp, 40
+    
+    pop rbp
+    ret

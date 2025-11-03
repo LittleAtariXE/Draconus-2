@@ -4,7 +4,7 @@ from ..mods.py_pip_lib import PYTHON_PIP_LIBRARY_LINUX, PYTHON_PIP_LIBRARY_WINDO
 from .core.multi_comp import CrossCompCore
 from .compilers.mingw_x64 import MinGW_X64
 from .compilers.py_compiler import PyCompiler
-
+from .compilers.mingw_x64_scode import ShellCodeExtractor
 
 if TYPE_CHECKING:
     from ..queen import Queen
@@ -37,6 +37,8 @@ class MasterCompiler:
         self.compilers["MinGW_X64"] = mingwx64
         pycomp = PyCompiler(CC_core, self)
         self.compilers["PyComp"] = pycomp
+        sc_ext = ShellCodeExtractor(CC_core, self)
+        self.compilers["MinGW_Extract"] = sc_ext
 
     
     def startCompile(self, raw_exe: RawExe, mod_compiler: RawCompiler = None) -> RawExe:

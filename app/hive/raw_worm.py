@@ -14,6 +14,7 @@ class RawWorm:
         self.food = {}
         self.shadow = {}
         self.scode = None
+        self.rscript = {}
         
 
 
@@ -34,6 +35,10 @@ class RawWorm:
             mods.append(shadow)
         if self.scode:
             mods.append(self.scode)
+        # Add only master worm Resources script
+        rscript = self.masterRcScript
+        if rscript:
+            mods.append(rscript)
         
         
         return mods
@@ -59,6 +64,13 @@ class RawWorm:
             for k, i in mod.payloadSpace.items():
                 pay[k] = i
         return pay
+    
+    @property
+    def masterRcScript(self) -> Union[object, None]:
+        for rs in self.rscript.values():
+            if rs.compilerOwner == self.master_compiler:
+                return rs
+        return None
     
     def getModule(self, module_name: str) -> Union[object, None]:
         mod = None

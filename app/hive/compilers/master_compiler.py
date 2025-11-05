@@ -96,3 +96,13 @@ class MasterCompiler:
             self.msg("error", f"[!!] ERROR: '{core_name}' does not exists. [!!]", sender=self.name)
             return
         core.installCore()
+    
+    def correct_command(self, command: str) -> str:
+        cmd_list = []
+        for c in command.split(" "):
+            if c == "" or c == " ":
+                continue
+            cmd_list.append(c)
+        return " ".join(cmd_list)
+
+    

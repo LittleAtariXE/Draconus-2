@@ -24,7 +24,7 @@ class Library:
         self.DIR_LIB_ITEM_FOOD = os.path.join(self.DIR_LIB_ITEMS, "food")
         self.DIR_LIB_ITEM_SHADOWS = os.path.join(self.DIR_LIB_ITEMS, "shadows")
         self.DIR_LIB_ITEMS_BINARY = os.path.join(self.DIR_LIB_ITEMS, "binary")
-        self.DIR_LIB_ITEMS_CSCRIPT = os.path.join(self.DIR_LIB_ITEMS, "cscript")
+        self.DIR_LIB_ITEMS_CSCRIPT = os.path.join(self.DIR_LIB_ITEMS, "rscript")
         self.DIR_LIB_ITEMS_SHELLCODE_TEMPLATE = os.path.join(self.DIR_LIB_ITEMS, "scode_temp")
         self.DIR_LIB_ITEMS_COMPILERS = os.path.join(self.DIR_LIB_ITEMS, "compilers")
         self._load_counter = 0
@@ -43,7 +43,7 @@ class Library:
             "food" : {},
             "shadow" : {},
             "scode" : {},
-            "cscript" : {},
+            "rscript" : {},
             "compiler" : {},
         }
 

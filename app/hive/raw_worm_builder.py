@@ -58,6 +58,12 @@ class RawWormBuilder:
         self.RAW.worm_name = name
         self.msg("msg", f"Set new name for worm: '{name}'.", sender=self.name)
     
+    def setIcon(self, name: str) -> None:
+        if self.Icons.set_icon(name):
+            self.msg("msg", f"Set new icon: '{name}'", sender=self.name)
+        else:
+            self.msg("error", f"[!!] ERROR: Can't find icon: '{name}' [!!]", sender=self.name)
+    
     def get_target(self, name: Union[str, object]) -> Union[object, None]:
         if isinstance(name, str):
             target = self.RAW.getModule(name)
@@ -89,6 +95,8 @@ class RawWormBuilder:
                 self.addShadow(raw_info, target)
             case "scode":
                 self.addShellcodeTemplate(raw_info, target)
+            case "rscript":
+                self.addResourcesScript(raw_info, target)
             case _:
                 self.msg("error", f"[!!] ERROR: Unknown module type: '{raw_info.itemType}' [!!]", sender=self.name)
                 return
@@ -266,6 +274,25 @@ class RawWormBuilder:
         self.RAW.scode = scode
         self.msg("msg", f"Add shellcode template: {scode.name} successfull.", sender=self.name)
         self.check_depediences(scode)
+    
+    def addResourcesScript(self, raw_info: object, target: Union[str, object, None]) -> None:
+        if not target:
+            if not self.RAW.master_compiler:
+                self.msg("error", "[!!] ERROR: To add Resource Script you must have a compiler added. [!!]", sender=self.name)
+                return
+            target = self.RAW.master_compiler
+        if isinstance(target, str):
+            target = self.get_target(target)
+        if not target:
+            self.msg("error", f"[!!] ERROR: Target module does not exists in worm. [!!]", sender=self.name)
+            return
+        rcscript = self.raw_constructor.buildRawItem(raw_info)
+        rcscript.owner = target
+        rcscript.setCompilerOwner(target)
+        target.setCompilerRC(rcscript)
+        self.RAW.rscript[rcscript.name] = rcscript
+        self.msg("msg", f"Add Resources Script: {rcscript.name} to compiler: {target.name} successfull.", sender=self.name)
+        self.check_depediences(rcscript)
 
         
 
@@ -328,6 +355,15 @@ class RawWormBuilder:
             else:
                 self.addModCompiler(comp, raw_mod)
         
+        # check required RC Script for compiler
+        if raw_mod.itemType == "compiler":
+            if raw_mod.reqRC:
+                rscript = self.getLibItem("rscript", raw_mod.reqRC)
+                if not rscript:
+                    self.msg("error", f"[!!] ERROR: Required RC Script: {raw_mod.reqRC} does not exists in library. [!!]", sender=self.name)
+                else:
+                    self.addResourcesScript(rscript, raw_mod)
+        
         # check for food
         for fname, vname in raw_mod.foodReq.items():
             self.addFood(vname, fname, raw_mod)
@@ -368,6 +404,7 @@ class RawWormBuilder:
             mcompiler = f'{self.RAW.master_compiler.name} - {self.RAW.master_compiler.info}'
         tab["data"].append(["Worm Name:", self.wormName])
         tab["data"].append(["Source Lang:", self.RAW.master_worm.lang])
+        tab["data"].append(["Master Template:", self.RAW.master_worm.name])
         tab["data"].append(["Description: ", self.RAW.master_worm.info])
         tab["data"].append(["Worm Tags:", self.correct_tags(self.RAW.master_worm.moduleTags)])
         tab["data"].append(["Worm Process:", wprocess])
@@ -444,6 +481,18 @@ class RawWormBuilder:
         for t in tag_list:
             tags += f"{sheme[0]}{t}{sheme[1]} "
         return tags
+    
+    def showRcScript(self, no_separator: bool = False) -> None:
+        rcs = self.RAW.masterRcScript
+        if not rcs:
+            return
+        tab = {}
+        tab["headers"] = ["RC Name:", "Owner:", "Description:"]
+        tab["data"] = [[rcs.name, f"<< {rcs.compilerOwner.name} >>", rcs.info]]
+        tab["width"] = self.CONSOLE_SCR["3c"]
+        self.msg("msg", f"  {rcs.compilerOwner.name} RC Script:  ", mtypes="title", sender=self.name, no_separator=no_separator, color=self.DEFAULT_TITLE_COLOR)
+        self.msg("msg", tab, mtypes="table", no_separator=no_separator, sender=self.name)
+
 
     def showWorm(self) -> None:
         if not self.RAW.master_worm:
@@ -454,6 +503,7 @@ class RawWormBuilder:
         self.showModules(True)
         self.showPayloads(True)
         self.showVariables(True)
+        self.showRcScript(True)
         self.showProcessWorm(True)
 
         

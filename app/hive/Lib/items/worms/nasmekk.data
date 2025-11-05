@@ -1,0 +1,27 @@
+#!name##Kicha
+#!itemType##worm
+#!info##NASM worm for testing
+#!lang##nasm
+#!itemTags##WIN
+#!Wprocess##AsmLib
+#!wormCompiler##Basic-Nasm
+#!Var##first##ala##variable for test##str
+#!reqMod##NasmMod##KupaDLL
+
+
+extern ExitProcess
+extern printf
+
+
+section .data
+    my_text: db "{{first}}", 10, 0
+
+section .text
+    global main
+
+main:
+    sub rsp, 40
+    mov rcx, my_text
+    call printf
+    mov rcx, 0
+    call ExitProcess

@@ -64,13 +64,23 @@ class RawExe:
         self.dll_def_file_name = f"{self.NAME}.def"
         self.dll_def_file_path = os.path.join(self.fpath_dir_output, self.dll_def_file_name)
         self.dll_entry_point = "-Wl,--entry=DllMain"
+
+        ### Worm Icon
+            
         
         ### LOGS
         self.last_error = 0
         self.last_process_name = None
         self.last_process_error = ""
+        
 
-
+    # Icon is only added to the compilation of the main module.
+    @property
+    def wormIcon(self) -> bool:
+        if self.master_module == self.master_raw.worm_master:
+            return True
+        else:
+            return False
 
   
 
@@ -80,6 +90,13 @@ class RawExe:
             return self.master_raw.worm_master_compiler
         else:
             return self.master_raw.RWB.wormGetModCompiler(self.master_module.name)
+    
+    @property
+    def rcScript(self) -> Union[object, None]:
+        comp = self.compilerItem
+        if not comp:
+            return None
+        return comp.compilerRC
     
     @property
     def modules(self) -> list:

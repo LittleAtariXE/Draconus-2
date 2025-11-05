@@ -14,4 +14,15 @@ class RawCompilerItem(RawLibItem):
         # 'compiler item name' in Master Compiler
         # The name of the compiler that the 'master compiler' will use
         self.compilerMCNAME = None
+
+        # Specifies the "RC Script" that will be assigned to the compiler.
+        self.compilerRC = None
+
+        # Required RC Script
+        # Automatically loads the given RC script
+        self.reqRC = None
+    
+
+    def setCompilerRC(self, raw_rc_script: object) -> None:
+        self.compilerRC = raw_rc_script
     

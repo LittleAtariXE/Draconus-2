@@ -5,6 +5,7 @@ from .items_src.raw_lib_item import RawLibItem
 from .items_src.raw_proc_item import RawProcessItem
 from .items_src.raw_compiler_item import RawCompilerItem
 from .items_src.raw_food_item import RawFoodItem
+from .items_src.raw_rc_script import RawRcScript
 from .worm_variable import WormVariable
 from .default_variable import DefaultWormVariable
 from .payload_variable import PayloadVariable
@@ -31,6 +32,8 @@ class RawItemConstructor:
                 new = self.process_item(raw_mod_info, RawCompilerItem)
             case "food":
                 new = self.process_item(raw_mod_info, RawFoodItem)
+            case "rscript":
+                new = self.process_item(raw_mod_info, RawRcScript)
             case _:
                 new = self.process_item(raw_mod_info, RawLibItem)
         
@@ -100,6 +103,8 @@ class RawItemConstructor:
                     raw_mod.payImportHold = self.fGetBool(head[1])
                 case "shadowRender":
                     raw_mod.shadowRender = self.fGetBool(head[1])
+                case "reqRC":
+                    raw_mod.reqRC = head[1]
         
         return raw_mod
     

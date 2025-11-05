@@ -21,8 +21,8 @@ class LocalMSG:
     def __init__(self, queen: object):
         self.queen = queen
         self.console_scr = self.queen.conf.console_screen
-        self.show_no_imp_msg = True
-        self.show_dev_msg = True
+        self.show_no_imp_msg = self.queen.conf.show_no_important_messages
+        self.show_dev_msg = self.queen.conf.dev_msg
         self.log_draco_file_path = self.queen.conf.PATH_DRACONUS_LOGS
         self.log_hive_file_path = self.queen.conf.PATH_HIVE_LOGS
         self.lock = Lock()
@@ -30,7 +30,7 @@ class LocalMSG:
             "msg" : self.queen.conf.msg_color_basic,
             "error" : self.queen.conf.msg_color_error,
             "no_imp" : self.queen.conf.msg_color_no_imp,
-            "dev" : MSG_DEV_MSG
+            "dev" : self.queen.conf.msg_color_dev
         }
         self.first_table_space = "+ "
         self.make_log_file()

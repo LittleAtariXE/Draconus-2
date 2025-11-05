@@ -52,6 +52,10 @@ class MasterRaw:
 
         self.worm_MASTER = self.worm_list_MASTER[-1]
 
+        # Worm Icon
+        self.worm_icon = self.RWB.Icons.icon
+        self.worm_icon_fpath = self.RWB.Icons.icon_fpath
+
         ### UPDATE ALL RAW_EXE
         self.updateRawExe()
 

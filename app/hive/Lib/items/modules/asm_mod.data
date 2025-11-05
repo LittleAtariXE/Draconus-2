@@ -7,7 +7,7 @@
 #!fileType##lib
 #!modProcess##BUILD_CODE##COMPILE
 #!addNameComp##True
-#!modCompiler##MinGW_x64_v2
+#!modCompiler##Basic-Nasm
 #!Var##NM_ala##Siema##Display text##str
 #!Var##NM_empty##_NULL##second text##str
 

@@ -144,6 +144,7 @@ class Coder:
         extra["_PY_IMPORT"] = []
         extra["_PY_PIP_IMPORT"] = []
         extra["_PY_MODULES"] = []
+        extra["_ICON_NAME"] = self.raw_builder.Icons.icon
         return extra
 
     def buildVariable(self) -> dict:

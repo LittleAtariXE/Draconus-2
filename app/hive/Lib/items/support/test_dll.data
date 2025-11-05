@@ -7,7 +7,7 @@
 #!Var##k_text##DzienDobry##Jakis tekst##str
 #!modProcess##BUILD_CODE##COMPILE
 #!addNameComp##True
-#!modCompiler##MinGW_x64_v2
+#!modCompiler##Basic-Nasm
 #!dllDef##Hello
 #!readyApp##True
 

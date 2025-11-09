@@ -57,7 +57,7 @@ class RawExe:
         self.final_bin_path = None
 
         ### Shellcodes
-        
+        self.shellcode_c_array = None
 
         ### DLL
         self.dll_def_func = self._collect_def_func()

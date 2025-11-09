@@ -23,7 +23,7 @@ class Library:
         self.DIR_LIB_ITEM_SUPPORT = os.path.join(self.DIR_LIB_ITEMS, "support")
         self.DIR_LIB_ITEM_FOOD = os.path.join(self.DIR_LIB_ITEMS, "food")
         self.DIR_LIB_ITEM_SHADOWS = os.path.join(self.DIR_LIB_ITEMS, "shadows")
-        self.DIR_LIB_ITEMS_BINARY = os.path.join(self.DIR_LIB_ITEMS, "binary")
+        self.DIR_LIB_ITEMS_BINARY = os.path.join(self.DIR_LIB_ITEMS, "bin")
         self.DIR_LIB_ITEMS_CSCRIPT = os.path.join(self.DIR_LIB_ITEMS, "rscript")
         self.DIR_LIB_ITEMS_SHELLCODE_TEMPLATE = os.path.join(self.DIR_LIB_ITEMS, "scode_temp")
         self.DIR_LIB_ITEMS_COMPILERS = os.path.join(self.DIR_LIB_ITEMS, "compilers")

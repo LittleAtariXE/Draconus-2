@@ -2,6 +2,7 @@
 #!itemType##Wprocess
 #!info##Build python exe.
 
+[PAYLOAD]
 [BUILD_CODE]
 [SHADOW_CODE]
 [COMPILE]

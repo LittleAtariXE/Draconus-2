@@ -1,0 +1,20 @@
+#!name##AkMod
+#!itemType##module
+#!fileType##PY_MOD
+#!info##Module have 3 space for payloads
+#!lang##Python
+#!hiveType##PySM
+#!payloadSpace##AMP1##Payload no 1
+#!payloadSpace##AMP2##Payload no 2
+#!payloadSpace##AMP3##Payload no 3
+
+
+class AkMod:
+    def __init__(self):
+        self.pay1 = {{AMP1}}
+        self.pay2 = {{AMP2}}
+        self.pay3 = {{AMP3}}
+    
+    def start(self):
+        print("AkMod Init")
+

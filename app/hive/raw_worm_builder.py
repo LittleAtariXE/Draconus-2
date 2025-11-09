@@ -100,6 +100,54 @@ class RawWormBuilder:
             case _:
                 self.msg("error", f"[!!] ERROR: Unknown module type: '{raw_info.itemType}' [!!]", sender=self.name)
                 return
+    
+    def removeWormItem(self, item_type: str, item_name: str) -> None:
+        if item_type == "worm":
+            self.msg("error", "The main module cannot be removed. Please use the appropriate function.", sender=self.name)
+            return
+        if item_type == "support":
+            self.msg("error", "This type of module cannot be removed. They are automatically added by the worm.", sender=self.name)
+            return
+        for mod in self.wormAllMods:
+            if mod.name == item_name:
+                self._remove_child_item(mod)
+                self._remove_worm_item(mod)
+                return
+        self.msg("error", f"[!!] ERROR: {item_name} is not added to worm. [!!]", sender=self.name)
+    
+    def _remove_worm_item(self, module: RawLibItem, is_child: bool = False) -> None:
+        if is_child:
+            child = "child"
+        else:
+            child = ""
+        match module.itemType:
+            case "module":
+                del self.RAW.modules[module.name]
+                self.msg("msg", f"Remove {child} module: {module.name} successfull.", sender=self.name)
+            case "shadow":
+                del self.RAW.shadow[module.name]
+                self.msg("msg", f"Remove {child} shadow: {module.name} successfull.", sender=self.name)
+            # case "payload":
+            #     print(module.owner.payloadSpace)
+            #     print(self.RAW._payloads)
+            #     try:
+            #         # del module.owner.payloadSpace[]
+            #         del self.RAW._payloads[module.owner]
+            #         self.msg("msg", f"Remove {child} payload: {module.name} successfull.", sender=self.name)
+            #     except:
+            #         print("ERRR")
+            #         pass
+                
+            case "compiler":
+                self.RAW.master_compiler = None
+                self.msg("msg", f"Remove {child} compiler: {module.name} successfull.", sender=self.name)
+
+
+    
+    def _remove_child_item(self, module: RawLibItem) -> None:
+        for cmod in self.RAW.getChildAll(module):
+            self._remove_worm_item(cmod, True)
+
 
 
     def addMasterWorm(self, raw_info: object) -> None:

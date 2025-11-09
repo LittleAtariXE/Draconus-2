@@ -1,0 +1,6 @@
+#!name##PayBin
+#!itemType##payload
+#!info##Binary payload for linux 64. Prints "Hello World"
+#!binType##True
+#!binName##hello_asm
+#!modProcess##bin_payload

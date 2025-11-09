@@ -7,6 +7,7 @@ class RawLibItem:
         self.fpath = raw_info_item.fpath
         self.separator = raw_info_item.separator
         self.in_separator = raw_info_item.in_separator
+        
 
         # Item name. 'name'
         self.name = None

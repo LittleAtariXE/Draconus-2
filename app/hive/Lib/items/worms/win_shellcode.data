@@ -4,5 +4,5 @@
 #!typeAccept##SCode
 #!lang##nasm
 #!Wprocess##WinShell
-#!wormCompiler##ShellcodeExtractor
+#!wormCompiler##SC_WIN64
 

@@ -6,6 +6,7 @@ from .items_src.raw_proc_item import RawProcessItem
 from .items_src.raw_compiler_item import RawCompilerItem
 from .items_src.raw_food_item import RawFoodItem
 from .items_src.raw_rc_script import RawRcScript
+from .items_src.raw_bin_item import RawBinItem
 from .worm_variable import WormVariable
 from .default_variable import DefaultWormVariable
 from .payload_variable import PayloadVariable
@@ -24,7 +25,11 @@ class RawItemConstructor:
         else:
             return False
     
+    
     def buildRawItem(self, raw_mod_info: object) -> Union[object, None]:
+        if raw_mod_info.binType:
+            new = self.process_item(raw_mod_info, RawBinItem)
+            return new
         match raw_mod_info.itemType:
             case "Wprocess":
                 new = self.process_item(raw_mod_info, RawProcessItem)
@@ -105,6 +110,11 @@ class RawItemConstructor:
                     raw_mod.shadowRender = self.fGetBool(head[1])
                 case "reqRC":
                     raw_mod.reqRC = head[1]
+                case "binType":
+                    raw_mod.binType = self.fGetBool(head[1])
+                case "binName":
+                    raw_mod.binName = head[1]
+                
         
         return raw_mod
     

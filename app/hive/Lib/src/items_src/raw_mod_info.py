@@ -4,7 +4,7 @@ class RawModuleInfo:
         self.separator = separator
         self.in_separator = "##"
         self.fpath = fpath
-        self.__opt = options
+        self._opt = options
 
        # Item name. 'name'
         self.name = None
@@ -14,6 +14,10 @@ class RawModuleInfo:
 
         # Item Library types. # 'itemType'
         self.itemType = None
+
+        # A special type for handling binary files. #   'binType' 
+        # binType##True
+        self.binType = False
 
         # Item tags. #  'itemTags'
         # WIN - Works only on Windows
@@ -55,6 +59,8 @@ class RawModuleInfo:
 
         self._load_basic_data()
 
+        
+
     
     def fGetBool(self, value: str) -> bool:
         if value == "True" or value == "true" or value == True:
@@ -91,4 +97,6 @@ class RawModuleInfo:
                     self.FLAG_broken = self.fGetBool(head[1])
                 case "lang":
                     self.lang = head[1]
+                case "binType":
+                    self.binType = self.fGetBool(head[1])
 

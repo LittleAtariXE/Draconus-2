@@ -5,7 +5,9 @@ from .core.multi_comp import CrossCompCore
 from .compilers.mingw_x64 import MinGW_X64
 from .compilers.py_compiler import PyCompiler
 from .compilers.mingw_x64_scode import ShellCodeExtractor
+
 from .compilers.mingw_universal import MinGW_All
+from .compilers.mingw_x64_scode import ScExtrator
 
 if TYPE_CHECKING:
     from ..queen import Queen
@@ -48,8 +50,12 @@ class MasterCompiler:
             return
         self.compilerCore = core(self)
         self.msg("msg", f"Mount core: '{self.compilerCore.CORE_NAME}' successfull.", sender=self.name)
+
         mingw = MinGW_All(self.compilerCore, self)
         self.compilers[mingw.name] = mingw
+        
+        mingw_sc = ScExtrator(self.compilerCore, self)
+        self.compilers[mingw_sc.name] = mingw_sc
 
         return
 

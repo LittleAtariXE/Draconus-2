@@ -1,0 +1,23 @@
+
+#!name##kiszakos
+#!itemType##payload
+#!info##My first bin payload. Worm Kicha.## Master Module: Kicha ## Module Used: Basic-Nasm Kicha  ## Payload created by You. Payload size: 206 bytes.
+
+
+
+extern ExitProcess
+extern printf
+
+
+section .data
+    my_text: db "ala", 10, 0
+
+section .text
+    global main
+
+main:
+    sub rsp, 40
+    mov rcx, my_text
+    call printf
+    mov rcx, 0
+    call ExitProcess

@@ -4,8 +4,8 @@
 #!lang##nasm
 #!itemTags##WIN
 #!Wprocess##BasicPay
-#!wormCompiler##MinGW_x64_v2
-#!payloadSpace##PAYLOAD##My first evil payload
+#!wormCompiler##Basic-Nasm
+#!payloadSpace##pejlold##My first evil payload
 
 
 extern ExitProcess
@@ -13,7 +13,7 @@ extern printf
 
 
 section .data
-    my_text: db "{{PAYLOAD}}", 10, 0
+    my_text: db "{{pejlold}}", 10, 0
 
 section .text
     global main

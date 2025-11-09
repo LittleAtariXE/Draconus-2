@@ -6,7 +6,7 @@
 #!Wprocess##AsmLib
 #!wormCompiler##Basic-Nasm
 #!Var##first##ala##variable for test##str
-#!reqMod##NasmMod##KupaDLL
+#!rrrreqMod##NasmMod##KupaDLL
 
 
 extern ExitProcess

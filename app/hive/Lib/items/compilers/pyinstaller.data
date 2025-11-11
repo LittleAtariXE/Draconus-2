@@ -1,9 +1,10 @@
 #!name##PyInstaller
 #!itemType##compiler
 #!info##PyInstaller compiler. Compiles a Python file into a Windows x64 EXE.
-#!compilerMCNAME##PyComp
+#!compilerMCNAME##MinGW-x64
 #!Var##PYI_EXE_SHOW##console##'console' - the executable runs as a console program. 'gui' - the executable's output is not displayed.##str
 #!Var##PYI_ONE_FILE##True##Using the '--onefile' flag. Compiles the program into a single EXE file.##str
+
 
 {% set __COMP_EXEC = "wine pyinstaller" %}
 
@@ -20,12 +21,9 @@
 {% endif %}
 
 {
-    "NAME" : "PyInstaller",
-    "COMPILER_NAME" : "PyComp",
-    "EXEC_SHOW" : "{{__EXEC_SHOW}}",
-    "ONE_FILE" : "{{__ONE_FILE}}",
-    "COMPILER_CMD" : "{{__COMP_EXEC}} {{__ONE_FILE}} {{__EXEC_SHOW}} --name={{__FINAL_OUTPUT_FNAME}} {{__SRC_FILE_NAME}}",
-    "COMPILER_CLEAN" : [
+    "WORKING_DIR" : "{{__WORK_DIR_DOCKER}}",
+    "COMPILER_CMD" : [
+        "cd {{__WORK_DIR_DOCKER}} && {{__COMP_EXEC}} {{__ONE_FILE}} {{__EXEC_SHOW}} --name={{__FINAL_OUTPUT_FNAME}} {{__SRC_FILE_NAME}}",
         "cd {{__WORK_DIR_DOCKER}}/dist && cp ./{{__FINAL_OUTPUT_FNAME}} {{__WORK_DIR_DOCKER}}",
         "cd {{__WORK_DIR_DOCKER}} && chmod 777 *",
         "cd {{__WORK_DIR_DOCKER}} && rm -R build/",

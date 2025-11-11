@@ -100,14 +100,18 @@ class Library:
             self.msg("error", f"[!!] ERROR: Items: '{item_type}' does not exists in library. [!!]")
             return
         tab = {}
-        tab["headers"] = ["Name", "Tags", "Description"]
+        tab["headers"] = ["Name", "Tags", "Code lang", "Description"]
         tab["data"] = []
         for i in items.values():
             tags = ""
-            for t in i.Tags:
+            for t in i.moduleTags:
                 tags += f"[{t}] "
-            tab["data"].append([i.Name, tags, i.Info])
-        tab["width"] = self.CONSOLE_SCR["3c"]
+            if not i.lang:
+                lang = ""
+            else:
+                lang = i.lang
+            tab["data"].append([i.name, tags, lang, i.info])
+        tab["width"] = self.CONSOLE_SCR["4c"]
         tab["types"] = self.DEFAULT_TABLE_STYLE
         self.msg("msg", f"  {item_type}  ", mtypes="title")
         self.msg("msg", tab, mtypes="table", no_separator=True)

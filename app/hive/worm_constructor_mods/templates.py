@@ -8,6 +8,15 @@ SHELLCODE_PAYLOAD_TEMPLATE = """
 {{SHELLCODE}}
 """
 
+SHELLCODE_FOOD_TEMPLATE = """
+#!name##{{NAME}}
+#!itemType##food
+#!info##{{INFO}}
+#!loadType##clean_text
+
+{{SHELLCODE}}
+"""
+
 
 RAW_PAYLOAD_TEMPLATE = """
 #!name##{{NAME}}

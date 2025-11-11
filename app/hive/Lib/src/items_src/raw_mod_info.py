@@ -59,7 +59,15 @@ class RawModuleInfo:
 
         self._load_basic_data()
 
-        
+    
+    @property
+    def moduleTags(self) -> list:
+        tags = []
+        if self.fileType:
+            tags.append(self.fileType)
+        tags.extend(self.itemTags)
+        tags.extend(self.hiveType)
+        return tags
 
     
     def fGetBool(self, value: str) -> bool:

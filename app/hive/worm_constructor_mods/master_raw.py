@@ -59,6 +59,7 @@ class MasterRaw:
         # Special options, Flags
         self.FLAG_NO_COMPILE = self.options.get("FLAG_NO_COMPILE")
         self.FLAG_BUILD_SHELLCODE_PAYLOAD = self.options.get("BUILD_SHELLCODE_PAYLOAD")
+        self.FLAG_BUILD_SHELLCODE_FOOD = self.options.get("BUILD_SHELLCODE_FOOD")
         self.EXTRA_MODULE_INFO = self.options.get("MODULE_INFO", "")
         self.BUILD_PAYLOAD = self.options.get("BUILD_PAYLOAD")
 

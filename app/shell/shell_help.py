@@ -8,6 +8,8 @@ class SHELL_HELP_MESSAGES:
         self.pSort = self.msg_sorter.sort_Text
         self.pTitle = self.msg_sorter.make_Title
         self.pText = self.msg_sorter.basic_Text
+        self.pSort_set = self.msg_sorter.set_text_len_first
+        self.pSort_restore = self.msg_sorter.restore_text_len_first
         
 
     
@@ -45,18 +47,6 @@ class SHELL_HELP_MESSAGES:
         self.pSort("", 'Ex: var -f worm_text FOOD_default_text')
         self.pText("")
     
-    @property
-    def HIVE_COMP_VARIABLES_HELP(self) -> None:
-        self.pTitle("  Compiler Variable help  ")
-        self.pText("Compiler variables are values applied during the final build/compilation stage that control how the program is produced and how it will run.")
-        self.pText("They define runtime settings (for example, whether the program runs in a console or as a background service),")
-        self.pText("linking behavior, and other build-time options that affect the final executable.")
-        self.pText("")
-        self.pText("NO_STD_LIB - When enabled, the standard library is not linked into the executable.")
-        self.pText("This usually produces a smaller binary but removes the standard library’s runtime support and utilities.")
-        self.pText("Using NO_STD_LIB may require supplying your own startup/runtime code or replacements for any standard-library functions you use")
-        self.pText("— some features that rely on the standard library may be unavailable.")
-        self.pText("")
 
     @property
     def HIVE_ICON_HELP(self) -> None:
@@ -67,18 +57,54 @@ class SHELL_HELP_MESSAGES:
         self.pTitle("  options:  ")
         self.pSort("--set_icon, -s", "Set the chosen icon for the exe file.")
         self.pSort("--list, -l", "Show the list of available icons.")
-        self.pSort("--xlist, -xl", "Show the list of icons with additional information.")
         self.pText("")
         
     @property
     def HIVE_BUILD_COMPILE_HELP(self) -> None:
         self.pTitle("  Build help  ")
         self.pText("Compiles the worm. This is the final function that produces an executable (exe, dll, etc.) depending on what the chosen template supports.")
+        self.pText("")
         self.pSort("--no_compile, -nc", "Do not compile the worm; only produce the generated source/code files. Warning: using this option may cause errors and some build steps may be skipped,")
         self.pSort("", "especially if the final worm requires additional libraries that will not be compiled. Code files will still be created.")
-        self.pSort("--payload [name], -p [name]", "Do not compile the final binary; store the generated code in the payload library under the given name so it can be added to another worm later.")
-        self.pSort("", "Example: you can assemble a worm from Python modules but save it as a payload to be used later (for example inside a shellcode).")
-        self.pSort("--as_food [name], -as [name]", "Do not compile the final binary; store the generated code in the food library so it can be assigned to a variable and reused.")
-        self.pSort("", "This is particularly useful for saving generated shellcodes that you want to add to other projects.")
+        self.pSort("", "")
+        self.pSort("--payload, -p", "Places the built worm into the 'payload' section of the library. If the worm has gone through compilation, its binary version will be saved.")     
+        self.pSort("", "Using this option together with '--no_compile' will store only the worm's source/code in the 'payload' section (useful when building Python scripts).")
+        self.pSort("", "Note: payloads generally do not support multi-file projects, so this option will not work correctly for e.g. C++ code that requires multiple files.")
+        self.pSort("", 'After the option you may provide a description in quotes (e.g. --payload "My description") which will be used as the modules description in the library.')
+        self.pSort("", "Ex:")
+        self.pSort("", 'build --no_compile --payload "My first python payload ...."')
+        self.pSort("", 'build --shellpay "My shellcode reverse tcp"')
+        self.pSort("", "")
+        self.pSort("--shellpay, -sp", "Works only when generating shellcode. Saves the finished shellcode into the 'payload' section.")
+        self.pSort("", 'After the option you may provide a description in quotes (e.g. --shellpay "My description") which will be used as the modules description in the library.')
+        self.pSort("", "")
+        self.pSort("--shellfood, -sf", "Works only when generating shellcode. Saves the finished shellcode into the 'food' section.")
+        self.pSort("", 'After the option you may provide a description in quotes (e.g. --shellfood "My description") which will be used as the modules description in the library.')
+        self.pSort("", "")
+ 
         self.pText("")
-        
+    
+    @property
+    def HIVE_MODULES_TYPE(self) -> None:
+        self.pTitle("  DRACONUS Item type:  ")
+        self.pSort_set(15)
+        self.pSort("worm", "The main template; required to add first. Its choice determines whether you build an injector, shellcode, DLL, or something else.")
+        self.pSort("", "Different extra modules can be attached to a worm depending on the chosen template.")
+        self.pSort("", "")
+        self.pSort("module", "Various modules or libraries that add functionality. Some worms allow additional modules to be added.")
+        self.pSort("support", "Modules and libraries added automatically when required by a worm or another module.")
+        self.pSort("payload", "Various kinds of payloads, small and large, implemented in different languages. If a worm supports adding payloads, they are listed here.")
+        self.pSort("shadow", "Code obfuscation. Additional modules used to obfuscate code.")
+        self.pSort("food", "'Food' for the worm. Contains assorted data like text databases for obfuscators, random game names, ready-made shellcodes, and other resources.")
+        self.pSort("", "Worms automatically use food when needed, but you can change items or assign them to a variable 'var'.")
+        self.pSort("", "")
+        self.pSort("Wprocess", "The lifecycle a worm goes through to reach its final form. These are added automatically; only modify them if you really know what you are doing.")
+        self.pSort("scode", "Template for creating shellcodes.")
+        self.pSort("compiler", "Compilers and linker scripts that can be attached to a worm. Each worm has a default compiler assigned; you can change it if you know what you’re doing.")
+        self.pSort("", "For example, you can switch a Python build from PyInstaller to Nuitka.")
+        self.pSort("", "")
+        self.pSort("rscript", "Additional .rc resource files that inject metadata or resources into the final executable.")
+        self.pSort("", "These resource files can be added when the chosen compiler supports including .rc resources.")
+        self.pSort("", "")
+        print("\n")
+        self.pSort_restore()

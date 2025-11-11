@@ -79,3 +79,5 @@ class RawFoodItem(RawLibItem):
         text = "".join(data)
         text = text.replace("\n", "")
         return text
+    
+    

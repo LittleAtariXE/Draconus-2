@@ -72,6 +72,22 @@ class RawWorm:
                 return rs
         return None
     
+    @property
+    def tagsInfo(self) -> list:
+        ti = self.master_worm.moduleTags
+        if self.master_compiler.moduleTags:
+            ti.extend(self.master_compiler.moduleTags)
+        return ti
+    
+    @property
+    def acceptItemList(self) -> list:
+        if not self.master_worm:
+            return []
+        ail = set()
+        for mod in self.allMods:
+            ail.update(mod.typeAccept)
+        return list(ail)
+    
     def getModule(self, module_name: str) -> Union[object, None]:
         mod = None
         for m in self.allMods:

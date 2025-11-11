@@ -9,6 +9,7 @@ from .template_tools.nasm_builder import NasmBuilderTemplate
 from .template_tools.temp_random import RandomTemplate
 from .template_tools.temp_shadow import ShadowTemplate
 from .template_tools.py_temp import PyTemplate
+from .template_tools.temp_scode import ShellTemplate
 
 from .raw_worm_builder import RawWormBuilder
 
@@ -136,6 +137,7 @@ class Coder:
         self.TEMP_nasm = NasmBuilderTemplate(self)
         self.TEMP_random = RandomTemplate(self)
         self.TEMP_python = PyTemplate(self)
+        self.TEMP_shellcode = ShellTemplate(self)
 
     
     def _build_extra_var(self) -> dict:
@@ -162,7 +164,7 @@ class Coder:
     def renderSingleTemplate(self, code: str, var: dict = {}) -> str:
         try:
             fcode = Template(code)
-            fcode = fcode.render(**var, shTOOL=self.TEMP_shadow, asmTOOL=self.TEMP_nasm, randTOOL=self.TEMP_random, pyTOOL=self.TEMP_python)
+            fcode = fcode.render(**var, shTOOL=self.TEMP_shadow, asmTOOL=self.TEMP_nasm, randTOOL=self.TEMP_random, pyTOOL=self.TEMP_python, scTOOL=self.TEMP_shellcode)
             return fcode
         except Exception as e:
             self.msg("error", f"[!!] ERROR: render template: {e} [!!]", sender=self.name)

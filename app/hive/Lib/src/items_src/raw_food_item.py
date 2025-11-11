@@ -45,12 +45,21 @@ class RawFoodItem(RawLibItem):
                         self.foodRender = False
     
     def show_value(self) -> str:
-        if len(str(self.FOOD_DATA)) > self.FOOD_SHOW_CHAR_LIMIT:
-            fv = str(self.FOOD_DATA[0:self.FOOD_SHOW_CHAR_LIMIT])
-            fv += "..."
-        else:
-            fv = str(self.FOOD_DATA)
-        return fv
+        fdata = str(self.FOOD_DATA)
+        if len(fdata) > self.FOOD_SHOW_CHAR_LIMIT:
+            fdata = fdata[0:self.FOOD_SHOW_CHAR_LIMIT]
+            fdata += "..."
+        return fdata
+
+
+
+
+        # if len(str(self.FOOD_DATA)) > self.FOOD_SHOW_CHAR_LIMIT:
+        #     fv = str(self.FOOD_DATA[0:self.FOOD_SHOW_CHAR_LIMIT])
+        #     fv += "..."
+        # else:
+        #     fv = str(self.FOOD_DATA)
+        # return fv
     
 
     def load_food_list(self) -> list:

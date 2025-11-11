@@ -1,9 +1,7 @@
-#!name##CharFood
+#!name##BasChar
 #!itemType##food
-#!info##Some letters
+#!info##Contains all lowercase and uppercase letters, numbers and some special characters.
 #!loadType##clean_text
-
-
 
 
 

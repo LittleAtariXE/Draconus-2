@@ -54,12 +54,21 @@ class WormVariable:
                 return raw_val
     
     def show_value(self, max_limit: bool = True) -> str:
+        value = str(self.__value)
         if not max_limit:
-            return str(self.__value)
-        if len(str(self.__value)) > self.show_limit:
-            return str(self.__value[0:self.show_limit])
+            return value
+        if len(value) > self.show_limit:
+            return value[0:self.show_limit]
         else:
-            return str(self.__value)
+            return value
+
+
+        # if not max_limit:
+        #     return str(self.__value)
+        # if len(str(self.__value)) > self.show_limit:
+        #     return str(self.__value[0:self.show_limit])
+        # else:
+        #     return str(self.__value)
     
     def set_value(self, value: any, val_type: str = None) -> None:
         self.__value = value

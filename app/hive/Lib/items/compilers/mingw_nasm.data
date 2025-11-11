@@ -3,7 +3,7 @@
 #!info##MinGW-x64 cross compiler. Compiler NASM code to exe, dll, lib windows.
 #!compilerMCNAME##MinGW-x64
 #!Var##BASM_no_std##-nostdlib -s##Parameters to avoid including the standard library in the linker. You can add additional parameters or remove them entirely, in which case the function will not be used.##str
-
+#!typeAccept##RcExe
 
 {% if __VAR_EXEC_SHOW %}
     {% if __VAR_EXEC_SHOW == "console" %}

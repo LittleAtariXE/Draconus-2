@@ -2,6 +2,7 @@
 #!itemType##rscript
 #!info##Resource Script. Script file '.rc'. Generates lots of random information about the executable. You can set your own.
 #!Var##RSCR_test##AlaMaKota##Variables from resources script##str
+#!hiveType##RcExe
 
 1 VERSIONINFO
 FILEVERSION 1,2,3,4

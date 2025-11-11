@@ -4,7 +4,7 @@
 #!lang##python
 #!itemTags##WIN
 #!Wprocess##BasicPy
-#!foodAdd##CharFood##KICHA_FOOD
+#!foodAdd##BasChar##KICHA_FOOD
 #!Var##Ktext##Ala ma kota##Jakis Tekst##str
 #!wormCompiler##PyInstaller
 #!typeAccept##PySh

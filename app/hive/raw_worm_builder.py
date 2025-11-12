@@ -540,7 +540,7 @@ class RawWormBuilder:
     def _build_info_tags(self, tag_list: list, sheme: str = "[$]") -> str:
         sheme = sheme.split("$")
         tags = ""
-        for t in tag_list:
+        for t in set(tag_list):
             tags += f"{sheme[0]}{t}{sheme[1]} "
         return tags
     

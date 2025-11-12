@@ -26,6 +26,8 @@ class SHELL_HELP_MESSAGES:
         self.pSort("raw", "A TCP socket server that sends and receives raw bytes, which are only converted to text.")
         self.pSort("", "It does not encode, encrypt, etc. It has a special buffer that merges fragments of messages into a whole.")
         self.pText("")
+        self.pSort("b64", "A regular TCP socket server encrypts and encodes communications using base64.")
+        self.pText("")
         self.pTitle("  Example:  ")
         self.pSort("server myServ 4444", "Building default 'raw' server on port 4444.")
         self.pSort("server new2 3000 -t b64", "Buiding 'b64' server on port 3000")

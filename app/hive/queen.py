@@ -85,9 +85,14 @@ class Queen:
         #conf["BUILD_SHELLCODE_PAYLOAD"] = True
         # conf["BUILD_SHELLCODE_FOOD"] = True
 
-        self.setWormName("qpek")
-        self.addWormItem("worm", "Kicha")
-        self.addWormItem("rscript", "BasicRes")
+        self.setWormName("exekkk")
+        self.addWormItem("worm", "WShellcode")
+        self.addWormItem("scode", "WinExec")
+        
+
+        # self.setWormName("qpek")
+        # self.addWormItem("worm", "Kaczki")
+        #self.addWormItem("rscript", "BasicRes")
 
 
         self.wormShow()

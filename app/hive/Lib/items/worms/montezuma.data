@@ -3,7 +3,7 @@
 #!info##The worm template written in Python, designed without a specific purpose. It allows integration of any number of additional Python-based modules. Ideal for building custom payloads and flexible worm structures in Python.
 #!lang##python
 #!Wprocess##BasicPy
-#!wormCompiler##PyInstaller
+#!wormCompiler##Nuitka
 #!itemTags##LW
 #!typeAccept##PySM##PyExM##PySh
 

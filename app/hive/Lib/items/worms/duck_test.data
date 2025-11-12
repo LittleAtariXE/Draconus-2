@@ -1,0 +1,36 @@
+#!name##Kaczki
+#!itemType##worm
+#!info##Worm for test Duck Tales library
+#!lang##nasm
+#!itemTags##WIN
+#!Wprocess##AsmLib
+#!wormCompiler##Basic-Nasm
+#!reqMod##DuckTalesLib
+
+
+
+extern ExitProcess
+extern printf
+extern DuckStartTales
+extern DuckIntro
+
+section .data
+    text_exit: db "Exit Program", 0
+    text_start: db "Start Program", 0
+
+section .text
+    global main
+
+
+main:
+    
+    sub rsp, 40
+    mov rcx, text_start
+    call printf
+    call DuckStartTales
+    call DuckIntro
+    mov rcx, rax
+    call printf
+    mov rcx, 0
+    call ExitProcess
+

@@ -109,7 +109,6 @@ class DracoController:
         self.Tasker.addThread("DracoController", self.accept_conn, info="Receives and executes commands from Commander.", daemon=True)
         
     def process_cmd(self, cmd: dict) -> None:
-        print("CMD: ", cmd)
         main = cmd.get("cmd_type")
         if not main:
             self.msg("error", "[!!] ERROR: No main command. [!!]")

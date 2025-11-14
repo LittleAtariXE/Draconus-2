@@ -19,11 +19,16 @@ class TcpServer(Thread):
             self.server_ip = ip_addr
         self.server_name = name
         self.draco_name = f"Server-{self.server_name}"
+        
+        ## A special designation that determines what first action the server will take after a connection from a client.
+        ## E.g.: receiving messages, sending messages, etc.
+        self.FIRST_JOB = "recive"
 
 
         self.FLAG_server_working = Event()
         self.FLAG_server_working.clear()
         self.SERVER_LISTENING_TIMEOUT = self.CONF.tcp_sock_to_listening
+        self.DIR_INPUT_PATH = self.CONF.DIR_INPUT
     
     def build_server(self) -> bool:
         try:

@@ -1,0 +1,12 @@
+#!name##PajPej
+#!itemType##payload
+#!info##Python payload for test
+#!lang##python
+
+
+
+from time import sleep
+for _ in range(10):
+    print("PAJ PEJ")
+    sleep(1)
+print("THE END")

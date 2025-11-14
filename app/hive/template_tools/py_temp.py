@@ -1,4 +1,4 @@
-
+from typing import Union
 
 
 class PyTemplate:
@@ -24,3 +24,14 @@ class PyTemplate:
         
         data = " ".join(list(database))
         return data
+    
+    def encodeHex(self, data: Union[str, bytes], encode: str = "utf-8") -> str:
+        if isinstance(data, str):
+            data = data.encode(encode)
+        return str(data.hex())
+    
+    def buildLoader(self, script: str, loader: str, replace_char: str = "$") -> str:
+        exe_script = loader.replace(replace_char, script)
+        return exe_script
+    
+

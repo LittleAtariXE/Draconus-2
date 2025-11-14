@@ -103,6 +103,8 @@ class RawModuleInfo:
                     self.fileType = head[1]
                 case "FLAG_broken":
                     self.FLAG_broken = self.fGetBool(head[1])
+                case "itemTags":
+                    self.itemTags.extend(head[1:])
                 case "lang":
                     self.lang = head[1]
                 case "binType":

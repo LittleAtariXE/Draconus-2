@@ -144,7 +144,7 @@ class RawWormBuilder:
 
     def addMasterWorm(self, raw_info: object) -> None:
         if self.RAW.master_worm:
-            self.msg("error", "[!!] ERROR: You can't add a main template to an existing worm. Use the 'rebuild' command. [!!]", sender=self.name)
+            self.msg("error", "[!!] ERROR: You can't add a main template to an existing worm. Use the 'reset' command. [!!]", sender=self.name)
             return
         master = self.raw_constructor.buildRawItem(raw_info)
         self.RAW.master_worm = master

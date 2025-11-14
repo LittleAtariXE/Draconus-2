@@ -2,6 +2,7 @@
 #!itemType##Wprocess
 #!info##Process for building windows x64 shellcode.
 
+[PAYLOAD]
 [BUILD_CODE]
 [COMPILE]
 [SCODE_EXTRACT]

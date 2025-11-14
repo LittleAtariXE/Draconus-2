@@ -85,9 +85,13 @@ class Queen:
         #conf["BUILD_SHELLCODE_PAYLOAD"] = True
         # conf["BUILD_SHELLCODE_FOOD"] = True
 
-        self.setWormName("exekkk")
-        self.addWormItem("worm", "WShellcode")
-        self.addWormItem("scode", "WinExec")
+        self.setWormName("pajtek")
+        # self.addWormItem("worm", "WShellcode")
+        # self.addWormItem("scode", "WEPy")
+
+
+        self.addWormItem("worm", "PayTest")
+        self.addWormItem("payload", "PyRawReciver")
         
 
         # self.setWormName("qpek")
@@ -141,7 +145,7 @@ class Queen:
 
     def Run(self) -> None:
         self.enter()
-        self.test()
+        #self.test()
 
 
 

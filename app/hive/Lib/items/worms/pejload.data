@@ -8,19 +8,4 @@
 #!payloadSpace##pejlold##My first evil payload
 
 
-extern ExitProcess
-extern printf
-
-
-section .data
-    my_text: db "{{pejlold}}", 10, 0
-
-section .text
-    global main
-
-main:
-    sub rsp, 40
-    mov rcx, my_text
-    call printf
-    mov rcx, 0
-    call ExitProcess
+{{pejlold}}

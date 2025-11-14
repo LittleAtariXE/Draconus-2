@@ -5,6 +5,7 @@ from time import sleep
 
 from .servers.raw_server import RawTcpServer
 from .servers.b64_server import B64TcpServer
+from .servers.deliver_server import DeliverTcpServer
 
 
 
@@ -21,7 +22,11 @@ class ClientHandler:
 
         self.RECIVE_TIMEOUT = self.central.CONF.tcp_sock_to_recive
         self.conn.settimeout(self.RECIVE_TIMEOUT)
+
         
+    @property
+    def FIRST_JOB(self) -> str:
+        return self.server.FIRST_JOB
     
     @property
     def FLAG_connection(self) -> bool:
@@ -41,6 +46,7 @@ class ClientHandler:
     
     def start_recive(self) -> None:
         self.server.recive_data(self)
+    
     
     def _close(self) -> None:
         self._FLAG_conn = False
@@ -79,6 +85,8 @@ class Central:
                 return RawTcpServer
             case "b64":
                 return B64TcpServer
+            case "deliver":
+                return DeliverTcpServer
             case _:
                 return None
     
@@ -102,8 +110,12 @@ class Central:
             self.msg("error", "[!!] ERROR: Unknown server type. [!!]")
             return None
         serv_ip = data_conf.get("ip", self.CONF.ip)
+        #### extra config
+        ex_conf = {}
+        if data_conf.get("socket_encode"):
+            ex_conf["TCP_SOCKET_FORMAT"] = data_conf.get("socket_encode")
         try:
-            server = serv_type(self, serv_name, serv_port, serv_ip)
+            server = serv_type(self, serv_name, serv_port, serv_ip, config=ex_conf)
         except Exception as e:
             self.msg("error", f"[!!] ERROR Building server: {e} [!!]")
             return None
@@ -120,7 +132,28 @@ class Central:
         self.Tasker.addWorkingThread(name=server.server_name, thread=server, info=f"Server-{server.server_name} on port: {server.server_port} Main Thread", th_type="server")
         return True
     
+    ##################### ADD NEW CONNECTIONS #######################################
 
+    def _ac_recive(self, client_handle: ClientHandler) -> None:
+        self.Tasker.addThread(
+            name = f"ClientHandle-{client_handle.ID}",
+            func_name = client_handle.start_recive,
+            info = f"Receiving data by client ID {client_handle.ID} on server: {client_handle.server.server_name}.",
+            th_type = "Handle",
+            daemon = False,
+            start_now = True
+        )
+    
+    def _ac_raw_send(self, client_handle: ClientHandler) -> None:
+        self.Tasker.addThread(
+            name = f"ClientHandle-{client_handle.ID}",
+            func_name = client_handle.server.send_raw_data,
+            fargs = (client_handle, ),
+            info = f"Sending file to client ID: {client_handle.ID} on server: {client_handle.server.server_name}.",
+            th_type = "Handle",
+            daemon = True,
+            start_now = True
+        )
 
     def add_new_connection(self, conn_obj: object, addr_obj: object, server: object) -> None:
         with self.lock_client_id:
@@ -129,17 +162,31 @@ class Central:
         new = ClientHandler(cli_id, conn_obj, addr_obj, server, self)
         with self.lock_clients:
             self.clients[str(new.ID)] = new
+        self.msg("msg", f"New connection: {new.addr[0]}:{new.addr[1]}", sender=server.draco_name)
+
+        match new.FIRST_JOB:
+            case "recive":
+                self._ac_recive(new)
+            case "raw_send":
+                self._ac_raw_send(new)
+            case _:
+                self.msg("error", f"[!!] ERROR: Unknown '{new.server.server_name}' function to work. Set to 'recive'.[!!]")
+                self._ac_recive(new)
         
 
-        self.msg("msg", f"New connection: {new.addr[0]}:{new.addr[1]}", sender=server.draco_name)
-        self.Tasker.addThread(
-            name = f"ClientHandle-{new.ID}",
-            func_name = new.start_recive,
-            info = f"Receiving data by client ID {new.ID} on server: {server.server_name}.",
-            th_type = "Handle",
-            daemon = False,
-            start_now = True
-        )
+
+
+
+        # self.Tasker.addThread(
+        #     name = f"ClientHandle-{new.ID}",
+        #     func_name = new.start_recive,
+        #     info = f"Receiving data by client ID {new.ID} on server: {server.server_name}.",
+        #     th_type = "Handle",
+        #     daemon = False,
+        #     start_now = True
+        # )
+    
+    #######################################################################################
 
     def close_server(self, server_name: str) -> None:
         server = self.servers.get(server_name)
@@ -239,5 +286,7 @@ class Central:
         
 
 
-    def process_msg(self, msg: str, handler: ClientHandler) -> None:
-        self.msg("msg", msg, sender=handler.name)
+    def process_msg(self, msg: str, handler: ClientHandler, process_list: list = []) -> None:
+        if len(process_list) == 0 or not process_list:
+            self.msg("msg", msg, sender=handler.name)
+        

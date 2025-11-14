@@ -21,6 +21,7 @@ class SHELL_HELP_MESSAGES:
         self.pText("")
         self.pSort("name", "The server’s name, can be any string.")
         self.pSort("port", "The port on which the server listens (recommended range: 2000 – 64000).")
+        self.pSort("--encode, -e", "Message encoding format. If not selected, the default will be used.")
         self.pSort("--types, -t", "The type of server to create (default is 'raw').")
         self.pTitle("  Server Types:  ")
         self.pSort("raw", "A TCP socket server that sends and receives raw bytes, which are only converted to text.")
@@ -28,9 +29,14 @@ class SHELL_HELP_MESSAGES:
         self.pText("")
         self.pSort("b64", "A regular TCP socket server encrypts and encodes communications using base64.")
         self.pText("")
+        self.pSort("deliver", "A TCP socket server. After creating it, a directory with the server’s name will appear inside the 'INPUT' folder.")
+        self.pSort("", "The server works by immediately sending the file located in that directory as soon as a client connects,")
+        self.pSort("", "then closing the connection. It does not receive any messages.")
+        self.pText("")
         self.pTitle("  Example:  ")
         self.pSort("server myServ 4444", "Building default 'raw' server on port 4444.")
         self.pSort("server new2 3000 -t b64", "Buiding 'b64' server on port 3000")
+        self.pSort("server new10 5000 -t b64 -e cp1250", "Builiding 'b64' server on port 5000 with encoding 'cp1250'.")
         self.pText("")
 
     @property

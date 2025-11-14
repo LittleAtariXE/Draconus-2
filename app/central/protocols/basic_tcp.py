@@ -8,7 +8,8 @@ class ProtocolBasicTcp:
         self.master = server
 
         self.TCP_SOCKET_RAW_LEN = self.CONF.tcp_socket_raw_len
-        self.TCP_SOCKET_FORMAT = self.CONF.tcp_socket_format
+        self.TCP_SOCKET_FORMAT = self.master.ENCODE_FORMAT
+        
     
 
     def _recive_data(self, handle: object) -> Union[bytes, None]:
@@ -48,9 +49,11 @@ class ProtocolBasicTcp:
     
 
     def _send_data(self, conn_object: object, data: str) -> None:
+        print("DATA TO SEND: ", data)
         try:
             conn_object.sendall(data.encode(self.TCP_SOCKET_FORMAT))
-        except:
+        except Exception as e:
+            print("ERROR SEND DATA: ", e)
             pass
     
     def send_data(self, conn_object: object, data: str) -> None:

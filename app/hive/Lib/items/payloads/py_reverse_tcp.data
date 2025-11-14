@@ -1,4 +1,4 @@
-#!name##PyRevTcp
+#!name##oldPyRevTcp
 #!itemType##payload
 #!lang##python
 #!info##Simple Reverse Shell built in python. Select the type of the target system.

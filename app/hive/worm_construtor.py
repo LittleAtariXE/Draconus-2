@@ -11,6 +11,7 @@ from .worm_constructor_mods.master_raw import MasterRaw
 from .worm_constructor_mods.raw_compiler import RawCompiler
 from .mod_tool.mod_wrapper import ModWrapper
 from .worm_constructor_mods.templates import SHELLCODE_PAYLOAD_TEMPLATE, RAW_PAYLOAD_TEMPLATE, BIN_PAYLOAD_TEMPLATE, SHELLCODE_FOOD_TEMPLATE
+
 if TYPE_CHECKING:
     from .raw_worm_builder import RawWormBuilder
     from .coder import Coder
@@ -202,9 +203,13 @@ class WormConstructor:
     
     def _build_unknown_raw_worm(self, raw_object: RawExe) -> RawExe:
         raw_object.last_process_name = "Build Unknown Raw Worm"
-        self.saveFile(raw_object.fpath_src_file, raw_object.master_module.raw_code)
-        # raw_object.source_files[raw_object.fpath_src_file] = raw_object.master_module.raw_code
+        code = self.renderSingleTemplate(raw_object.master_module.raw_code, raw_object.VAR)
+        self.saveFile(raw_object.fpath_src_file, code)
         return raw_object
+
+        # self.saveFile(raw_object.fpath_src_file, raw_object.master_module.raw_code)
+        # # raw_object.source_files[raw_object.fpath_src_file] = raw_object.master_module.raw_code
+        # return raw_object
     
     def _build_python_raw_worm(self, raw_exe: RawExe) -> RawExe:
         raw_exe.last_process_name = "Build Python Raw Worm"
@@ -327,6 +332,9 @@ class WormConstructor:
     def process_BuildPayload(self, raw_exe: RawExe) -> RawExe:
         raw_exe.last_process_name = "Process Build Payload"
         self.msg("msg", "Check for payloads...", sender=self.name)
+        if len(raw_exe.master_raw.worm_list_PAYLOAD) == 0:
+            self.msg("msg", "No Payloads to build. Skip step.", sender=self.name)
+            return raw_exe
         for pay in raw_exe.master_raw.worm_list_PAYLOAD:
             self._build_payload(pay)
         return raw_exe

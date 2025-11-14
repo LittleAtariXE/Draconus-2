@@ -75,7 +75,8 @@ class DraconusShell:
         @click.argument("port", required=False)
         @click.option("--types", "-t", required=False, help="Server type.")
         @click.option("--help", "show_help", required=False, is_flag=True, help="Show help.")
-        def server(name, port, types, show_help) -> None:
+        @click.option("--encode", "-e", required=False, help="Server message encode")
+        def server(name, port, types, show_help, encode) -> None:
             if show_help:
                 self.help.DRACONUS_SERVER_TYPE_HELP
                 return
@@ -88,6 +89,8 @@ class DraconusShell:
             }
             if types:
                 data_serv["serv_type"] = types
+            if encode:
+                data_serv["socket_encode"] = encode
 
             cmd = self.cmd_SYS.copy()
             cmd["cmd"] = "build_server"

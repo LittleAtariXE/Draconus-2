@@ -8,7 +8,7 @@ class ProtocolBasicTcpNoEncode:
         self.master = server
 
         self.TCP_SOCKET_RAW_LEN = self.CONF.tcp_socket_raw_len
-        self.TCP_SOCKET_FORMAT = self.CONF.tcp_socket_format
+        self.TCP_SOCKET_FORMAT = self.master.ENCODE_FORMAT
     
 
     def _recive_data(self, handle: object) -> Union[bytes, None]:

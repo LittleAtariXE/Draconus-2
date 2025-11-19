@@ -1,11 +1,12 @@
-#!name##Montezuma
+#!name##oldMontezuma
 #!itemType##worm
 #!info##The worm template written in Python, designed without a specific purpose. It allows integration of any number of additional Python-based modules. Ideal for building custom payloads and flexible worm structures in Python.
 #!lang##python
 #!Wprocess##BasicPy
-#!wormCompiler##Nuitka
+#!wormCompiler##PyInstaller
 #!itemTags##LW
 #!typeAccept##PySM##PyExM##PySh
+#!FLAG_broken##True
 
 
 

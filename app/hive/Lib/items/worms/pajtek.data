@@ -3,11 +3,11 @@
 #!info##Python Worm for test
 #!lang##Python
 #!itemTags##WIN
-#!typeAccept##PySM
+#!typeAccept##PySM##PyExM
 #!Var##PAJ_text##Ala ma kota##Jakis tekst##str
 #!Wprocess##BasicPy
-#!reqMod##Kapiszon##JudoHonor
 #!wormCompiler##PyInstaller
+#!reqMod##PyDcWeb
 
 
 import socket

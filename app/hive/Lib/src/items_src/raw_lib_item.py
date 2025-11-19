@@ -50,7 +50,7 @@ class RawLibItem:
         # DLL, LIB etc.
         # LIB - static Library
         # DLL - Dynamic library
-        # PY_MOD - Python 'hive module'
+        # PY_MOD - Python 'hive module' - Without this tag, the module will not be added to "_PY_MODULE"
         #   fileType##DLL
         self.fileType = None
 
@@ -182,6 +182,11 @@ class RawLibItem:
         # Specifies whether the added Python module will not place the 'import' section at the beginning of the file, but only at the module.
         # pyImportHold##True
         self.pyImportHold = False
+
+        # Python Module name in code. # 'pyModName'
+        # Specifies the module name used in the code. If not present, the module name will be used.
+        # pyModName##[mod_name]
+        self.pyModName = None
 
         ############################################################################################
 

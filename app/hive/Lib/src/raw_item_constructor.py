@@ -103,9 +103,11 @@ class RawItemConstructor:
                 case "payloadProcess":
                     raw_mod.payloadProcess[head[1]] = head[2:]
                 case "pyType":
-                    raw_mod.payType = head[1]
+                    raw_mod.pyType = head[1]
                 case "pyImportHold":
-                    raw_mod.payImportHold = self.fGetBool(head[1])
+                    raw_mod.pyImportHold = self.fGetBool(head[1])
+                case "pyModName":
+                    raw_mod.pyModName = head[1]
                 case "shadowRender":
                     raw_mod.shadowRender = self.fGetBool(head[1])
                 case "reqRC":

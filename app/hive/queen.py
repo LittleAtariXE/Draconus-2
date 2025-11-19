@@ -72,6 +72,7 @@ class Queen:
         self.library.findItems()
 
     def test(self) -> None:
+        self.enter()
         self.msg("msg", "Test HIVE")
         conf = {}
 
@@ -85,13 +86,20 @@ class Queen:
         #conf["BUILD_SHELLCODE_PAYLOAD"] = True
         # conf["BUILD_SHELLCODE_FOOD"] = True
 
-        self.setWormName("pajtek")
+        # self.showItems("worm")
+
+        self.setWormName("monteczek")
+        self.addWormItem("worm", "Montezuma")
+        self.addWormItem("module", "PyAnts")
+        self.setVariable("PYA_fext", "jpg, bmp")
+        self.addWormItem("module", "PyRawTcp")
+        # self.addWormItem("module", "PyDcWeb")
         # self.addWormItem("worm", "WShellcode")
         # self.addWormItem("scode", "WEPy")
 
 
-        self.addWormItem("worm", "PayTest")
-        self.addWormItem("payload", "PyRawReciver")
+        # self.addWormItem("worm", "PayTest")
+        # self.addWormItem("payload", "PyRawReciver")
         
 
         # self.setWormName("qpek")

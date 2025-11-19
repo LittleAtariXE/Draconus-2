@@ -211,7 +211,10 @@ class RawExe:
         # update variable python worm module list
         for mod_name in self.sort_modules["child"]:
             if mod_name.fileType == "PY_MOD":
-                self.VAR["_PY_MODULES"].append(mod_name.name)
+                if mod_name.pyModName:
+                    self.VAR["_PY_MODULES"].append(mod_name.pyModName)
+                else:
+                    self.VAR["_PY_MODULES"].append(mod_name.name)
             
     
     def _collect_def_func(self) -> list:

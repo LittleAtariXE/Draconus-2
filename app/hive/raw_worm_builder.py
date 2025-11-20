@@ -533,6 +533,9 @@ class RawWormBuilder:
         # add shellcode template
         if self.RAW.scode:
             tab["data"].append([f"{self.RAW.scode.name} [SCODE]", self._build_info_tags(self.RAW.scode.moduleTags), self.RAW.scode.owner.name, self.RAW.scode.info])
+        # add shadow
+        for sh in self.RAW.shadow.values():
+            tab["data"].append([f"{sh.name} [SH]", self._build_info_tags(sh.moduleTags), sh.owner.name, sh.info])
         tab["width"] = self.CONSOLE_SCR["4c"]
         self.msg("msg", f"  {self.wormName} Modules:  ", mtypes="title", sender=self.name, no_separator=no_separator, color=self.DEFAULT_TITLE_COLOR)
         self.msg("msg", tab, mtypes="table", no_separator=no_separator, sender=self.name)
@@ -567,6 +570,7 @@ class RawWormBuilder:
         self.showVariables(True)
         self.showRcScript(True)
         self.showProcessWorm(True)
+        print("\n")
     
     def showWormComp(self, options: list) -> None:
         show = []

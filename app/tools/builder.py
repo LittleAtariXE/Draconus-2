@@ -20,6 +20,9 @@ class Builder:
         self.DIR_INPUT = os.path.join(self.DIR_MAIN, "INPUT")
         self.DIR_SHORTCUTS = os.path.join(self.DIR_OUTPUT, "Links")
 
+        # Loot dir
+        self.DIR_LOOT = os.path.join(self.DIR_OUTPUT, "Loot")
+
         # path to the 'hive' directory in the docker image
         self.DIR_HIVE_IN_DOCKER_IMAGE = "/hive"
 
@@ -129,7 +132,8 @@ class Builder:
             self.DIR_LOGS,
             self.DIR_HIVE_OUT,
             self.DIR_INPUT,
-            self.DIR_SHORTCUTS
+            self.DIR_SHORTCUTS,
+            self.DIR_LOOT
         ]
 
         for d in draco_dirs:

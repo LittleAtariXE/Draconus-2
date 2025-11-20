@@ -48,3 +48,15 @@ class NasmBuilderTemplate:
             hex_data.append("0x00")
         out = separator.join(hex_data)
         return out
+    
+    def ConvertHexBytesPart(self, data: str, add_null: bool = True, part_len: int = 1024, encrypt_byte: int = 0, tabs: int = 1) -> str:
+        tabs = "\t" * tabs
+        hex_data = [f"0x{ord(obyte) + encrypt_byte:02X}" for obyte in data]
+        if add_null:
+            hex_data.append("0x00")
+        code = ""
+        for i in range(0, len(hex_data) - 1, part_len):
+            code += f"{tabs} db "
+            code += ", ".join(hex_data[i:i+part_len])
+            code += "\n"
+        return code

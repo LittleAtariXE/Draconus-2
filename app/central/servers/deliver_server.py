@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 class DeliverTcpServer(TcpServer):
     def __init__(self, central: Central, name: str, port: int, ip_addr: str = None, is_daemon: bool = True, config: dict = {}):
         super().__init__(central, name, port, ip_addr, is_daemon)
+        self.server_type = "deliver"
         self.central = central
         self.SERVER_DIR_INPUT = os.path.join(self.DIR_INPUT_PATH, self.draco_name)
         self.FIRST_JOB = "raw_send"

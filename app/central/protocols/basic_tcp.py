@@ -49,11 +49,9 @@ class ProtocolBasicTcp:
     
 
     def _send_data(self, conn_object: object, data: str) -> None:
-        print("DATA TO SEND: ", data)
         try:
             conn_object.sendall(data.encode(self.TCP_SOCKET_FORMAT))
         except Exception as e:
-            print("ERROR SEND DATA: ", e)
             pass
     
     def send_data(self, conn_object: object, data: str) -> None:

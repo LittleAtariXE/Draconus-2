@@ -6,6 +6,7 @@ from time import sleep
 from .servers.raw_server import RawTcpServer
 from .servers.b64_server import B64TcpServer
 from .servers.deliver_server import DeliverTcpServer
+from .servers.raw_down import RawDown
 
 
 
@@ -87,6 +88,8 @@ class Central:
                 return B64TcpServer
             case "deliver":
                 return DeliverTcpServer
+            case "rdown":
+                return RawDown
             case _:
                 return None
     

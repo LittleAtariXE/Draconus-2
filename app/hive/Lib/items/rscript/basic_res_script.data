@@ -1,12 +1,24 @@
 #!name##BasicRes
 #!itemType##rscript
 #!info##Resource Script. Script file '.rc'. Generates lots of random information about the executable. You can set your own.
-#!Var##RSCR_test##AlaMaKota##Variables from resources script##str
 #!hiveType##RcExe
+#!foodAdd##CompanyName##BRE_cname
+#!foodAdd##AppDescription##BRE_appd
+#!foodAdd##AppName##BRE_appn
+#!Var##BRE_company##_RANDOM##Company Name. '_RANDOM' - get random name from food database##str
+#!Var##BRE_appdesc##_RANDOM##Application description. '_RANDOM' - get random name from food database##str
+#!Var##BRE_appname##_RANDOM##Application name. '_RANDOM' - get random name from food database##str
+
+
+{% set _BRE_company = randTOOL.randomStr(BRE_cname, BRE_company) %}
+{% set _BRE_appdesc = randTOOL.randomStr(BRE_appd, BRE_appdesc) %}
+{% set _BRE_fversion = randTOOL.randomVersion(4) %}
+{% set _BRE_pversion = randTOOL.randomVersion(4, separator=".") %}
+{% set _BRE_appname = randTOOL.randomStr(BRE_appd, BRE_appname) %}
 
 1 VERSIONINFO
-FILEVERSION 1,2,3,4
-PRODUCTVERSION 1,2,3,4
+FILEVERSION {{_BRE_fversion}}
+PRODUCTVERSION {{_BRE_fversion}}
 FILEOS 0x4                // VOS__WINDOWS32
 FILETYPE 0x1              // VFT_APP
 BEGIN
@@ -14,14 +26,14 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName",      "Acme Labs, Ltd."
-            VALUE "FileDescription",  "MyApp — sample application"
-            VALUE "FileVersion",      "1.2.3.4"
-            VALUE "InternalName",     "MyApp-1.2.3.4"
-            VALUE "LegalCopyright",   "Copyright 2025 Acme Labs, Ltd."
-            VALUE "OriginalFilename", "MyApp.exe"
-            VALUE "ProductName",      "MyApp"
-            VALUE "ProductVersion",   "1.2.3.4"
+            VALUE "CompanyName",      "{{_BRE_company}}"
+            VALUE "FileDescription",  "{{_BRE_appname}}-{{_BRE_appdesc}}"
+            VALUE "FileVersion",      "{{_BRE_pversion}}"
+            VALUE "InternalName",     "{{_BRE_appname}}-{{_BRE_pversion}}"
+            VALUE "LegalCopyright",   "Copyright 2025 {{_BRE_company}}"
+            VALUE "OriginalFilename", "{{_BRE_appname}}.exe"
+            VALUE "ProductName",      "{{_BRE_appname}}"
+            VALUE "ProductVersion",   "{{_BRE_pversion}}"
             VALUE "Comments",         "Built with love and coffee."
         END
     END

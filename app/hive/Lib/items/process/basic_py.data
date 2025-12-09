@@ -1,6 +1,6 @@
 #!name##BasicPy
 #!itemType##Wprocess
-#!info##Build python exe.
+#!info##Building EXEs or code from Python files, including payloads and code obfuscations.
 
 [PAYLOAD]
 [BUILD_CODE]

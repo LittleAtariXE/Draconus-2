@@ -32,3 +32,48 @@ class ShellTemplate:
             return scode
         scode = self._build_scode(scode, sc_prefix, separator)
         return scode
+    
+    def OneCharShadow(self, 
+            shellcode: str,
+            chars: str = "#",
+            var_count_limit: int = 512,
+            var_low: str = "wb",
+            var_med: str = "cp",
+            var_hi: str = "sg",
+            var_master: str = "col",
+            add_tabs: int = 1
+            ):
+        add_tabs = "\t" * add_tabs
+        sc_list = [int(xb.strip(" "), 16) for xb in shellcode.split(",")]
+        sc_len = len(sc_list)
+        code = ""
+        low_lvl = []
+        # gen variables
+        for i, sb in enumerate(sc_list):
+            line = f'{add_tabs}{var_low}{i}: db "{sb * chars}", 0\n'
+            code += line
+            low_lvl.append(f"{var_low}{i}")
+        code += "\n"
+        i = 0
+        med_lvl = []
+        for v in range(0, len(low_lvl), var_count_limit):
+            line = f"{add_tabs}{var_med}{i}: dq {', '.join(low_lvl[v:v+var_count_limit])}, 0\n"
+            code += line
+            med_lvl.append(f"{var_med}{i}")
+            i += 1
+        code += "\n"
+
+        del low_lvl
+        hi_lvl = []
+        i = 0
+        for v in range(0, len(med_lvl), var_count_limit):
+            line = f"{add_tabs}{var_hi}{i}: dq {', '.join(med_lvl[v:v+var_count_limit])}, 0\n"
+            code += line
+            hi_lvl.append(f"{var_hi}{i}")
+            i += 1
+        code += "\n"
+
+        line = f"{add_tabs}{var_master}: dq {', '.join(hi_lvl)}, 0\n\n"
+        code += line
+
+        return code

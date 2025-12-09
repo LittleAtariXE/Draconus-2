@@ -1,7 +1,0 @@
-#!name##BasicPay
-#!itemType##Wprocess
-#!info##Test rendering payloads
-
-
-[PAYLOAD]
-[BUILD_CODE]

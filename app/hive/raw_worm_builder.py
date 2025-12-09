@@ -456,7 +456,7 @@ class RawWormBuilder:
         if not self.RAW.master_compiler:
             mcompiler = "NOT LOADED"
         else:
-            mcompiler = f'{self.RAW.master_compiler.name} - {self.RAW.master_compiler.info}'
+            mcompiler = f'[{self.RAW.master_compiler.name}] - {self.RAW.master_compiler.info}'
         accept_types = self.RAW.acceptItemList
         if len(accept_types) == 0:
             accept_types = "Worm does not allow adding any modules."
@@ -473,6 +473,7 @@ class RawWormBuilder:
         tab["data"].append(["Worm Compiler:", mcompiler])
         tab["width"] = self.CONSOLE_SCR["2c"]
         self.msg("msg", tab, mtypes="table", sender=self.name, no_separator=True)
+        print("\n")
     
     def showVariables(self, no_separator: bool = False) -> None:
         tab = {}
@@ -491,6 +492,7 @@ class RawWormBuilder:
         tab["width"] = self.CONSOLE_SCR["4c"]
         self.msg("msg", f"  {self.wormName} variables:  ", mtypes="title", sender=self.name, no_separator=no_separator, color=self.DEFAULT_TITLE_COLOR)
         self.msg("msg", tab, mtypes="table", sender=self.name, no_separator=no_separator)
+        print("\n")
     
     def showProcessWorm(self, no_separator: bool = False) -> None:
         proc = ""
@@ -502,6 +504,7 @@ class RawWormBuilder:
         tab["data"] = [[self.RAW.wprocess.name, proc]]
         tab["width"] = self.CONSOLE_SCR["2c"]
         self.msg("msg", tab, mtypes="table", no_separator=no_separator, sender=self.name)
+        print("\n")
     
     def showPayloads(self, no_separator: bool = False) -> None:
         if len(self.RAW.payloads) == 0:
@@ -518,6 +521,7 @@ class RawWormBuilder:
         tab["width"] = self.CONSOLE_SCR["4c"]
         self.msg("msg", f"  {self.wormName} Payloads:  ", mtypes="title", sender=self.name, no_separator=no_separator, color=self.DEFAULT_TITLE_COLOR)
         self.msg("msg", tab, mtypes="table", no_separator=no_separator, sender=self.name)
+        print("\n")
     
     def showModules(self, no_separator: bool =  False) -> None:
         if len(self.RAW.modules) == 0 and not self.RAW.scode:
@@ -539,6 +543,7 @@ class RawWormBuilder:
         tab["width"] = self.CONSOLE_SCR["4c"]
         self.msg("msg", f"  {self.wormName} Modules:  ", mtypes="title", sender=self.name, no_separator=no_separator, color=self.DEFAULT_TITLE_COLOR)
         self.msg("msg", tab, mtypes="table", no_separator=no_separator, sender=self.name)
+        print("\n")
 
     def _build_info_tags(self, tag_list: list, sheme: str = "[$]") -> str:
         sheme = sheme.split("$")
@@ -557,7 +562,7 @@ class RawWormBuilder:
         tab["width"] = self.CONSOLE_SCR["3c"]
         self.msg("msg", f"  {rcs.compilerOwner.name} RC Script:  ", mtypes="title", sender=self.name, no_separator=no_separator, color=self.DEFAULT_TITLE_COLOR)
         self.msg("msg", tab, mtypes="table", no_separator=no_separator, sender=self.name)
-
+        print("\n")
 
     def showWorm(self) -> None:
         if not self.RAW.master_worm:

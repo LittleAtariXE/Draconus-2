@@ -81,6 +81,7 @@ class RawLibItem:
         #
         # Reserved variable names:
         # 'EXEC_SHOW' - Determines whether the executable file will run in the console or will be invisible as a 'gui'.
+        # '_RANDOM' - A special value denoting 'random selection' passed to tools.
         # ex: Var##EXEC_SHOW##gui##[description]##optional[type]
         self.Var = {}
 

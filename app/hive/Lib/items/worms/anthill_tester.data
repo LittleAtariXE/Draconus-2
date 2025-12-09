@@ -1,0 +1,9 @@
+#!name##ATL_tester
+#!itemType##worm
+#!info##Test for anthill lib
+#!lang##nasm
+#!wormCompiler##Basic-Nasm
+#!Wprocess##AsmLib
+#!reqMod##Anthill
+
+

@@ -1,9 +1,0 @@
-#!name##EvilPay
-#!itemType##payload
-#!info##First payload.
-#!lang##nasm
-#!itemTags##WIN
-#!Var##EP_var##KUPA##Jakis tekst##str
-#!modProcess##build_code
-
-Evil Payload: {{EP_var}}

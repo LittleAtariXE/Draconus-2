@@ -5,7 +5,7 @@ from typing import Union
 class RandomTemplate:
     def __init__(self, coder: object):
         self.coder = coder
-        self._choice_random = "$random"
+        self._choice_random = "_RANDOM"
 
     def randomStr(self, database: Union[list, tuple, set], variable: str) -> str:
         if variable == self._choice_random:

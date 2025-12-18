@@ -21,6 +21,7 @@ class Queen:
         self.DIR_ICONS = os.path.join(self.DIR_LIB_MAIN, "icons")
         self.PYTHON_PIP_LIBRARY_LINUX = PYTHON_PIP_LIBRARY_LINUX
         self.PYTHON_PIP_LIBRARY_WINDOWS = PYTHON_PIP_LIBRARY_WINDOWS
+        self.DEFAULT_COMPILER_CORE = self.conf.DEFAULT_COMPILER_CORE
         self.msg = LocalMSG(self)
     
     @property
@@ -70,6 +71,9 @@ class Queen:
 
     def scanItems(self) -> None:
         self.library.findItems()
+    
+    def installCore(self) -> None:
+        self.master_compiler.installCore()
 
     def test(self) -> None:
         self.enter()

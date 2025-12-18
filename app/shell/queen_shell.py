@@ -40,7 +40,8 @@ class QueenShell:
             self.pTitle("  Hive Help  ")
             self.pSort("clr, clear", "Clear screen.")
             self.pSort("exit", "Exit Hive Shell.")
-            self.pSort("reset", "Clear Worm Constructor. Start Empty Template")
+            self.pSort("install", "Install Compiler Core.")
+            self.pSort("reset", "Clear Worm Constructor. Start Empty Template.")
             self.pSort("name [new_name]", f"Set worm name. Actual {self.Queen.wormName}")
             self.pSort("icon [-option]", "Set icon to worm. See 'icon --help'")
             self.pSort("mods", "Show Draconus items in library.")
@@ -173,7 +174,10 @@ class QueenShell:
             self.sHelp.HIVE_MODULES_TYPE
         ######################################################################################################################################
 
-
+        @hiveShell.command()
+        def install() -> None:
+            self.Queen.installCore()
+            
         ######################################################################################################################################
         return hiveShell
     

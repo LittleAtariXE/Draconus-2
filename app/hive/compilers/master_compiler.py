@@ -2,9 +2,9 @@ from __future__ import annotations
 from typing import Union, TYPE_CHECKING
 from ..mods.py_pip_lib import PYTHON_PIP_LIBRARY_LINUX, PYTHON_PIP_LIBRARY_WINDOWS
 from .core.multi_comp import CrossCompCore
-from .compilers.mingw_x64 import MinGW_X64
-from .compilers.py_compiler import PyCompiler
-from .compilers.mingw_x64_scode import ShellCodeExtractor
+# from .compilers.mingw_x64 import MinGW_X64
+# from .compilers.py_compiler import PyCompiler
+# from .compilers.mingw_x64_scode import ShellCodeExtractor
 
 from .compilers.mingw_universal import MinGW_All
 from .compilers.mingw_x64_scode import ScExtrator
@@ -50,29 +50,15 @@ class MasterCompiler:
             return
         self.compilerCore = core(self)
         self.msg("msg", f"Mount core: '{self.compilerCore.CORE_NAME}' successfull.", sender=self.name)
-
+        if not self.compilerCore.get_compiler():
+            self.msg("error", f"[!!] WARNING: Compiler core is not full installed. To fully use Draconus, install Core [!!]", sender=self.name)
+            return
+        
         mingw = MinGW_All(self.compilerCore, self)
         self.compilers[mingw.name] = mingw
         
         mingw_sc = ScExtrator(self.compilerCore, self)
         self.compilers[mingw_sc.name] = mingw_sc
-
-        return
-
-
-
-
-
-        CC_core = CrossCompCore(self)
-        if not CC_core.status:
-            self.msg("error", f"WARNING: Cross Compiler Core is not installed.", sender=self.name)
-        self.cores["CrossCompCore"] = CC_core
-        mingwx64 = MinGW_X64(CC_core, self)
-        self.compilers["MinGW_X64"] = mingwx64
-        pycomp = PyCompiler(CC_core, self)
-        self.compilers["PyComp"] = pycomp
-        sc_ext = ShellCodeExtractor(CC_core, self)
-        self.compilers["MinGW_Extract"] = sc_ext
 
     
     def startCompile(self, raw_exe: RawExe, mod_compiler: RawCompiler = None) -> RawExe:
@@ -96,12 +82,10 @@ class MasterCompiler:
 
         return raw_exe
     
-    def coreInstall(self, core_name: str) -> None:
-        core = self.cores.get(core_name)
-        if not core:
-            self.msg("error", f"[!!] ERROR: '{core_name}' does not exists. [!!]", sender=self.name)
-            return
-        core.installCore()
+    def installCore(self) -> None:
+        self.compilerCore.installCore()
+        self.mountCore()
+        
     
     def correct_command(self, command: str) -> str:
         cmd_list = []

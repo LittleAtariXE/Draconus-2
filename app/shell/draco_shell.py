@@ -44,6 +44,7 @@ class DraconusShell:
             self.print_sort("close [name]", "Close specific server.")
             self.print_sort("show -[option]", "Show active servers and connected clients. See 'show --help'")
             self.print_sort("conn [client_ID]", "Enter client connection console.")
+            self.print_sort("hive", "Enter to Hive section.")
             self.print_title("")
         
         @dracoShell.command()

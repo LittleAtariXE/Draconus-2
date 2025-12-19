@@ -171,69 +171,134 @@
         Since Hive enables building payloads, modules, shellcode, worms, and more, its structure and commands are explained here in additional detail.
     </p>
 </div>
-<div id="Hive">
-    <h2>Hive</h2>
+<h3>Module Types</h3>
+<p>
+    Hive is built around different module types, each serving a specific role in the construction process:
+</p>
+<ul>
+    <li>
+        <strong>worm</strong>  
+        The primary module and the starting point of every project.  
+        It defines the type of worm being created, such as shellcode, Python script, standalone executable, or DLL.
+        The selected worm type determines whether additional modules or payloads can be embedded.
+    </li>
+    <li>
+        <strong>module</strong>  
+        Optional extensions that enhance or modify the behavior of a worm.  
+        Not every worm template supports modules, while some templates are built entirely from modular components.
+        Modules may consist of raw code snippets, dynamic DLLs, or static libraries.
+    </li>
+    <li>
+        <strong>payload</strong>  
+        Prebuilt functional components written in various languages.
+        Worms or modules may expose dedicated injection points for payloads.
+        Payloads are handled differently by the build system than modules,
+        which is why similar functionality may exist in both forms.
+    </li>
+    <li>
+        <strong>shadow</strong>  
+        Code obfuscation components.  
+        These modules transform source code into a heavily obscured and difficult-to-analyze form.
+    </li>
+    <li>
+        <strong>scode</strong>  
+        Templates for the shellcode generator.
+        This category contains predefined shellcode types that can be generated on demand.
+        Generated shellcode is exported in three popular formats for easy integration.
+    </li>
+    <li>
+        <strong>rscript</strong>  
+        Resource script (<code>.rc</code>) files included during the compilation process.
+        They define metadata such as version number, application description, and other resource information,
+        allowing the resulting executable to resemble a legitimate application.
+        Most values are generated automatically using data from <code>food</code>,
+        but users may override them with custom values.
+    </li>
+    <li>
+        <strong>compiler</strong>  
+        Compiler and linker scripts used during the build process.
+        Each worm template has a default compiler configuration,
+        but it can be replaced or modified.
+        For example, Python-based worms can be compiled using either PyInstaller or Nuitka.
+    </li>
+    <li>
+        <strong>food</strong>  
+        Supporting data used by worms and modules.
+        This includes text databases, link collections, naming resources, and specialized string sequences
+        required by certain libraries.  
+        Draconus uses <code>food</code> when generating application names, descriptions,
+        metadata, and other contextual elements.
+    </li>
+    <li>
+        <strong>support</strong>  
+        Internal helper modules automatically added and managed by Draconus.
+        These components provide auxiliary functionality required by other modules
+        and are not intended to be modified manually.
+    </li>
+    <li>
+        <strong>sfile</strong> (support file)  
+        Additional files automatically attached during the build process.
+        These may include auxiliary binaries, configuration files, or data blobs
+        required by the final executable.
+    </li>
+    <li>
+        <strong>wprocess</strong>  
+        Defines the complete build workflow of a worm.
+        This component controls how modules, payloads, compilers, and resources are combined.
+        It is added and managed automatically by Draconus and represents the internal build pipeline.
+    </li>
+</ul>
+</div>
+<div id="Variables">
+    <h2>Variables (var)</h2>
     <p>
-        The <strong>Hive</strong> section is the creative core of Draconus.  
-        It is the workspace where worms, payloads, modules, shellcode, and other components are designed and assembled.
-        Draconus allows building a wide range of artifacts, from simple Python scripts to fully compiled Windows executables,
-        dynamic libraries, and raw assembly shellcode.
+        Variables (<code>var</code>) are one of the most important elements in the worm creation process.
+        They are responsible for configuring behavior, parameters, and runtime values used by worms,
+        modules, and payloads.
     </p>
     <p>
-        All created worms, payloads, and build artifacts are stored in the <code>OUTPUT/Hive</code> directory.
-        Hive also supports saving completed projects as reusable payloads and placing them into an internal library,
-        enabling flexible build combinations and rapid experimentation.
+        Every added template—whether it is a main <strong>worm</strong> template or a regular module—may define
+        its own configurable variables. These variables are used to control things such as network settings,
+        execution behavior, payload options, and build-time parameters.
     </p>
     <p>
-        The build process is intentionally simplified.  
-        Even without programming knowledge, users can create custom payloads, executables, DLLs, or shellcode
-        by assembling ready-made components. Many Hive commands include their own built-in documentation;
-        simply append the <code>--help</code> parameter to any command to see usage instructions and available options.
+        To view the current configuration and state of the worm being built, use the command:
     </p>
-    <h3>Module Types</h3>
+    <pre><code>worm</code></pre>
     <p>
-        Hive is built around different module types, each serving a specific role in the construction process:
+        This command displays all active modules and their associated variables.
+        Many variables come with default values that can be modified as needed.
+        The most common examples include IP addresses, port numbers, and execution options.
     </p>
-    <ul>
-        <li>
-            <strong>worm</strong>  
-            The primary module and the starting point of every project.  
-            It defines the type of worm being created, such as shellcode, Python script, standalone executable, or DLL.
-            The selected worm type determines whether additional modules or payloads can be embedded.
-        </li>
-        <li>
-            <strong>module</strong>  
-            Optional extensions that enhance or modify the behavior of a worm.  
-            Not every worm template supports modules, while some templates are built entirely from modular components.
-            Modules may consist of raw code snippets, dynamic DLLs, or static libraries.
-        </li>
-        <li>
-            <strong>payload</strong>  
-            Prebuilt functional components written in various languages.
-            Worms or modules may expose dedicated injection points for payloads.
-            Payloads are handled differently by the build system than modules,
-            which is why similar functionality may exist in both forms.
-        </li>
-        <li>
-            <strong>shadow</strong>  
-            Code obfuscation components.  
-            These modules transform source code into a heavily obscured and difficult-to-analyze form.
-        </li>
-        <li>
-            <strong>scode</strong>  
-            Templates for the shellcode generator.
-            This category contains predefined shellcode types that can be generated on demand.
-            Generated shellcode is exported in three popular formats for easy integration.
-        </li>
-        <li>
-            <strong>food</strong>  
-            Supporting data used by worms and modules.
-            This includes text databases, link collections, naming resources, and specialized string sequences
-            required by certain libraries.  
-            Draconus uses <code>food</code> when generating application names, descriptions,
-            metadata, and other contextual elements.
-        </li>
-    </ul>
+    <h3>Setting Variables</h3>
+    <p>
+        Variables are set using the following command syntax:
+    </p>
+    <pre><code>var [variable_name] "[value]"</code></pre>
+    <p>
+        <strong>Important:</strong>  
+        Always enclose the value in double quotes (<code>" "</code>).
+        This prevents parsing errors, especially when the value contains spaces or special characters.
+    </p>
+    <h3>Using Food as Variable Input</h3>
+    <p>
+        Variables can also be populated using entries from the <strong>food</strong> section.
+        This is especially useful when assigning large datasets or complex values that would be
+        impractical or error-prone to paste directly into the console.
+    </p>
+    <p>
+        To assign a food entry to a variable, use:
+    </p>
+    <pre><code>var -f [variable_name] [food_name]</code></pre>
+    <p>
+        This allows Draconus to automatically inject predefined content into the variable,
+        such as text blocks, link lists, or specialized string sequences.
+    </p>
+    <h3>Additional Help</h3>
+    <p>
+        For a full list of options and advanced usage, use:
+    </p>
+    <pre><code>var --help</code></pre>
 </div>
 </body>
 </html>

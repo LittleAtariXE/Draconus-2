@@ -59,8 +59,13 @@
         <li><a href="#Install">Install</a></li>
         <li><a href="#Start">Start</a></li>
         <li><a href="#FirstRun">First Run</a></li>
+        <li><a href="#Hive">Hive</a></li>
+        <li><a href="#ModuleTypes">Module Types</a></li>
+        <li><a href="#Variables">Variables</a></li>
+        <li><a href="#HiveCommands">Hive Commands</a></li>
         <li><a href="#About">About</a></li>
         <li><a href="#About">About</a></li>
+
     </ul>
 </div>
 <div id="Install">
@@ -171,83 +176,87 @@
         Since Hive enables building payloads, modules, shellcode, worms, and more, its structure and commands are explained here in additional detail.
     </p>
 </div>
-<h3>Module Types</h3>
-<p>
-    Hive is built around different module types, each serving a specific role in the construction process:
-</p>
-<ul>
-    <li>
-        <strong>worm</strong>  
-        The primary module and the starting point of every project.  
-        It defines the type of worm being created, such as shellcode, Python script, standalone executable, or DLL.
-        The selected worm type determines whether additional modules or payloads can be embedded.
-    </li>
-    <li>
-        <strong>module</strong>  
-        Optional extensions that enhance or modify the behavior of a worm.  
-        Not every worm template supports modules, while some templates are built entirely from modular components.
-        Modules may consist of raw code snippets, dynamic DLLs, or static libraries.
-    </li>
-    <li>
-        <strong>payload</strong>  
-        Prebuilt functional components written in various languages.
-        Worms or modules may expose dedicated injection points for payloads.
-        Payloads are handled differently by the build system than modules,
-        which is why similar functionality may exist in both forms.
-    </li>
-    <li>
-        <strong>shadow</strong>  
-        Code obfuscation components.  
-        These modules transform source code into a heavily obscured and difficult-to-analyze form.
-    </li>
-    <li>
-        <strong>scode</strong>  
-        Templates for the shellcode generator.
-        This category contains predefined shellcode types that can be generated on demand.
-        Generated shellcode is exported in three popular formats for easy integration.
-    </li>
-    <li>
-        <strong>rscript</strong>  
-        Resource script (<code>.rc</code>) files included during the compilation process.
-        They define metadata such as version number, application description, and other resource information,
-        allowing the resulting executable to resemble a legitimate application.
-        Most values are generated automatically using data from <code>food</code>,
-        but users may override them with custom values.
-    </li>
-    <li>
-        <strong>compiler</strong>  
-        Compiler and linker scripts used during the build process.
-        Each worm template has a default compiler configuration,
-        but it can be replaced or modified.
-        For example, Python-based worms can be compiled using either PyInstaller or Nuitka.
-    </li>
-    <li>
-        <strong>food</strong>  
-        Supporting data used by worms and modules.
-        This includes text databases, link collections, naming resources, and specialized string sequences
-        required by certain libraries.  
-        Draconus uses <code>food</code> when generating application names, descriptions,
-        metadata, and other contextual elements.
-    </li>
-    <li>
-        <strong>support</strong>  
-        Internal helper modules automatically added and managed by Draconus.
-        These components provide auxiliary functionality required by other modules
-        and are not intended to be modified manually.
-    </li>
-    <li>
-        <strong>sfile</strong> (support file)  
-        Additional files automatically attached during the build process.
-        These may include auxiliary binaries, configuration files, or data blobs
-        required by the final executable.
-    </li>
-    <li>
-        <strong>wprocess</strong>  
-        Defines the complete build workflow of a worm.
-        This component controls how modules, payloads, compilers, and resources are combined.
-        It is added and managed automatically by Draconus and represents the internal build pipeline.
-    </li>
-</ul>
+<div id="Hive" align="center">
+    <h2>--------- Hive ----------</h2>
+</div>
+<div id="ModuleTypes">
+    <h3>Module Types</h3>
+    <p>
+        Hive is built around different module types, each serving a specific role in the construction process:
+    </p>
+    <ul>
+        <li>
+            <strong>worm</strong>  
+            The primary module and the starting point of every project.  
+            It defines the type of worm being created, such as shellcode, Python script, standalone executable, or DLL.
+            The selected worm type determines whether additional modules or payloads can be embedded.
+        </li>
+        <li>
+            <strong>module</strong>  
+            Optional extensions that enhance or modify the behavior of a worm.  
+            Not every worm template supports modules, while some templates are built entirely from modular components.
+            Modules may consist of raw code snippets, dynamic DLLs, or static libraries.
+        </li>
+        <li>
+            <strong>payload</strong>  
+            Prebuilt functional components written in various languages.
+            Worms or modules may expose dedicated injection points for payloads.
+            Payloads are handled differently by the build system than modules,
+            which is why similar functionality may exist in both forms.
+        </li>
+        <li>
+            <strong>shadow</strong>  
+            Code obfuscation components.  
+            These modules transform source code into a heavily obscured and difficult-to-analyze form.
+        </li>
+        <li>
+            <strong>scode</strong>  
+            Templates for the shellcode generator.
+            This category contains predefined shellcode types that can be generated on demand.
+            Generated shellcode is exported in three popular formats for easy integration.
+        </li>
+        <li>
+            <strong>rscript</strong>  
+            Resource script (<code>.rc</code>) files included during the compilation process.
+            They define metadata such as version number, application description, and other resource information,
+            allowing the resulting executable to resemble a legitimate application.
+            Most values are generated automatically using data from <code>food</code>,
+            but users may override them with custom values.
+        </li>
+        <li>
+            <strong>compiler</strong>  
+            Compiler and linker scripts used during the build process.
+            Each worm template has a default compiler configuration,
+            but it can be replaced or modified.
+            For example, Python-based worms can be compiled using either PyInstaller or Nuitka.
+        </li>
+        <li>
+            <strong>food</strong>  
+            Supporting data used by worms and modules.
+            This includes text databases, link collections, naming resources, and specialized string sequences
+            required by certain libraries.  
+            Draconus uses <code>food</code> when generating application names, descriptions,
+            metadata, and other contextual elements.
+        </li>
+        <li>
+            <strong>support</strong>  
+            Internal helper modules automatically added and managed by Draconus.
+            These components provide auxiliary functionality required by other modules
+            and are not intended to be modified manually.
+        </li>
+        <li>
+            <strong>sfile</strong> (support file)  
+            Additional files automatically attached during the build process.
+            These may include auxiliary binaries, configuration files, or data blobs
+            required by the final executable.
+        </li>
+        <li>
+            <strong>wprocess</strong>  
+            Defines the complete build workflow of a worm.
+            This component controls how modules, payloads, compilers, and resources are combined.
+            It is added and managed automatically by Draconus and represents the internal build pipeline.
+        </li>
+    </ul>
 </div>
 <div id="Variables">
     <h2>Variables (var)</h2>
@@ -299,6 +308,85 @@
         For a full list of options and advanced usage, use:
     </p>
     <pre><code>var --help</code></pre>
+</div>
+<div id="HiveCommands">
+    <h2>Hive Commands</h2>
+    <p>
+        The Hive section provides a dedicated set of commands used to create, configure, and build worms,
+        payloads, modules, and other components. These commands control the entire build lifecycle,
+        from initialization to final compilation.
+    </p>
+    <h3>Available Commands</h3>
+    <ul>
+        <li>
+            <strong>install</strong><br>
+            Downloads and installs the required Docker image containing all necessary compilers and build tools.
+            This command is only required if the image is not already present on the system.
+        </li>
+        <li>
+            <strong>reset</strong><br>
+            Creates a new worm template.  
+            Removes all currently added modules, variables, and settings, effectively resetting the build process
+            and starting a new project from scratch.
+        </li>
+        <li>
+            <strong>name [name]</strong><br>
+            Assigns a name to the worm being created.  
+            This name is used during the build process and may appear in metadata, output files, and logs.
+        </li>
+        <li>
+            <strong>icon [name]</strong><br>
+            Assigns an icon to the worm.  
+            Draconus includes a set of built-in icons, but custom icons can also be added.
+            This command provides additional options and usage examples via <code>--help</code>.
+        </li>
+        <li>
+            <strong>mods</strong><br>
+            Displays all available module types along with their descriptions.
+            Use this command to explore what kinds of components can be added to a worm.
+        </li>
+        <li>
+            <strong>show [module_type]</strong><br>
+            Lists all available modules of the specified type.
+            To view all valid module types, use the <code>mods</code> command
+            or refer to the <em>Module Types</em> section in this README.
+        </li>
+        <li>
+            <strong>add [module_type] [module_name]</strong><br>
+            Adds the specified module to the current worm template.
+            This is the core command used during worm construction.
+            <br><br>
+            Examples:
+            <pre><code>add worm DuckHunt</code></pre>
+            Creates and assigns the main worm template of type <code>worm</code> named <code>DuckHunt</code>.
+            <pre><code>add module PyRawTcp</code></pre>
+            Adds the <code>PyRawTcp</code> module to the current worm template.
+        </li>
+        <li>
+            <strong>var [options] [name] "[value]"</strong><br>
+            Creates or modifies variables used by the worm and its modules.
+            See the <em>Variables</em> section in this README or use <code>var --help</code> for detailed usage.
+        </li>
+        <li>
+            <strong>worm</strong><br>
+            Displays the complete configuration of the currently built worm.
+            This includes all added modules, variable values, and build settings.
+            It is the primary command for inspecting the current build state.
+        </li>
+        <li>
+            <strong>build [options]</strong><br>
+            Finalizes and compiles the worm.
+            Depending on the selected template, the output may be an EXE, DLL, shellcode, or another artifact.
+            After a successful build, the worm can optionally be added to the Draconus library.
+            See <code>build --help</code> for available options.
+        </li>
+        <li>
+            <strong>scan</strong><br>
+            Scans the local library for newly added modules and updates the internal module database.
+            The module database is automatically refreshed only on the first entry into Hive.
+            After that, this command must be used manually whenever new modules are added.
+        </li>
+    </ul>
 </div>
 </body>
 </html>

@@ -388,5 +388,95 @@
         </li>
     </ul>
 </div>
+<div id="HiveExamples">
+    <h2>Build Examples</h2>
+    <h3>1) Building a Windows x64 Shellcode</h3>
+    <p>
+        To generate shellcode, you must start with a dedicated worm template designed for shellcode builds.
+        First, list all available main worm templates:
+    </p>
+    <pre><code>show worm</code></pre>
+    <p>
+        Find the shellcode worm template named <code>WShellcode</code>, then add it as the main template:
+    </p>
+    <pre><code>add worm WShellcode</code></pre>
+    <p>
+        Draconus will display a confirmation message and automatically assign the correct compiler/build pipeline for shellcode generation.
+    </p>
+    <p>
+        Next, list available shellcode templates (<code>scode</code>):
+    </p>
+    <pre><code>show scode</code></pre>
+    <p>
+        Add a test shellcode that spawns a classic “Hello World” message box:
+    </p>
+    <pre><code>add scode MsgBoxA</code></pre>
+    <p>
+        At this point, the worm template is ready. Build it using:
+    </p>
+    <pre><code>build</code></pre>
+    <p>
+        After a short moment, the generated shellcode will appear in <code>OUTPUT/Hive</code>,
+        exported in several popular formats for easy integration into other projects.
+    </p>
+<h3>2) Building a Custom Python Worm Using Modules</h3>
+    <p>
+        This example demonstrates how to build a Python-based worm that does not provide functionality on its own.
+        Instead, all behavior is defined by added modules and additional components.
+        This approach is well suited for Python, as the prepared template can later be compiled into an EXE
+        or saved into the Draconus library for reuse in other projects
+        (for example, embedding it into custom shellcode or combining it with other payloads).
+    </p>
+    <p>
+        First, add the worm template designed for Python-based worms:
+    </p>
+    <pre><code>add worm Montezuma</code></pre>
+    <p>
+        Next, display the list of available modules:
+    </p>
+    <pre><code>show module</code></pre>
+    <p>
+        Using the <strong>Tags</strong> associated with each module
+        (their descriptions are always shown when running the <code>worm</code> command),
+        locate modules implemented in Python and add them to the template.
+    </p>
+    <p>
+        Add a module that scans directories for files matching specific extensions and name patterns:
+    </p>
+    <pre><code>add module PyAnts</code></pre>
+    <p>
+        Now add a module responsible for sending collected files to a Discord server:
+    </p>
+    <pre><code>add module PyDcWeb</code></pre>
+    <p>
+        With the modules added, inspect the current build state:
+    </p>
+    <pre><code>worm</code></pre>
+    <p>
+        This command displays the complete configuration of the worm, including all active modules and variables.
+        Use the <code>var</code> command to configure required settings such as the Discord webhook URL,
+        file extensions to search for, naming patterns, and other module-specific options.
+        You can repeatedly run <code>worm</code> to verify updated variable values.
+    </p>
+    <p>
+        Once the template is fully configured, compile the worm using:
+    </p>
+    <pre><code>build</code></pre>
+    <p>
+        After compilation completes, the resulting executable will be available in the
+        <code>OUTPUT/Hive</code> directory.
+    </p>
+    <h4>Saving the Worm as a Reusable Payload</h4>
+    <p>
+        If you do not want to compile the script immediately and instead wish to add it to your personal library
+        for later reuse, use the following command:
+    </p>
+    <pre><code>build --no_compile --payload "My first payload"</code></pre>
+    <p>
+        This will save the prepared template into the <strong>payload</strong> section of the Draconus library.
+        From that point on, it can be reused like any other payload and embedded into future worms,
+        shellcode projects, or executable builds.
+    </p>
+</div>
 </body>
 </html>

@@ -47,6 +47,7 @@ class QueenShell:
             self.pSort("mods", "Show Draconus items in library.")
             self.pSort("show [type]", "Display all 'types' items in Library. Ex: 'show worm', 'show module'")
             self.pSort("add [type] [name]", "Adds the selected module type to the worm. Ex: 'add module RawTcp', 'add worm Montezuma'")
+            self.pSort("remove [type] [name]", "Remove selceted module from worm. Ex: 'remove module RawTcp'")
             self.pSort('var [-option] [name] "[value]"', "Add, set variable to worm. See 'var --help'")
             self.pSort("worm", "Show worm config. All loaded Modules, Variables etc.")
             self.pSort("build [-option]", "Build, compile worm. See 'build --help' ")
@@ -178,6 +179,15 @@ class QueenShell:
         def install() -> None:
             self.Queen.installCore()
             
+        ######################################################################################################################################
+
+        @hiveShell.command()
+        @click.argument("item_type")
+        @click.argument("item_name")
+        def remove(item_type, item_name) -> None:
+            self.Queen.removeWormItem(item_type, item_name)
+
+
         ######################################################################################################################################
         return hiveShell
     

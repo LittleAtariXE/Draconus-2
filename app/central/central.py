@@ -176,18 +176,6 @@ class Central:
                 self.msg("error", f"[!!] ERROR: Unknown '{new.server.server_name}' function to work. Set to 'recive'.[!!]")
                 self._ac_recive(new)
         
-
-
-
-
-        # self.Tasker.addThread(
-        #     name = f"ClientHandle-{new.ID}",
-        #     func_name = new.start_recive,
-        #     info = f"Receiving data by client ID {new.ID} on server: {server.server_name}.",
-        #     th_type = "Handle",
-        #     daemon = False,
-        #     start_now = True
-        # )
     
     #######################################################################################
 

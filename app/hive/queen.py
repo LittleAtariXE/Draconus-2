@@ -57,6 +57,9 @@ class Queen:
     def addWormItem(self, item_type: str, item_name: str) -> None:
         self.rawBuilder.Add(item_type, item_name)
     
+    def removeWormItem(self, item_type: str, item_name: str) -> None:
+        self.rawBuilder.removeWormItem(item_type, item_name)
+    
     def setVariable(self, var_name: str, value: any, val_types: str = "str") -> None:
         self.rawBuilder.setVariable(var_name, value, val_types)
     
@@ -84,7 +87,7 @@ class Queen:
 
 
 
-        #conf["FLAG_NO_COMPILE"] = True
+        conf["FLAG_NO_COMPILE"] = True
         # conf["BUILD_PAYLOAD"] = True
         # conf["MODULE_INFO"] = "big shellcode for anthill"
         # conf["BUILD_SHELLCODE_PAYLOAD"] = True
@@ -96,7 +99,7 @@ class Queen:
         # self.addWormItem("scode", "PyYogi")
         # self.addWormItem("payload", "BigMama")
 
-        self.setWormName("Kapec")
+        self.setWormName("Kapec345")
         self.addWormItem("worm", "Montezuma")
         self.addWormItem("module", "PyRawTcp")
         # self.addWormItem("payload", "pkppp")

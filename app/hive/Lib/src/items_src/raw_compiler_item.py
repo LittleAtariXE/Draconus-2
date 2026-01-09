@@ -20,6 +20,7 @@ class RawCompilerItem(RawLibItem):
 
         # Required RC Script
         # Automatically loads the given RC script
+        # reqRC##[RC_name]
         self.reqRC = None
     
 

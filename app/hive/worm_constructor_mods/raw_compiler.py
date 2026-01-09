@@ -39,7 +39,10 @@ class RawCompiler:
     
     def _buildBasicCompilerVar(self) -> dict:
         cvar = {}
-        cvar["__ICON_NAME"] = None
+        if self.raw_exe.wormIcon:
+            cvar["__ICON_NAME"] = self.raw_exe.master_raw.worm_icon
+        else:
+            cvar["__ICON_NAME"] = None
         cvar["__SRC_FILE_NAME"] = self.raw_exe.FILE_NAME
         cvar["__MODULE_NAME"] = self.raw_exe.NAME
         cvar["__FINAL_OUTPUT_FTYPE"] = self.raw_exe._output_file_type

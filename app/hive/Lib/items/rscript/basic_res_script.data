@@ -16,6 +16,11 @@
 {% set _BRE_pversion = randTOOL.randomVersion(4, separator=".") %}
 {% set _BRE_appname = randTOOL.randomStr(BRE_appd, BRE_appname) %}
 
+
+{% if _ICON_NAME %}
+IDI_ICON1 ICON "{{_ICON_NAME}}"
+{% endif %}
+
 1 VERSIONINFO
 FILEVERSION {{_BRE_fversion}}
 PRODUCTVERSION {{_BRE_fversion}}

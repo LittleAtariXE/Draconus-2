@@ -4,7 +4,7 @@
 #!compilerMCNAME##MinGW-x64
 #!Var##NUT_one_file##True##Using the '--onefile' flag. Compiles the program into a single EXE file.##str
 #!Var##NUT_gui##True##Specifies whether the program is run in a console 'False' or as a gui program 'True'.##str
-#!typeAccept##RcExe
+
 
 
 {% if _ICON_NAME %}

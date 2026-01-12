@@ -133,12 +133,26 @@ class RawWormBuilder:
             case "compiler":
                 self.RAW.master_compiler = None
                 self.msg("msg", f"Remove {child} compiler: {module.name} successfull.", sender=self.name)
-
+            case "rscript":
+                del self.RAW.rscript[module.name]
+                self.msg("msg", f"Remove {child} rscript: {module.name} successfull.", sender=self.name)
+        self.removeFoods(module)
 
     
     def _remove_child_item(self, module: RawLibItem) -> None:
         for cmod in self.RAW.getChildAll(module):
             self._remove_worm_item(cmod, True)
+    
+    def removeFoods(self, owner_module: RawLibItem) -> None:
+        too_del = []
+        for vname, food in self.RAW.food.items():
+            if food.owner == owner_module:
+                too_del.append(vname)
+        for td in too_del:
+            del self.RAW.food[td]
+            self.msg("msg", f"Remove Food item: {td} successfull.", sender=self.name)
+        
+
 
 
 
@@ -203,6 +217,9 @@ class RawWormBuilder:
                 if not target:
                     self.msg("error", "[!!] ERROR: Target module does not exists [!!]", sender=self.name)
                     return
+        # remove old compiler and child modules
+        if self.RAW.master_compiler:
+            self.removeWormItem("compiler", self.RAW.master_compiler.name)
         comp = self.raw_constructor.buildRawItem(raw_info)
         comp.owner = target
         self.RAW.master_compiler = comp

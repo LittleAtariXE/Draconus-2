@@ -7,7 +7,7 @@
 <div id="Draconus">
     <h1 align="center">Draconus</h1>
     <p align="center">
-        <img src="img/logo1.webp" alt="Logo Projektu" width="300">
+        <img src="img/draco2_logo.png" alt="Logo Projektu" width="300">
     </p>
     <h4 align="center">Every USER should have a Cyber Weapon to defend himself.</h4>
     <p align="center">This project serves as a comprehensive toolkit designed to introduce fundamental concepts in ethical hacking and malware creation. It offers tools and functionalities for creating shellcodes, basic malware, code obfuscation, and code packing into single lines, providing an engaging way to explore malware techniques responsibly.</p>

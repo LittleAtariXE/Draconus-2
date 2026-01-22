@@ -47,6 +47,10 @@ class Library:
             "compiler" : {},
         }
 
+    @property
+    def DEV_MODE(self) -> bool:
+        return self.queen.DEV_MODE
+
     def load_items(self, dir_path: str, item_type: object = RawModuleInfo) -> None:
         # special options
         opt = {}
@@ -57,6 +61,8 @@ class Library:
             for fname in f:
                 item = item_type(os.path.join(r, fname), opt, separator=self.LIB_ITEM_SEPARATOR)
                 if item.FLAG_broken:
+                    continue
+                if item.devItem and not self.DEV_MODE:
                     continue
                 if not item.itemType in self.lib.keys():
                     self.msg("error", f"[!!] ERROR: Unknown item in library: {item.fpath} [!!]")

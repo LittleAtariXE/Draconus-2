@@ -94,6 +94,7 @@ class CrossCompCore:
     def install(self) -> None:
         if self.status:
             self.msg("msg", f"Core: '{self.name}' is installed.", sender=self.name)
+            return
         if not self.check_docker_image():
             self.msg("msg", "Start image downloads. This may take some time.", sender=self.name)
             self.download_image()

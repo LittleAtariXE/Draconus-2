@@ -16,7 +16,7 @@ class Loader:
     def load_mods(self):
         for mod in self.mods:
             try:
-                exec(mod)
+                exec(f"import {mod}")
             except ModuleNotFoundError:
                 self.download_mods(mod)
     

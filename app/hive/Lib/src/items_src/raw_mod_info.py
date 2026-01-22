@@ -52,6 +52,9 @@ class RawModuleInfo:
         # Item is broken. Dont add to library. #    "FLAG_broken"
         self.FLAG_broken = False
 
+        # The item will only be added in DEV mode
+        self.devItem = False
+
         # Item source code language
         # Python, Nasm, cpp, c, None
         #   lang##Python
@@ -109,4 +112,6 @@ class RawModuleInfo:
                     self.lang = head[1]
                 case "binType":
                     self.binType = self.fGetBool(head[1])
+                case "devItem":
+                    self.devItem = self.fGetBool(head[1])
 

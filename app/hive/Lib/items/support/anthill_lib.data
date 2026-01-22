@@ -1,4 +1,5 @@
 #!name##Anthill
+#!devitem##True
 #!itemType##support
 #!info##New nasm library to hide shellcode
 #!lang##nasm

@@ -1,4 +1,5 @@
-#!name##MontezumaDev
+#!name##MontezumaDEV
+#!devItem##True
 #!itemType##worm
 #!info##DEV WORM template written in Python, designed without a specific purpose. It allows integration of any number of additional Python-based modules. Ideal for building custom payloads and flexible worm structures in Python.
 #!lang##python

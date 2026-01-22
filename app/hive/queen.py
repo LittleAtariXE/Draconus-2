@@ -15,6 +15,7 @@ class Queen:
     def __init__(self, builder_object: object):
         self.conf = builder_object
 
+        self.DEV_MODE = self.conf.dev_mode
         self.DIR_HIVE = self.conf.DIR_HIVE
         self.DIR_HIVE_OUTPUT = self.conf.DIR_HIVE_OUT
         self.DIR_LIB_MAIN = os.path.join(self.DIR_HIVE, "Lib")
@@ -23,6 +24,7 @@ class Queen:
         self.PYTHON_PIP_LIBRARY_WINDOWS = PYTHON_PIP_LIBRARY_WINDOWS
         self.DEFAULT_COMPILER_CORE = self.conf.DEFAULT_COMPILER_CORE
         self.msg = LocalMSG(self)
+
     
     @property
     def wormName(self) -> str:
@@ -81,102 +83,6 @@ class Queen:
     def test(self) -> None:
         self.enter()
         self.msg("msg", "Test HIVE")
-        conf = {}
-
-
-
-
-
-        #conf["FLAG_NO_COMPILE"] = True
-        # conf["BUILD_PAYLOAD"] = True
-        # conf["MODULE_INFO"] = "big shellcode for anthill"
-        # conf["BUILD_SHELLCODE_PAYLOAD"] = True
-        # conf["BUILD_SHELLCODE_FOOD"] = True
-
-        # self.showItems("worm")
-        # self.setWormName("BigSC")
-        # self.addWormItem("worm", "WShellcode")
-        # self.addWormItem("scode", "PyYogi")
-        # self.addWormItem("payload", "BigMama")
-
-        self.setWormName("Panterka2")
-        self.addWormItem("worm", "MontezumaDev")
-        # self.addWormItem("module", "PyRawTcp")
-        self.addWormItem("module", "PyPanther")
-        # self.addWormItem("compiler", "NuitkaExt")
-        # self.addWormItem("payload", "pkppp")
-        #self.addWormItem("rscript", "BasicRes")
-        #self.addWormItem("payload", "BigSC")
-        # sc = "0x10, 0x03, 0x00, 0x00, 0x1a, 0x13, 0x14, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x0c"
-        # self.setVariable("SC_test", sc)
-        # self.addWormItem("scode", "PyYogi")
-        # self.addWormItem("payload", "BigMama")
-        # self.addWormItem("module", "PyAnts")
-        # self.setVariable("PYA_fext", "jpg, bmp")
-        # self.addWormItem("module", "PyRawTcp")
-        # self.addWormItem("module", "PyDcWeb")
-        # self.addWormItem("worm", "WShellcode")
-        # self.addWormItem("scode", "WEPy")
-
-        # self.setWormName("BigMama")
-        # self.addWormItem("worm","Montezuma")
-        # self.addWormItem("module", "PyRawTcp")
-        # self.addWormItem("module", "PyAnts")
-        # self.addWormItem("shadow", "DigDug")
-
-
-        # self.addWormItem("worm", "PayTest")
-        # self.addWormItem("payload", "PyRawReciver")
-        
-
-        # self.setWormName("qpek")
-        # self.addWormItem("worm", "Kaczki")
-        #self.addWormItem("rscript", "BasicRes")
-
-
-        self.wormShow()
-        self.buildWorm(options=conf)
-        
-        #self.master_compiler.coreInstall("CrossCompCore")
-        # self.rawBuilder.setWormName("kurwinox")
-        # self.rawBuilder.Add("worm", "WShellcode")
-        # self.rawBuilder.Add("scode", "MsgBoxA")
-
-
-
-        # self.rawBuilder.Add("worm", "PyScode")
-        # self.rawBuilder.addFoodAsVar("szelkod", "FSzel")
-        # self.rawBuilder.Add("module", "AkMod")
-        # self.rawBuilder.removeWormItem("module", "AkMod")
-        # self.rawBuilder.Add("worm", "Kapelusz")
-        # self.rawBuilder.Add("payload", "EvilPay")
-        # self.rawBuilder.removeWormItem("compiler", "PyInstaller")
-        #self.rawBuilder.removeWormItem("payload", "EvilPay")
-        #self.rawBuilder.Add("scode", "MsgBoxA")
-        # self.rawBuilder.Add("rscript", "BasicRes")
-        # self.rawBuilder.setIcon("worm1.ico")
-        #self.rawBuilder.Add("payload", "PyRevTcp")
-        # self.rawBuilder.Add("scode", "MsgBoxA")
-        #self.rawBuilder.Add("worm", "Asmek")
-        # self.rawBuilder.Add("worm", "Montezuma")
-        # self.rawBuilder.Add("module", "PyRawTcp")
-        # self.rawBuilder.Add("shadow", "DigDug")
-        # self.rawBuilder.addFoodAsVar("Ktext", "CharFood")
-        # self.rawBuilder.Add("worm", "Pajtek")
-        # self.rawBuilder.Add("module", "PajMod")
-        # self.rawBuilder.Add("payload", "EvilPay")
-        # self.rawBuilder.Add("compiler", "MinGW_x64_Nasm", "Asmek")
-        #self.rawBuilder.Add("worm", "MultiTest")
-        #self.rawBuilder.Add("module", "NasmMod")
-
-        # self.rawBuilder.test()
-        # self.rawBuilder.showWorm()
-        # self.wormConstructor.buildWorm(options=conf)
-
-    
-        
-
-
 
     def Run(self) -> None:
         self.enter()

@@ -78,7 +78,8 @@ class Builder:
             "unix_sock_to_recive" : int(dev.get("unix_socket_timeout_recive")),
             "tcp_sock_to_recive" : int(dev.get("tcp_socket_timeout_recive")),
             "central_clean_pause" : int(dev.get("central_cleaner_time_pause")),
-            "msg_color_dev" : dev.get("DEV_MSG_COLOR")
+            "msg_color_dev" : dev.get("DEV_MSG_COLOR"),
+            "dev_mode" : dev.getboolean("DEV_MODE")
         }
 
         ### update directories

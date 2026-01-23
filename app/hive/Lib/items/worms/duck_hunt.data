@@ -6,8 +6,8 @@
 #!wormCompiler##Basic-Nasm
 #!Wprocess##BasicProc
 #!reqMod##DuckTalesLib2
-#!Var##DTL_start##200##Pid number of the process from which the search for a vulnerable process will begin.##str
-#!Var##DTL_last##5000##Last PID number at which the search will end.##str
+#!Var##DTL_start##4000##Pid number of the process from which the search for a vulnerable process will begin.##str
+#!Var##DTL_last##9000##Last PID number at which the search will end.##str
 #!payloadSpace##DH_scode##Your shellcode
 
 

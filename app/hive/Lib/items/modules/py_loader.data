@@ -1,6 +1,6 @@
 #!name##PyLoader
 #!itemType##module
-#!info##Python module PIP loader.
+#!info##A Python module that analyzes the code assembled in Draconus and detects any non-standard libraries used. When such libraries are found, they are added to its internal list. PyLoader always places its code at the beginning of the file so it executes first, then attempts to download and install missing dependencies using PIP. In testing, it worked reliably and as intended.
 #!pyType##loader
 #!hiveType##PySM
 #!lang##python

@@ -1,0 +1,27 @@
+#!name##FakeChangeLog
+#!itemType##food
+#!info##This is a fake changelog. Contains all lowercase and uppercase letters, numbers and some special characters.
+#!loadType##clean_text
+
+
+Added new unit: Longbow Archers with extended range but low armor. Introduced morale system. Units may rout if heavily outnumbered. Players can now choose to play as a Ruthless Commander, unlocking harsher diplomacy options. Added dynamic weather that affects visibility and movement speed.
+Naval units can now perform coastal bombardments. New building: Field Hospital to slowly recover injured units. Siege weapons now deal splash damage to clustered troops. Enemy AI improved flanking behavior on open terrain.
+You can add your own modifications. Acceptable characters are: #qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM_- Added night battles with limited line of sight. Cavalry charges now have a momentum bonus on downhill attacks.
+Walls can be upgraded to Fortified Stone Walls with higher resistance to artillery. Spies can now sabotage supply lines, reducing enemy reinforcement rates. Item names cannot start with: 1234567890. Introduced veterancy ranks for units that survive multiple battles. Forests now provide better ambush bonuses but reduce ranged accuracy. Fixed an issue with incorrect names 90.,$%
+Added new hero ability: Rallying Cry to temporarily boost nearby morale.
+Artillery requires supply wagons to maintain firing efficiency.
+Rivers now slow heavy infantry unless a bridge or ford is present.
+New map type: Mountain Pass, focused on chokepoint warfare.
+Fire can spread between wooden structures during sieges.
+Corrected error no.: 192, 233.
+Diplomacy screen updated with threat level indicators for rival factions.
+Added fog of war memory, showing last known enemy positions faded on the map.
+Units standing idle for long periods will slowly recover stamina.
+New defensive structure: Watchtower that increases detection range.
+Improved pathfinding for large armies moving through narrow terrain.
+Supply shortages now reduce unit morale over time.
+Added banner customization for player factions.
+AI factions may now form temporary alliances against dominant players.
+New soundtrack tracks added for desert and winter biomes.
+Siege ladders can be destroyed while units are climbing them.
+Fixed issue where catapults occasionally launched projectiles into the void instead of the enemy.

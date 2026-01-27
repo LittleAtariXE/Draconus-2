@@ -11,7 +11,7 @@
 #!modProcess##BUILD_CODE##COMPILE
 #!modCompiler##Basic-Nasm
 #!Var##DT_Buffer##4096##Buffer for text (in bytes) used for encryption. Increase if using large text.##str
-#!foodAdd##BasChar##DT_text
+#!foodAdd##FakeChangeLog##DT_text
 
 {% if not shTOOL.SHADOW_TABLE %}
 

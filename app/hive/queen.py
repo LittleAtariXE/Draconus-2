@@ -9,8 +9,6 @@ from .worm_construtor import WormConstructor
 from .compilers.master_compiler import MasterCompiler
 
 
-# HIVE_MAIN_DIR = os.path.dirname(__file__)
-
 class Queen:
     def __init__(self, builder_object: object):
         self.conf = builder_object

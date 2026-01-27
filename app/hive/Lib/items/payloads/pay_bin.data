@@ -1,4 +1,5 @@
 #!name##PayBin
+#!devItem##True
 #!itemType##payload
 #!info##Binary payload for linux 64. Prints "Hello World"
 #!binType##True

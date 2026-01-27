@@ -10,7 +10,28 @@
         <img src="img/draco2_logo.png" alt="Logo Projektu" width="300">
     </p>
     <h4 align="center">Every USER should have a Cyber Weapon to defend himself.</h4>
-    <p align="center">This project serves as a comprehensive toolkit designed to introduce fundamental concepts in ethical hacking and malware creation. It offers tools and functionalities for creating shellcodes, basic malware, code obfuscation, and code packing into single lines, providing an engaging way to explore malware techniques responsibly.</p>
+    <h4 align="center">
+        <em>
+            Version 2 philosophy:<br>
+            Hack yourself first. Others will follow.
+        </em>
+    </h4>
+    <p align="center">
+    This project is essentially the legacy of a poor noob who desperately wanted to become a hacker,
+    but the only thing he ever successfully hacked was his own computer.
+    Hundreds of hours spent carving something out of code tend to produce strange ideas along the way.
+    </p>
+    <p align="center">
+    If you are curious how injectors, shellcode, and similar mechanisms are created and how they actually work,
+    you will likely find something interesting here.
+    Draconus focuses on building rather basic tools, but the system is designed in a way that allows them
+    to be extended, modified, and improved.
+    </p>
+    <p align="center">
+    If you are looking for a highly advanced, professional-grade framework,
+    projects like Metasploit will serve you better.
+    That said, even simple toys can sometimes walk quietly past an antivirus without being noticed.
+    </p>
     <h2>Features and Advantages</h2>
     <ul>
     <li><strong>Cross-Compilation Environment</strong>: Includes a custom Docker image preloaded with compilers for Assembly, C, C++, PyInstaller, and Nuitka, allowing seamless creation of Windows executables directly from Linux.</li>
@@ -63,9 +84,9 @@
         <li><a href="#ModuleTypes">Module Types</a></li>
         <li><a href="#Variables">Variables</a></li>
         <li><a href="#HiveCommands">Hive Commands</a></li>
-        <li><a href="#About">About</a></li>
-        <li><a href="#About">About</a></li>
-
+        <li><a href="#HiveExamples">Hive Examples</a></li>
+        <li><a href="#Contributing">Contributing</a></li>
+        <li><a href="#Changelog">Changelog</a></li>
     </ul>
 </div>
 <div id="Install">
@@ -476,6 +497,70 @@
         This will save the prepared template into the <strong>payload</strong> section of the Draconus library.
         From that point on, it can be reused like any other payload and embedded into future worms,
         shellcode projects, or executable builds.
+    </p>
+</div>
+<div id="Contributing">
+    <h2>Join the Project</h2>
+    <p>
+        Draconus is a hobby-driven project developed in spare time and focused on learning,
+        experimentation, and responsible research in offensive security.
+        The project is open to collaboration and welcomes contributions from people interested
+        in malware analysis, shellcoding, reverse engineering, and tool development.
+    </p>
+    <p>
+        If you would like to contribute, you can help by creating:
+    </p>
+    <ul>
+        <li>Reverse shells written in various languages (for testing and educational purposes)</li>
+        <li>New Hive modules or payloads</li>
+        <li>Shellcode templates</li>
+        <li>Support tools for analysis, obfuscation, or automation</li>
+        <li>Documentation improvements or usage examples</li>
+    </ul>
+    <p>
+        Contributions do not need to be large or complex.
+        Even small, focused tools or experimental ideas are welcome if they help explore
+        techniques or improve the learning value of the project.
+    </p>
+    <p>
+        As the community grows, contributors will be listed here along with links
+        to their profiles or repositories.
+    </p>
+    <p>
+        If you are interested in contributing, feel free to reach out or submit your ideas.
+        Collaboration, experimentation, and knowledge sharing are core goals of Draconus.
+    </p>
+</div>
+<div id="Changelog">
+    <h2>Changelog</h2>
+    <h3>Version 2.0</h3>
+    <p>
+        This release marks the beginning of a new version of the Draconus project.
+        At this stage, the focus is not on the number of available tools,
+        but on rebuilding the entire system architecture, improving stability,
+        and validating the new build and compilation pipelines.
+    </p>
+    <p>
+        Version 2.0 introduces a redesigned internal structure and scripting system,
+        with significant effort spent on testing, automation, and compiler workflows.
+    </p>
+    <h4>Included in this version:</h4>
+    <ul>
+        <li>4 shellcode generators</li>
+        <li>2 injectors based on the new version of the <strong>DuckTales</strong> library,
+            which dynamically resolves and imports WinAPI functions</li>
+        <li>2 Python payloads, including reverse shell implementations</li>
+        <li>Several Python modules, such as TCP socket communication, Discord webhook integration, and ransomware logic</li>
+        <li>Support for compiling custom Python code</li>
+        <li>Ability to add and manage custom payloads within the Draconus library</li>
+    </ul>
+    <p>
+        The current development focus will shift toward expanding the available toolset,
+        adding new payloads, modules, and experimental components.
+    </p>
+    <p>
+        If you are interested in contributing or extending the project,
+        feel free to join and add your own tools, ideas, or experiments.
     </p>
 </div>
 </body>

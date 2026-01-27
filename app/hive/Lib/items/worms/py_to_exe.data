@@ -1,0 +1,13 @@
+#!name##PyToExe
+#!itemType##worm
+#!info##A special worm template that allows you to compile your own Python code into an executable using Draconus compilers. You can switch the compiler to "Nuitka"; by default, PyInstaller is used. Open the file "OUTPUT/links/PyToExe", paste your code there, then create this template, change the compiler if desired, and compile it.
+#!lang##python
+#!Wprocess##BasicPy
+#!wormCompiler##PyInstaller
+#!itemTags##WIN
+#!typeAccept##PySh
+#!e##---------------------------------------------------------------------------------------------------------------------------------------
+#!e##--- Paste your Python code below the headers. IMPORTANT: Do not remove the Draconus headers. ---
+#!e##---------------------------------------------------------------------------------------------------------------------------------------
+
+

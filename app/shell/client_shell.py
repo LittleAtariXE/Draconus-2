@@ -31,6 +31,7 @@ class ClientShell:
             self.pTitle("  Client Command  ")
             self.pSort("exit", "Exit client shell. Back to Draconus shell.")
             self.pSort("msg [text]", 'Send message / command to client. Put message quotation marks “”')
+            self.pSort("", 'Ex: msg "help"')
             self.pSort("", 'Ex: msg "Hello World"')
         
         @cliShell.command()

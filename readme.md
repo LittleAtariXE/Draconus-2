@@ -85,6 +85,7 @@
         <li><a href="#Variables">Variables</a></li>
         <li><a href="#HiveCommands">Hive Commands</a></li>
         <li><a href="#HiveExamples">Hive Examples</a></li>
+        <li><a href="#Tips">Tips and Tricks</a></li>
         <li><a href="#Contributing">Contributing</a></li>
         <li><a href="#Changelog">Changelog</a></li>
     </ul>
@@ -497,6 +498,55 @@
         This will save the prepared template into the <strong>payload</strong> section of the Draconus library.
         From that point on, it can be reused like any other payload and embedded into future worms,
         shellcode projects, or executable builds.
+    </p>
+</div>
+<div id="Tips">
+    <h2>Tips & Tricks</h2>
+    <p>
+        Below are a few practical tips that may help you avoid common issues
+        and better understand how to work with Draconus.
+    </p>
+    <h3>Draconus reports that it is already running</h3>
+    <p>
+        If Draconus reports that it is already running, but you are certain that it is not,
+        this usually means the program was not closed properly.
+    </p>
+    <p>
+        To fix this, navigate to the following directory:
+    </p>
+    <pre><code>app/_sys_files</code></pre>
+    <p>
+        Remove all files inside this directory, then start Draconus again.
+        These files are used internally to track runtime state and may remain after an improper shutdown.
+    </p>
+    <h3>Build Incrementally</h3>
+    <p>
+        Remember that Draconus is designed to support incremental and modular building.
+        You do not need to create everything in a single step.
+    </p>
+    <p>
+        A common workflow might look like this:
+    </p>
+    <ul>
+        <li>Create a custom Python script using a dedicated worm template</li>
+        <li>Save it as a reusable payload</li>
+        <li>Create a new shellcode-based worm and embed your payload</li>
+        <li>Save the shellcode as another payload</li>
+        <li>Create an injector and attach the previously created payload</li>
+    </ul>
+    <p>
+        This layered approach allows you to mix, reuse, and recombine components
+        in many different ways, building increasingly complex setups from simple elements.
+    </p>
+    <h3>Nuitka Compilation Takes Time</h3>
+    <p>
+        When using the <strong>Nuitka</strong> compiler, compilation times can be significantly longer
+        than expected.
+        During this process, it may appear as if Draconus has frozen or stopped responding.
+    </p>
+    <p>
+        In most cases, this is normal behavior.
+        Be patient and allow the compilation process to complete.
     </p>
 </div>
 <div id="Contributing">

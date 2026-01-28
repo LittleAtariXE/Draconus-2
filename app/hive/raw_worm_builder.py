@@ -59,6 +59,17 @@ class RawWormBuilder:
         self.msg("msg", f"Set new name for worm: '{name}'.", sender=self.name)
     
     def setIcon(self, name: str) -> None:
+        # Check if worm has 'rscript'
+        if not self.RAW.master_worm:
+            self.msg("msg", "[!!] First, add the main template. [!!]", sender=self.name)
+            return
+        if not self.RAW.master_compiler:
+            self.msg("error", "[!!] ERROR: A compiler is required to add an icon. [!!]", sender=self.name)
+            return
+        if not self.RAW.masterRcScript:
+            self.msg("msg", "No 'rscript'. Adds the minimal required for icon.", sender=self.name)
+            min_res = self.getLibItem("rscript", "MinimalRes")
+            self.addResourcesScript(min_res, self.RAW.master_compiler, force_add=True)
         if self.Icons.set_icon(name):
             self.msg("msg", f"Set new icon: '{name}'", sender=self.name)
         else:

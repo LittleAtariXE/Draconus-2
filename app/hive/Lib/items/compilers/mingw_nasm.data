@@ -5,6 +5,7 @@
 #!Var##BASM_no_std##-nostdlib -s##Parameters to avoid including the standard library in the linker. You can add additional parameters or remove them entirely, in which case the function will not be used.##str
 #!typeAccept##RcExe
 
+
 {% if __VAR_EXEC_SHOW %}
     {% if __VAR_EXEC_SHOW == "console" %}
         {% set _WORM_EXE_SHOW = "-Wl,-e,main" %}

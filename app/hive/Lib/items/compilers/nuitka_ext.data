@@ -1,0 +1,74 @@
+#!name##NuitkaExt
+#!itemType##compiler
+#!info##Python-to-native compiler using Nuitka. Builds standalone Windows executables and embeds VERSIONINFO metadata such as file version, product version, company name, and file description via compiler flags.
+#!compilerMCNAME##MinGW-x64
+#!foodAdd##CompanyName##NuEXT_cname
+#!foodAdd##AppDescription##NuEXT_appd
+#!foodAdd##AppName##NuEXT_appn
+#!Var##NUT_one_file##True##Using the '--onefile' flag. Compiles the program into a single EXE file.##str
+#!Var##NUT_gui##True##Specifies whether the program is run in a console 'False' or as a gui program 'True'.##str
+#!Var##NuEXT_company##_RANDOM##Company Name. '_RANDOM' - get random name from food database##str
+#!Var##NuEXT_appdesc##_RANDOM##Application description. '_RANDOM' - get random name from food database##str
+#!Var##NuEXT_appname##_RANDOM##Application name. '_RANDOM' - get random name from food database##str
+
+{% if _ICON_NAME %}
+    {% set __ICON_NAME = "--windows-icon-from-ico=%s" | format(_ICON_NAME) %}
+{% else %}
+    {% set __ICON_NAME = "" %}
+{% endif %}
+
+{% if not NUT_one_file %}
+    {% set __ONE_FILE = "" %}
+{% else %}
+    {% set __ONE_FILE = "--onefile" %}
+{% endif %}
+
+{% if NUT_gui %}
+    {% set __GUI_EXEC = "--windows-console-mode=disable" %}
+{% else %}
+    {% set __GUI_EXEC = "" %}
+{% endif %}
+
+{% set _NuEXT_fversion = randTOOL.randomVersion(4, separator=".") %}
+{% set _NuEXT_pversion = randTOOL.randomVersion(4, separator=".") %}
+{% set _NuEXT_company = randTOOL.randomStr(NuEXT_cname, NuEXT_company) %}
+{% set _NuEXT_appdesc = randTOOL.randomStr(NuEXT_appd, NuEXT_appdesc) %}
+{% set _NuEXT_appname = randTOOL.randomStr(NuEXT_appd, NuEXT_appname) %}
+
+{% set _NuEXT_FDesc =
+  "--windows-file-version=" ~ _NuEXT_fversion ~ " " ~
+  "--windows-product-version=" ~ _NuEXT_pversion ~ " " ~
+  "--windows-company-name=" ~ ('"' ~ _NuEXT_company ~ '"') ~ " " ~
+  "--windows-product-name=" ~ ('"' ~ _NuEXT_appname ~ '"') ~ " " ~
+  "--windows-file-description=" ~ ('"' ~ _NuEXT_appdesc ~ '"')
+%}
+
+{# Build command strings as regular text first... #}
+{% set _cmd_build =
+  "cd " ~ __WORK_DIR_DOCKER ~
+  " && wine python -m nuitka " ~
+  __ONE_FILE ~
+  " --mingw64 " ~
+  __ICON_NAME ~ " " ~
+  __GUI_EXEC ~ " " ~
+  _NuEXT_FDesc ~ " " ~
+  __SRC_FILE_NAME
+%}
+
+{% set _cmd_rm_build  = "cd " ~ __WORK_DIR_DOCKER ~ " && rm -R " ~ __MODULE_NAME ~ ".build" %}
+{% set _cmd_rm_dist   = "cd " ~ __WORK_DIR_DOCKER ~ " && rm -R " ~ __MODULE_NAME ~ ".dist" %}
+{% set _cmd_rm_one    = "cd " ~ __WORK_DIR_DOCKER ~ " && rm -R " ~ __MODULE_NAME ~ ".onefile-build" %}
+{% set _cmd_chmod_out = "cd " ~ __WORK_DIR_DOCKER ~ " && chmod 777 " ~ __FINAL_OUTPUT_FNAME %}
+
+{# ...and inject them into JSON using |tojson to properly escape
+   quotes, backslashes, and other special characters #}
+{
+  "WORKING_DIR": {{ __WORK_DIR_DOCKER | tojson }},
+  "COMPILER_CMD": [
+    {{ _cmd_build | tojson }},
+    {{ _cmd_rm_build | tojson }},
+    {{ _cmd_rm_dist | tojson }},
+    {{ _cmd_rm_one | tojson }},
+    {{ _cmd_chmod_out | tojson }}
+  ]
+}

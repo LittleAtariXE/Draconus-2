@@ -1,0 +1,185 @@
+#!name##MsgBoxA
+#!itemType##scode
+#!info##Generates shellcode that displays a MessageBoxA popup with the specified text, defaulting to "Hello World". The message box is displayed as an error-type window.
+#!hiveType##SCode
+#!Var##MBA_text##HelloWorld##Text that will be displayed in the window##str
+#!lang##nasm
+
+{% set MBA_BUILD = asmTOOL.PutStackCode(MBA_text, registry="rcx", shadow_space_enter=40)%}
+
+BITS 64
+
+
+section .text
+global main
+main:
+    mov rbp, rsp; for correct debugging
+    mov r15, rsp    ; save stack
+    call exe
+    db {{ asmTOOL.ConvertHexBytes("MessageBoxA")}}
+        
+exe:
+    pop r15
+    mov rcx, r15
+    mov rdx, 0x0000000000006c6c
+    push rdx
+    mov rdx, 0x642e323372657355
+    push rdx
+    mov rdx, rsp
+    sub rsp, 32
+    call Tales
+    add rsp, 32 + 16
+    
+{{MBA_BUILD[0]}}
+    mov rcx, rsp
+    
+    sub rsp, {{MBA_BUILD[1]}}
+    mov rdx, rcx
+    mov r8, 0
+    mov rcx, 0
+    mov r9, 0
+    call rax
+    add rsp, {{MBA_BUILD[2]}}
+    
+
+    ret
+
+
+Tales:
+    ; IN: rcx - pointer to function name
+    ; IN: rdx - pointer to dll name
+    ; OUT: rax - function address
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx    ; func name
+    mov [rbp-16], rdx   ; dll name
+    
+    ; LoadLibraryA
+    mov rax, 0x41797261
+    push rax
+    mov rax, 0x7262694c64616f4c
+    push rax
+    mov rcx, rsp
+    sub rsp, 40
+    call Duck
+    mov rcx, [rbp-16]
+    call rax    ; call LoadLibraryA
+    mov [rbp-16], rax   ; save dll handle
+    add rsp, 40 + 16
+    
+    ; GetProcAddress
+    mov rcx, 0x0000737365726464
+    push rcx
+    mov rcx, 0x41636f7250746547
+    push rcx
+    mov rcx, rsp
+    sub rsp, 40
+    call Duck
+    mov rcx, [rbp-16]   ; module handle
+    mov rdx, [rbp-8]    ; func name
+    call rax    ; call GetProcAddress
+    add rsp, 40 + 16
+    
+    
+    .return:
+        add rsp, 16
+        pop rbp
+        ret
+        
+
+
+Duck:
+    ; find function name in kernel32
+    ; Null bytes free
+    ; IN: rcx - pointer to function name
+    ; OUT: rax - function address
+    
+    push rbp
+    mov rbp, rsp
+    push rsi
+    push rdi
+    push r14
+    push r15
+    sub rsp, 16     ; space for local variable
+    mov [rbp-8], rcx    ; function name
+
+    
+    ; get kernel32 and Export Table address
+    ; r14 - kernel32 addr
+    ; r15 - export table
+    xor rcx, rcx
+    mov rcx, gs:[rcx+0x60]  ; Get address of PEB struct (avoid null bytes)
+    mov rcx, [rcx+0x18]     ; Get PEB_LDR_DATA address
+    mov rcx, [rcx+0x20]     ; Get InMemoryOrderModuleList
+    mov rcx, [rcx]      ; 1st entry in InMemoryOrderModuleList (ntdll.dll)
+    mov rcx, [rcx]      ; 2st entry in InMemoryOrderModuleList (kernel32.dll)
+    mov r14, [rcx+0x20] ; Get kernel32.dll address
+    
+    xor rcx, rcx
+    mov ecx, [r14+0x3c] ; get pointer to PE header  (pointer have RVAddress )
+    add rcx, r14    ; RVA PE header + kernel32 = VA PE header of kernel32
+    add rcx, 0x44
+    add rcx, 0x44   ;  0x88 bytes after the PE signature is the RVA for the Export Table
+    mov r15d, [rcx]  ; get RVA of Export Table
+    add r15, r14    ; RVA export table + VA kernel32 = VA export table
+    
+    mov r8d , [r15+0x14]     ; get number of function
+    xor rdx, rdx    ; 'function number' counter
+    xor r9, r9
+    xor rcx, rcx  ; 
+    ; r8 - number of function
+    ; rdx - actual function number
+    ; r10 - length function name
+    xor r10, r10    ; str len counter
+    mov rax, [rbp-8]
+    .match_len:
+        mov byte cl, [rax+r10]
+        cmp cl, r9b
+        je .find_name
+        inc r10
+        jmp .match_len
+    
+    .find_name:
+        cmp rdx, r8     ; check function limit
+        jg .not_find
+        mov esi, [r15+0x20]     ; RVA function name from export table
+        add rsi, r14        ; RVA function name + VA kernel32 = VA function name
+        mov esi, [rsi+4*rdx]    ; get next entry RVA function name
+        add rsi, r14        ; RVA name + kernel32 addr
+        ; rsi = function name from export table
+        ; compare function name
+        mov rdi, [rbp-8]    ; our func name
+        mov rcx, r10    ; func name length
+        cld
+        repe cmpsb
+        jnz .check_next
+        
+        ; get function addres
+        mov edi, [r15+0x24]     ; get AddressOfNameOrdinals RVA
+        add rdi, r14        ; AddressOfNameOrdinals RVA + kernel32 VA
+        xor rsi, rsi
+        mov si, [rdi+2*rdx]    ; get function index (word) to function address
+        mov edi, [r15+0x1c]     ; get AddressOfFunctions RVA
+        add rdi, r14    ; AddressOfFunctions RVA + kernel32 VA
+        mov edi, [rdi+4*rsi]    ; get RVA function address
+        add rdi, r14    ; function addr RVA + kernel32 VA
+        mov rax, rdi    ; return func addr
+    
+    .return:
+        add rsp, 16 ; restore stack
+        pop r15
+        pop r14
+        pop rdi
+        pop rsi
+        pop rbp
+        ret
+     
+     .not_find:
+        xor rax, rax
+        jmp .return
+        
+    .check_next:
+        inc rdx     ; increase main func counter
+        jmp .find_name
+

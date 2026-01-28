@@ -1,0 +1,8 @@
+#!name##WShellcode
+#!itemType##worm
+#!info##A special worm module that enables shellcode creation. Add it as the main module to gain access to available shellcode templates. You can view the list of templates using the 'show scode' command. Generates shellcode for Windows x64 systems. You can also use the build options 'build --shellfood' or 'build --shellpay' to save the generated shellcode to your library, allowing you to easily import it into future projects.
+#!typeAccept##SCode
+#!lang##nasm
+#!Wprocess##WinShell
+#!wormCompiler##SC_WIN64
+

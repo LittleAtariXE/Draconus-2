@@ -1,3 +1,4 @@
+import base64
 from typing import Union
 
 
@@ -43,4 +44,11 @@ class PyTemplate:
                 raw[i] = f"{prefix}{raw[i]}"
         return raw
     
-
+    def encodeBase64(self, text: Union[str, bytes], count: int = 1, encode: str = "utf-8") -> str:
+        if isinstance(text, str):
+            text = text.encode("utf-8")
+        etext = text
+        for _ in range(count):
+            etext = base64.b64encode(etext)
+        return etext
+        

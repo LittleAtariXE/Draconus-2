@@ -1,0 +1,240 @@
+import threading
+import os
+import pathlib
+import string
+import platform
+
+from time import sleep
+
+
+class Niffler:
+    # DEFAULT_BAN_DIRS = ["Windows", "windows", "temp", "Temp", "TEMP", "tmp", "TMP", "Program Files", "venv", ".venv", "__pycache__"]
+    DEFAULT_BAN_DIRS = []
+    DEFAULT_BAN_FILE_NAME = []
+    DEFAULT_BAN_FILE_EXT = []
+    # DEFAULT_TARGET_FILE_EXT = [".jpg", ".jpeg", ".bmp"]
+    DEFAULT_TARGET_FILE_EXT = []
+    DEFAULT_TARGET_FILE_NAME = []
+    def __init__(
+        self,
+        ban_dirs: list = [],
+        ban_file_name: list = [],
+        ban_file_ext: list = [],
+        target_dir_name: list = [],
+        target_file_name: list = [],
+        target_file_ext: list = [],
+        extra_start_path: list = [],
+        ):
+
+        # Main Targets
+        self._TARGETS = set()
+
+        # Targets
+        self.TAR_start_path = self.build_startPath(extra_start_path)
+        self.TAR_ban_dirs = []
+        self.TAR_ban_dirs.extend(self.DEFAULT_BAN_DIRS)
+        self.TAR_ban_dirs.extend(ban_dirs)
+        self.TAR_ban_file_name = []
+        self.TAR_ban_file_name.extend(self.DEFAULT_BAN_FILE_NAME)
+        self.TAR_ban_file_name.extend(ban_file_name)
+        self.TAR_ban_file_ext = []
+        self.TAR_ban_file_ext.extend(self.DEFAULT_BAN_FILE_EXT)
+        self.TAR_ban_file_ext.extend(ban_file_ext)
+        self._TAR_target_file_ext = []
+        self._TAR_target_file_ext.extend(self.DEFAULT_TARGET_FILE_EXT)
+        self._TAR_target_file_ext.extend(target_file_ext)
+        self.TAR_target_file_ext = [ext if ext.startswith(".") else f".{ext}" for ext in self._TAR_target_file_ext]
+        self.TAR_target_dir_name = target_file_name
+        self.TAR_target_file_name = []
+        self.TAR_target_file_name.extend(self.DEFAULT_TARGET_FILE_NAME)
+        self.TAR_target_file_name.extend(target_file_name)
+        
+
+        # set FLAGS
+        if len(self.TAR_ban_dirs) > 0:
+            self.FLAG_IGNORE_BAN_DIRS = False
+        else:
+            self.FLAG_IGNORE_BAN_DIRS = True
+        
+        if len(self.TAR_ban_file_name) > 0:
+            self.FLAG_IGNORE_FILE_NAME = False
+        else:
+            self.FLAG_IGNORE_FILE_NAME = True
+
+        if len(self.TAR_ban_file_ext) > 0:
+            self.FLAG_IGNORE_BAN_FILE_EXT = False
+        else:
+            self.FLAG_IGNORE_BAN_FILE_EXT = True
+        
+        if len(self.TAR_target_file_ext) > 0:
+            self.FLAG_IGNORE_TARGET_FILE_EXT = False
+        else:
+            self.FLAG_IGNORE_TARGET_FILE_EXT = True
+
+        if len(self.TAR_target_dir_name) > 0:
+            self.FLAG_IGNORE_TARGET_DIR_NAME = False
+        else:
+            self.FLAG_IGNORE_TARGET_DIR_NAME = True
+        
+        if len(self.TAR_target_file_name) > 0:
+            self.FLAG_IGNORE_TARGET_FILE_NAME = False
+        else:
+            self.FLAG_IGNORE_TARGET_FILE_NAME = True
+        
+        
+        
+        # Var
+        self.lock_main_targets = threading.Lock()
+
+        # Treads
+        self.th_master_find = None
+        self.th_slave_find = []
+
+        
+    @property
+    def Targets(self) -> list:
+        with self.lock_main_targets:
+            return list(self._TARGETS)
+    
+    @property
+    def WORKING_FLAG_FIND(self) -> bool:
+        if self.checkWorkingSlave():
+            return True
+        return False
+    
+    def build_startPath(self, extra_path: list) -> list:
+        stpath = extra_path
+        stpath.append(pathlib.Path.home())
+        if platform.system().lower() == "linux":
+            stpath.extend(["/media", "/mnt", "/var"])
+        else:
+            stpath.extend([os.environ.get("APPDATA"), os.environ.get("LOCALAPPDATA"), os.environ.get("PUBLIC"), os.environ.get("PROGRAMDATA"), os.environ.get("ONEDRIVE")])
+            for c in string.ascii_lowercase:
+                if os.path.exists(f"{c}:/"):
+                    stpath.append(f"{c}:/")
+        return list(set(stpath))
+    
+    def resetNiffler(self) -> None:
+        if self.WORKING_FLAG_FIND:
+            print("ERROR: niffler is still working.")
+        else:
+            self.resetTargets()
+            self.th_master_find = None
+            self.th_slave_find = []
+    
+    def addTarget(self, fpath: str) -> None:
+        with self.lock_main_targets:
+            self._TARGETS.add(fpath)
+    
+    def resetTargets(self) -> None:
+        with self.lock_main_targets:
+            self._TARGETS = set()
+    
+    def checkWorkingSlave(self) -> bool:
+        for th in self.th_slave_find:
+            if th.is_alive():
+                return True
+        return False
+    
+    def checkDir(self, dir_name: str) -> bool:
+        if not self.FLAG_IGNORE_BAN_DIRS:
+            raw_name = pathlib.Path(dir_name).parts
+            for rn in raw_name:
+                if rn in self.TAR_ban_dirs:
+                    return False
+        if not self.FLAG_IGNORE_TARGET_DIR_NAME:
+            raw_name = pathlib.Path(dir_name).parts
+            for rn in raw_name:
+                if rn in self.TAR_target_dir_name:
+                    return True
+                else:
+                    return False
+        return True
+    
+    def checkFile(self, file_name: str) -> bool:
+        fname = os.path.basename(file_name)
+        rname, fext = os.path.splitext(fname)
+        if not self.FLAG_IGNORE_FILE_NAME:
+            if rname in self.TAR_ban_file_name:
+                return False
+        if not self.FLAG_IGNORE_BAN_FILE_EXT:
+            if fext in self.TAR_ban_file_ext:
+                return False
+        if not self.FLAG_IGNORE_TARGET_FILE_EXT:
+            if fext in self.TAR_target_file_ext:
+                return True
+            else:
+                return False
+        if not self.FLAG_IGNORE_TARGET_FILE_NAME:
+            if rname in self.TAR_target_file_name:
+                return True
+            else:
+                return False
+        return True
+        
+    
+    def _dirTour(self, target_dir: str) -> None:
+        if not self.checkDir(target_dir):
+            return
+        for root, dirs, files in os.walk(target_dir):
+            if not self.checkDir(root):
+                continue
+            for f in files:
+                fpath = os.path.join(root, f)
+                if self.checkFile(fpath):
+                    self.addTarget(fpath)
+    
+    def dirTour(self, target_dir: str) -> None:
+        if not self.checkDir(target_dir):
+            return
+        for mdir in os.listdir(target_dir):
+            mdir_path = os.path.join(target_dir, mdir)
+            if os.path.isdir(mdir_path):
+                dt = threading.Thread(target=self._dirTour, args=(mdir_path, ), daemon=True)
+                dt.start()
+                self.th_slave_find.append(dt)
+            else:
+                if self.checkFile(mdir_path):
+                    self.addTarget(mdir_path)
+
+
+
+    def _startMainScan(self) -> None:
+        for sp in self.TAR_start_path:
+            if os.path.exists(sp):
+                dt = threading.Thread(target=self.dirTour, args=(sp,), daemon=True)
+                dt.start()
+                self.th_slave_find.append(dt)
+
+    def startMainScan(self) -> None:
+        self._startMainScan()
+        while self.WORKING_FLAG_FIND:
+            print("Wait")
+            sleep(0.05)
+        print("DONE")
+        print("FIND: ", len(self.Targets))
+
+
+    def findTargets(self) -> None:
+        self.resetNiffler()
+        print("Start find targets.....")
+        self.startMainScan()
+        input()
+        for t in self.Targets:
+            print(t)
+        print("END")
+
+
+
+    def test(self):
+        print(self.TAR_start_path)
+
+MAIN_DIR = os.path.dirname(__file__)
+
+if __name__ == "__main__":
+    nn = Niffler(target_file_ext=["jpg"])
+    nn.test()
+    nn.findTargets()
+    
+    
+

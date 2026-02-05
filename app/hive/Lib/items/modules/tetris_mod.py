@@ -5,6 +5,8 @@
 #!hiveType##PySM
 #!lang##python
 #!pyModName##Kaloryfer
+#!reqMod##PyNiffler
+#!pyType##module
 
 from time import sleep
 
@@ -14,13 +16,14 @@ class Kaloryfer:
     STAND_TH = False
     def __init__(self, master_worm: object):
         self.worm = master_worm
+        self.niffler = PyNiffler()
     
     def work(self) -> None:
-        while self.worm.FLAG_working:
-            sleep(0.5)
-            # print("Kaloryfer working")
-            # self.worm.processData("wclose")
-        print("Kaloryfer END")
+        self.niffler.start()
+        while self.niffler.WORKING_FLAG_FIND:
+            sleep(0.1)
+        for t in self.niffler.Targets:
+            print(t)
     
     def start(self) -> None:
         print("Kaloryfer start")

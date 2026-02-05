@@ -7,6 +7,7 @@
 #!itemTags##LW
 #!typeAccept##PySM##PyExM##PySh
 
+
 from typing import Union
 from time import sleep
 import queue
@@ -123,25 +124,27 @@ class Tetris:
             except:
                 pass
         print(h)
+        self.send_msg(h)
+
     
-    def _exeSysCmd(self, command: str) -> None:
-        cmd = command.split(" ")
-        match cmd[0]:
-            case "CLOSE":
-                self._flag_working = False
+    # def _exeSysCmd(self, command: str) -> None:
+    #     cmd = command.split(" ")
+    #     match cmd[0]:
+    #         case "CLOSE":
+    #             self._flag_working = False
         
     def exeCmd(self, command: str) -> None:
         cmd = command.split(" ")
         match cmd[0]:
             case "wclose":
-                self._exeSysCmd("CLOSE")
+                self._flag_working = False
             case "help":
                 self.help()
     
     def send_msg(self, msg: str, *args, **kwargs) -> None:
         for mod in self.connMods:
             try:
-                mod.send_msg(msg)
+                mod.send_msg(msg, *args, **kwargs)
             except:
                 pass
 
@@ -150,11 +153,8 @@ class Tetris:
     def working(self) -> None:
         self.executeData()
         while self.FLAG_working:
-            sleep(3)
-            self.send_msg("Siema")
-            self.send_msg("Siema345")
-            self.send_msg("aaaaaa")
-            self.send_msg("bbbbb")
+            sleep(1)
+            
     
     def Run(self) -> None:
         self._flag_working = True
@@ -165,9 +165,7 @@ class Tetris:
         # input("Press key")
 
 
-IP = {{pyTOOL.encodeBase64("ala ma kota")}}
-print(IP)
 
-# if __name__ == "__main__":
-#     tt = Tetris()
-#     tt.Run()
+if __name__ == "__main__":
+    tt = Tetris()
+    tt.Run()

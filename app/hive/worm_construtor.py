@@ -205,7 +205,15 @@ class WormConstructor:
     
     def _build_python_raw_worm(self, raw_exe: RawExe) -> RawExe:
         raw_exe.last_process_name = "Build Python Raw Worm"
-        py_data = self.Coder.buildPythonCode(raw_exe.modules, raw_exe.fpath_dir_output, raw_exe.FILE_NAME)
+        # default get mods from "raw_exe.modules"
+        mods = set(raw_exe.modules)
+        # add code from child modules
+        for mod in raw_exe.modules:
+            childs = raw_exe.master_raw.getRawChild(mod)
+            for c in childs:
+                mods.add(c)
+        # py_data = self.Coder.buildPythonCode(raw_exe.modules, raw_exe.fpath_dir_output, raw_exe.FILE_NAME)
+        py_data = self.Coder.buildPythonCode(mods, raw_exe.fpath_dir_output, raw_exe.FILE_NAME)
         # UPDATE VARIABLES
         # update pip module for loader if use
         raw_exe.VAR["_PY_PIP_IMPORT"].extend(py_data["pip_import"])

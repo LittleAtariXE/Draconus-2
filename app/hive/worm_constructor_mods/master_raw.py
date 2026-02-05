@@ -17,6 +17,8 @@ class MasterRaw:
         self.VAR = variables
         self.SEPARATE_MODULES_TYPE = ["lib", "dll"]
 
+        self.getRawChild = self.RWB.wormGetChild
+
         self.allMods = self.RWB.wormAllMods
 
         self.worm_name = self.options.get("WORM_NAME")

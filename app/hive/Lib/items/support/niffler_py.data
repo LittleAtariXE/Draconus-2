@@ -1,3 +1,13 @@
+#!name##PyNiffler
+#!itemType##support
+#!info##File finder
+#!lang##python
+#!hiveType##PySM
+#!aaafileType##PY_MOD
+#!itemTags##LW
+#!pyType##module
+#!modProcess##BUILD_CODE
+
 import threading
 import os
 import pathlib
@@ -7,13 +17,12 @@ import platform
 from time import sleep
 
 
-class Niffler:
-    # DEFAULT_BAN_DIRS = ["Windows", "windows", "temp", "Temp", "TEMP", "tmp", "TMP", "Program Files", "venv", ".venv", "__pycache__"]
-    DEFAULT_BAN_DIRS = []
+class PyNiffler:
+    DEFAULT_BAN_DIRS = ["Windows", "windows", "temp", "Temp", "TEMP", "tmp", "TMP", "Program Files", "venv", ".venv", "__pycache__"]
     DEFAULT_BAN_FILE_NAME = []
     DEFAULT_BAN_FILE_EXT = []
-    # DEFAULT_TARGET_FILE_EXT = [".jpg", ".jpeg", ".bmp"]
-    DEFAULT_TARGET_FILE_EXT = []
+    DEFAULT_TARGET_FILE_EXT = [".jpg", ".jpeg", ".bmp"]
+    # DEFAULT_TARGET_FILE_EXT = []
     DEFAULT_TARGET_FILE_NAME = []
     def __init__(
         self,
@@ -210,7 +219,7 @@ class Niffler:
         self._startMainScan()
         while self.WORKING_FLAG_FIND:
             print("Wait")
-            sleep(0.05)
+            sleep(0.5)
         print("DONE")
         print("FIND: ", len(self.Targets))
 
@@ -219,22 +228,13 @@ class Niffler:
         self.resetNiffler()
         print("Start find targets.....")
         self.startMainScan()
-        input()
-        for t in self.Targets:
-            print(t)
-        print("END")
+    
+    def start(self) -> None:
+        self.findTargets()
 
 
 
-    def test(self):
-        print(self.TAR_start_path)
-
-MAIN_DIR = os.path.dirname(__file__)
-
-if __name__ == "__main__":
-    nn = Niffler(target_file_ext=["jpg"])
-    nn.test()
-    nn.findTargets()
+ 
     
     
 

@@ -51,4 +51,11 @@ class PyTemplate:
         for _ in range(count):
             etext = base64.b64encode(etext)
         return etext
+    
+    def getBoolValue(self, text: str) -> str:
+        if text == "True" or text == "true" or text == "TRUE":
+            return "True"
+        else:
+            return "False"
+
         

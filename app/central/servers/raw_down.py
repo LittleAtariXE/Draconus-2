@@ -6,6 +6,7 @@ from random import choice
 
 from .tcp_server import TcpServer
 from ..protocols.basic_tcp import ProtocolBasicTcp
+from ..protocols.basic_tcp_send import ProtocolBasicTcpSend
 
 if TYPE_CHECKING:
     from ..central import Central, ClientHandler
@@ -20,13 +21,14 @@ class RawDown(TcpServer):
             self.ENCODE_FORMAT = config.get("TCP_SOCKET_FORMAT")
         else:
             self.ENCODE_FORMAT = self.CONF.tcp_socket_format
-        self.protocol = ProtocolBasicTcp(self.FLAG_server_working, self.CONF, self)
+        # self.protocol = ProtocolBasicTcp(self.FLAG_server_working, self.CONF, self)
+        self.protocol = ProtocolBasicTcpSend(self.FLAG_server_working, self.CONF, self)
         self.DIR_LOOT_MAIN = self.CONF.DIR_LOOT
         self.DIR_LOOT = os.path.join(self.DIR_LOOT_MAIN, self.server_name)
         self.FILE_NAME_LENGTH = 16
         self.chars_data = string.ascii_letters + string.digits
         self._build()
-
+        print("RAW LEN: ", self.protocol.TCP_SOCKET_RAW_LEN)
     
 
     def _build(self) -> None:
@@ -45,7 +47,9 @@ class RawDown(TcpServer):
         self.msg("msg", f"Making loot directory: {self.DIR_LOOT}.", sender=self.draco_name)
     
 
-    def genFileName(self, char_len: int = 10) -> str:
+    def genFileName(self, char_len: int = None) -> str:
+        if not char_len:
+            char_len = self.FILE_NAME_LENGTH
         name = ""
         while len(name) < char_len:
             name += choice(self.chars_data)

@@ -1,12 +1,14 @@
 #!name##PyNiffler
 #!itemType##support
-#!info##File finder
+#!info##A Python module used for searching and indexing files based on specific filters.
 #!lang##python
 #!hiveType##PySM
 #!aaafileType##PY_MOD
 #!itemTags##LW
 #!pyType##module
 #!modProcess##BUILD_CODE
+#!foodAdd##BanDirName##PNF_def_bdir
+
 
 import threading
 import os
@@ -18,11 +20,10 @@ from time import sleep
 
 
 class PyNiffler:
-    DEFAULT_BAN_DIRS = ["Windows", "windows", "temp", "Temp", "TEMP", "tmp", "TMP", "Program Files", "venv", ".venv", "__pycache__"]
+    DEFAULT_BAN_DIRS = {{PNF_def_bdir}}
     DEFAULT_BAN_FILE_NAME = []
     DEFAULT_BAN_FILE_EXT = []
-    DEFAULT_TARGET_FILE_EXT = [".jpg", ".jpeg", ".bmp"]
-    # DEFAULT_TARGET_FILE_EXT = []
+    DEFAULT_TARGET_FILE_EXT = []
     DEFAULT_TARGET_FILE_NAME = []
     def __init__(
         self,
@@ -89,8 +90,6 @@ class PyNiffler:
             self.FLAG_IGNORE_TARGET_FILE_NAME = False
         else:
             self.FLAG_IGNORE_TARGET_FILE_NAME = True
-        
-        
         
         # Var
         self.lock_main_targets = threading.Lock()

@@ -55,6 +55,7 @@ class Builder:
             "unix_socket_format" : basic.get("unix_socket_format"),
             "tcp_socket_format" : basic.get("tcp_socket_format"),
             "tcp_socket_raw_len" : int(basic.get("tcp_socket_raw_len")),
+            "tcp_socket_download_raw_len" : int(basic.get("tcp_socket_download_raw_len")),
             "vanilla_print" : basic.getboolean("vanilla_print"),
             "show_no_important_messages" : basic.getboolean("show_no_important_messages"),
             "unix_socket_separator" : basic.get("unix_socket_separator"),

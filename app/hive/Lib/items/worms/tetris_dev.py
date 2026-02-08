@@ -140,6 +140,11 @@ class Tetris:
                 self._flag_working = False
             case "help":
                 self.help()
+        for mod in self.allMods:
+            try:
+                mod.exeCmd(command)
+            except:
+                pass
     
     def send_msg(self, msg: str, *args, **kwargs) -> None:
         for mod in self.connMods:
@@ -148,7 +153,12 @@ class Tetris:
             except:
                 pass
 
-    
+    def send_file(self, fpath: str, *args, **kwargs) -> None:
+        for mod in self.connMods:
+            try:
+                mod.send_file(fpath, *args, **kwargs)
+            except:
+                pass
 
     def working(self) -> None:
         self.executeData()

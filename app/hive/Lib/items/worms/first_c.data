@@ -4,13 +4,14 @@
 #!lang##c
 #!Wprocess##BasicProc
 #!wormCompiler##Basic-C
-#!inFile##TestC_H##supp.h
+#!typeAccept##dll
+
 
 
 
 
 #include <stdio.h>
-#include "./supp.h"
+
 
 int main(void) {
     printf("Hello World\n");

@@ -55,6 +55,12 @@ global addrCreateThread
 global exeCreateThread
 global addrRtlMoveMemory
 global exeRtlMoveMemory
+global addrLoadLibraryA
+global exeLoadLibraryA
+global addrGetProcAddress
+global exeGetProcAddress
+global addrDisableThreadLibraryCalls
+global exeDisableThreadLibraryCalls
 
 extern lstrcmpA
 
@@ -77,6 +83,7 @@ section .data
     rb_VirtualAlloc: dd {{shTOOL.DigitsEncode("VirtualAlloc")}} ; VirtualAlloc
     rb_CreateThread: dd {{shTOOL.DigitsEncode("CreateThread")}} ; CreateThread
     rb_RtlMoveMemory: dd {{shTOOL.DigitsEncode("RtlMoveMemory")}} ; RtlMoveMemory
+    rb_DisableThreadLibraryCalls: dd {{shTOOL.DigitsEncode("DisableThreadLibraryCalls")}} ; DisableThreadLibraryCalls
     
 section .bss
     duck_k32: resq 1    ; kernel32.dll address
@@ -91,6 +98,104 @@ section .text
 
 ; ------------------------ EXPORT FUNCTIONS ------------------------------------------
 
+; ************************************************************************
+addrDisableThreadLibraryCalls:
+; DisableThreadLibraryCalls function address
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, rb_DisableThreadLibraryCalls
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+exeDisableThreadLibraryCalls:
+; Disables the DLL_THREAD_ATTACH and DLL_THREAD_DETACH notifications for the specified dynamic-link library (DLL). 
+; IN: RCX - A handle to the DLL module for which the DLL_THREAD_ATTACH and DLL_THREAD_DETACH notifications are to be disabled.
+; OUT: RAX - non zero (success) or "0" Fail
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx
+    
+    sub rsp, 32
+    call addrDisableThreadLibraryCalls
+    mov rcx, [rbp-8]
+    call rax
+    add rsp, 32 + 16
+    
+    pop rbp
+    ret
+
+; ************************************************************************
+addrGetProcAddress:
+; GetProcAddress function address
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, duck_item2
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+exeGetProcAddress:
+; Retrieves the address of an exported function (also known as a procedure) or variable from the specified dynamic-link library (DLL).
+; IN: RCX - A handle to the DLL module that contains the function or variable.
+; IN: RDX - The function or variable name, or the function's ordinal value. If this parameter is an ordinal value, it must be in the low-order word; the high-order word must be zero.
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx
+    mov [rbp-16], rdx
+    
+    sub rsp, 32
+    call addrGetProcAddress
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-16]
+    call rax
+    add rsp, 32 + 16
+    
+    pop rbp
+    ret
+
+; ************************************************************************
+addrLoadLibraryA:
+; LoadLibraryA function address
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, duck_item1
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+exeLoadLibraryA:
+; Loads the specified module into the address space of the calling process.
+; IN: RCX - file name
+; OUT: RAX - module handle or "0"
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx
+    
+    sub rsp, 32
+    call addrLoadLibraryA
+    mov rcx, [rbp-8]
+    call rax
+    add rsp, 32 + 16
+    
+    pop rbp
+    ret
+      
 
 ; ************************************************************************
 addrRtlMoveMemory:

@@ -5,6 +5,7 @@
 #!Var##BASC_slink##True##Specifies whether to use additional static libraries for the linker: '-static-libgcc'##str
 #!Var##BASC_no_std##True##Avoid including the standard library in the linker. If 'True' parameter is: '-Os -s -Wl,--gc-sections'##str
 #!reqRC##BasicRes
+#!typeAccept##RcExe
 
 {% if BASC_slink == 'True' or BASC_slink == True %}
     {% set _STATIC_LINK = "-static-libgcc" %}

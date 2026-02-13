@@ -437,12 +437,16 @@ class RawWormBuilder:
         
         # check required RC Script for compiler
         if raw_mod.itemType == "compiler":
-            if raw_mod.reqRC:
-                rscript = self.getLibItem("rscript", raw_mod.reqRC)
-                if not rscript:
-                    self.msg("error", f"[!!] ERROR: Required RC Script: {raw_mod.reqRC} does not exists in library. [!!]", sender=self.name)
-                else:
-                    self.addResourcesScript(rscript, raw_mod)
+            # Do not add "RS script" to "MOD Compiler"
+            if raw_mod.owner != self.RAW.master_worm:
+                pass
+            else:
+                if raw_mod.reqRC:
+                    rscript = self.getLibItem("rscript", raw_mod.reqRC)
+                    if not rscript:
+                        self.msg("error", f"[!!] ERROR: Required RC Script: {raw_mod.reqRC} does not exists in library. [!!]", sender=self.name)
+                    else:
+                        self.addResourcesScript(rscript, raw_mod)
         
         # check for food
         for fname, vname in raw_mod.foodReq.items():

@@ -1,4 +1,4 @@
-#!name##PyRawTcp2
+#!name##PyRawTcp
 #!itemType##module
 #!fileType##PY_MOD
 #!info##Basic TCP socket communication. Does not send or receive files. Handles sending and receiving messages and commands.
@@ -19,7 +19,7 @@ from random import randint
 
 {% set PRT_bencode_step = 6 %}
 
-class PyRawTcp2:
+class PyRawTcp:
     MTYPES = "conn"
     STAND_TH = False
     def __init__(self, master_worm: object):

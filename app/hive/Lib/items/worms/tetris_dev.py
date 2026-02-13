@@ -126,12 +126,6 @@ class Tetris:
         print(h)
         self.send_msg(h)
 
-    
-    # def _exeSysCmd(self, command: str) -> None:
-    #     cmd = command.split(" ")
-    #     match cmd[0]:
-    #         case "CLOSE":
-    #             self._flag_working = False
         
     def exeCmd(self, command: str) -> None:
         cmd = command.split(" ")

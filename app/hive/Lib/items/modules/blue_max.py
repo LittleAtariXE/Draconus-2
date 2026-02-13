@@ -102,7 +102,6 @@ class BlueMax:
             self.sendTargets()
 
     def start(self) -> None:
-        print("BlueMax Starting.....")
         self.NIFFLER.start()
         self.working()
 

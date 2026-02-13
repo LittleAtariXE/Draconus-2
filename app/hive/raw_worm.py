@@ -75,8 +75,10 @@ class RawWorm:
     @property
     def tagsInfo(self) -> list:
         ti = self.master_worm.moduleTags
-        if self.master_compiler.moduleTags:
+        if self.master_compiler:
             ti.extend(self.master_compiler.moduleTags)
+        # if self.master_compiler.moduleTags:
+        #     ti.extend(self.master_compiler.moduleTags)
         return ti
     
     @property

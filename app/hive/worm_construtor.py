@@ -224,6 +224,15 @@ class WormConstructor:
 
         return raw_exe
     
+    def _build_c_raw_worm(self, raw_exe: RawExe) -> RawExe:
+        raw_exe.last_process_name = "Build C Raw Worm"
+        raw_code = self.Coder.buildC_Code(raw_exe.modules, raw_exe.fpath_dir_output, raw_exe.FILE_NAME)
+        for fpath, rcode in raw_code.items():
+            code = self.renderSingleTemplate(rcode, raw_exe.VAR)
+            self.saveFile(fpath, code)
+            self.msg("dev", f"Save C code: {fpath}", sender=self.name)
+        return raw_exe
+    
     def process_BuildCode(self, raw_object: RawExe) -> RawExe:
         raw_object.last_process_name = f"Build Code: {raw_object.NAME}"
         if raw_object.hiveType == "payload":
@@ -238,6 +247,8 @@ class WormConstructor:
                 raw_object = self._build_cpp_raw_worm(raw_object)
             case "python":
                 self._build_python_raw_worm(raw_object)
+            case "c":
+                self._build_c_raw_worm(raw_object)
             case _:
                 raw_object = self._build_unknown_raw_worm(raw_object)
         return raw_object

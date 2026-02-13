@@ -1,0 +1,12 @@
+#!name##TestC_H
+#!itemType##sfile
+#!info##C header file
+
+#ifndef SUPP_H
+#define SUPP_H
+
+typedef int myINT;
+
+
+
+#endif

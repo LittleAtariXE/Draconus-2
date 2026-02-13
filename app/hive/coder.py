@@ -47,6 +47,19 @@ class CppCoder:
         fpath = os.path.join(self.output_dir, code_file_name)
         self.raw_code[fpath] = raw_code
 
+class C_Coder:
+    def __init__(self, coder: Coder, output_work_dir: str):
+        self.coder = coder
+        self.name = self.coder.name
+        self.msg = self.coder.msg
+        self.output_dir = output_work_dir
+        # file path : raw code
+        self.raw_code = {}
+    
+    def addCode(self, raw_code: str, code_file_name: str) -> None:
+        fpath = os.path.join(self.output_dir, code_file_name)
+        self.raw_code[fpath] = raw_code
+
 class PythonCoder:
     def __init__(self, coder: Coder, output_work_dir: str):
         self.coder = coder
@@ -190,6 +203,16 @@ class Coder:
             else:
                 cpp_code.addCode(rl.raw_code, master_file_name)
         return cpp_code.raw_code
+    
+    def buildC_Code(self, raw_lib_item_list: list, work_output_dir: str, master_file_name: str) -> dict:
+        c_code = C_Coder(self, work_output_dir)
+        for rl in raw_lib_item_list:
+            if rl.supportFileCodeName:
+                c_code.addCode(rl.raw_code, rl.supportFileCodeName)
+            else:
+                c_code.addCode(rl.raw_code, master_file_name)
+        return c_code.raw_code
+        
 
     def buildPythonCode(self, raw_lib_item_list: list, work_output_dir: str, master_file_name: str) -> tuple(list, str):
         py_code = PythonCoder(self, work_output_dir)

@@ -1,0 +1,18 @@
+#!name##FirstC
+#!itemType##worm
+#!info##First C Lang file.
+#!lang##c
+#!Wprocess##BasicProc
+#!wormCompiler##Basic-C
+#!inFile##TestC_H##supp.h
+
+
+
+
+#include <stdio.h>
+#include "./supp.h"
+
+int main(void) {
+    printf("Hello World\n");
+    return 0;
+}

@@ -64,8 +64,7 @@ class Tetris:
         for mod in self.__modules.values():
             try:
                 exmod = mod(self)
-            except Exception as e:
-                print("ERROR load mod: ", e)
+            except:
                 continue
             if mod.MTYPES in self._modules.keys():
                 self._modules[mod.MTYPES].append(exmod)
@@ -77,15 +76,13 @@ class Tetris:
             mod_th = threading.Thread(target=mod.start, daemon=True)
             mod_th.start()
             self.TH_mods.append(mod_th)
-        except Exception as e:
-            print("ERROR RUN MOD: ", e)
+        except:
             pass
     
     def _run_module_vanila(self, mod: object) -> None:
         try:
             mod.start()
-        except Exception as e:
-            print("ERROR Start mod: ", e)
+        except:
             pass
 
     def _run_modules(self) -> None:
@@ -100,10 +97,9 @@ class Tetris:
     
     def processData(self, data: Union[str, dict, list]) -> None:
         if isinstance(data, str):
-            print("RAW_CMD: ", data)
             self._input_cmd.put(data)
         else:
-            print("ERROR Wrong data")
+            pass
     
     def _executeData(self) -> None:
         while self._flag_working:
@@ -123,7 +119,6 @@ class Tetris:
                 h += mod.help()
             except:
                 pass
-        print(h)
         self.send_msg(h)
 
         
@@ -158,16 +153,14 @@ class Tetris:
         self.executeData()
         while self.FLAG_working:
             sleep(1)
-            
-            
+                      
     
     def Run(self) -> None:
         self._flag_working = True
-        print("Tetris Start")
         self._load_modules()
         self._run_modules()
         self.working()
-        # input("Press key")
+
 
 
 

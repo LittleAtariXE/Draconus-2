@@ -7,7 +7,7 @@
 #!modProcess##BUILD_CODE##COMPILE
 #!modCompiler##Basic-C
 #!readyApp##True
-#!Var##TDLL_text##Draconus say Helo##The text that will be displayed in the pop-up window.##str
+#!Var##TDLL_text##Draconus say Hello##The text that will be displayed in the pop-up window.##str
 
 #include <stdio.h>
 #include <windows.h>

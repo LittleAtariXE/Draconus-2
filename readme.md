@@ -9,13 +9,7 @@
     <p align="center">
         <img src="img/draco2_logo.png" alt="Logo Projektu" width="300">
     </p>
-    <h4 align="center">Every USER should have a Cyber Weapon to defend himself.</h4>
-    <h4 align="center">
-        <em>
-            Version 2 philosophy:<br>
-            Hack yourself first. Others will follow.
-        </em>
-    </h4>
+    <h4 align="center">Hack yourself first. Others will follow.</h4>
     <p align="center">
     This project is essentially the legacy of a poor noob who desperately wanted to become a hacker,
     but the only thing he ever successfully hacked was his own computer.
@@ -86,6 +80,7 @@
         <li><a href="#HiveCommands">Hive Commands</a></li>
         <li><a href="#HiveExamples">Hive Examples</a></li>
         <li><a href="#Tips">Tips and Tricks</a></li>
+        <li><a href="#ToolsList">Modules List</a></li>
         <li><a href="#Contributing">Contributing</a></li>
         <li><a href="#Changelog">Changelog</a></li>
     </ul>
@@ -549,6 +544,36 @@
         Be patient and allow the compilation process to complete.
     </p>
 </div>
+<div id="ToolsList">
+    <h2>Module List:</h2>
+    <p>
+        Below is a list of selected modules (tools) available in the current version of Draconus.
+        Not all module types are presented here.
+        For a complete and up-to-date overview, refer to the <strong>Hive</strong> section inside the program.
+    </p>
+    <p>
+        Module list for version <strong>2.01</strong>:
+    </p>
+    <p align="center">
+        <img src="img/worm1.jpg" alt="Master Worm" width="700">
+    </p>
+    <br/>
+    <p align="center">
+        <img src="img/module1.jpg" alt="Modules" width="700">
+    </p>
+    <br/>
+    <p align="center">
+        <img src="img/payload1.jpg" alt="Payloads" width="700">
+    </p>
+    <br/>
+    <p align="center">
+        <img src="img/compiler1.jpg" alt="Compilers" width="700">
+    </p>
+    <br/>
+    <p align="center">
+        <img src="img/shadow1.jpg" alt="Modules" width="700">
+    </p>
+</div>
 <div id="Contributing">
     <h2>Join the Project</h2>
     <p>
@@ -612,6 +637,20 @@
         If you are interested in contributing or extending the project,
         feel free to join and add your own tools, ideas, or experiments.
     </p>
+    <h3>Version 2.01</h3>
+    <p>
+        This update focuses on expanding language support, improving internal stability,
+        and cleaning up the codebase.
+    </p>
+    <h4>Changes and Improvements:</h4>
+    <ul>
+        <li>Added full C language support along with an integrated C compiler toolchain</li>
+        <li>Replaced the <strong>Montezuma</strong> worm template with <strong>Tetris</strong>,
+            a newer and more stable implementation</li>
+        <li>Improved all Python modules to ensure better interoperability and internal consistency</li>
+        <li>Added a new section in the README showcasing the current list of available modules</li>
+        <li>Fixed multiple minor bugs and removed obsolete or redundant code</li>
+    </ul>
 </div>
 </body>
 </html>

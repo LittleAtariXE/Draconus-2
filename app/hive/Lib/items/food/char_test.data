@@ -1,0 +1,9 @@
+#!name##CharTest
+#!itemType##food
+#!info##Test char. Contains all lowercase and uppercase char, numbers.
+#!loadType##clean_text
+
+#qwertyuiopasdfghjklzxcvbnm
+QWERTYUIOPASDFGHJKLZXCVBNM_-
+1234567890.,$%
+EXAMPLE TEXT example text

@@ -1,0 +1,8 @@
+#### Here are additional Python PIP libraries you can install into the compiler. Separate each name with an enter.
+#### ex:
+#### requests
+#### scapy
+#### etc....
+
+
+

@@ -1,0 +1,98 @@
+#!name##DuckTalesC_BASIC_C
+#!itemType##sfile
+#!info##Duck Tales C version. Extra Functions.
+#!lang##c
+#!addNameComp##True
+
+
+#include "duck_basic.h"
+
+#include <stdio.h>
+
+// ----------------------- FUNCTION DEF ----------------------------------------------
+typedef dt_DWORD (__stdcall *aGetModuleBaseNameA)(dt_HANDLE, dt_HMODULE, dt_LPSTR, dt_DWORD);
+typedef dt_LPSTR (__stdcall *aPathCombineA)(dt_LPSTR, dt_LPCSTR, dt_LPCSTR);
+typedef dt_DWORD (__stdcall *aGetCurrentDirectoryA)(dt_DWORD, dt_LPSTR);
+typedef dt_DWORD (__stdcall *aGetTempPathA)(dt_DWORD, dt_LPSTR);
+
+// ------------------------ FUNCTION, DLL NAME ------------------------------
+
+// psapi.dll
+uint32_t dtev_psapi_dll[] = {
+    {{shTOOL.DigitsEncode2("psapi.dll", _DUCK_TBASE)}}
+};
+
+// Shlwapi.dll
+uint32_t dtev_Shlwapi_dll[] = {
+    {{shTOOL.DigitsEncode2("Shlwapi.dll", _DUCK_TBASE)}}
+};
+
+uint32_t dtev_GetModuleBaseNameA[] = {
+    {{shTOOL.DigitsEncode2("GetModuleBaseNameA", _DUCK_TBASE)}}
+};
+
+// PathCombineA
+uint32_t dtev_PathCombineA[] = {
+    {{shTOOL.DigitsEncode2("PathCombineA", _DUCK_TBASE)}}
+};
+
+// GetCurrentDirectoryA
+uint32_t dtev_GetCurrentDirectoryA[] = {
+    {{shTOOL.DigitsEncode2("GetCurrentDirectoryA", _DUCK_TBASE)}}
+};
+
+// GetTempPathA
+uint32_t dtev_GetTempPathA[] = {
+    {{shTOOL.DigitsEncode2("GetTempPathA", _DUCK_TBASE)}}
+};
+
+// ----------------------- RAW ADDRESS FUNCTIONS ------------------------------
+void *dtaddr_GetModuleBaseNameA;
+void *dtaddr_PathCombineA;
+void *dtaddr_GetCurrentDirectoryA;
+void *dtaddr_GetTempPathA;
+
+aGetModuleBaseNameA dtf_raw_GetModuleBaseNameA;
+aPathCombineA dtf_raw_PathCombineA;
+aGetCurrentDirectoryA dtf_raw_GetCurrentDirectoryA;
+aGetTempPathA dtf_raw_GetTempPathA;
+
+// ----------------------- BUILD FUNCTIONS -----------------------------------------
+
+void dt_BasicFuncInit(void) {
+    // GetModuleBaseNameA
+    dtaddr_GetModuleBaseNameA = dt_DuckLoadAddr(dtev_GetModuleBaseNameA, dtev_psapi_dll);
+    dtf_raw_GetModuleBaseNameA = (aGetModuleBaseNameA)dtaddr_GetModuleBaseNameA;
+
+    // PathCombine
+    dtaddr_PathCombineA = dt_DuckLoadAddr(dtev_PathCombineA, dtev_Shlwapi_dll);
+    dtf_raw_PathCombineA = (aPathCombineA)dtaddr_PathCombineA;
+
+    // GetCurrentDirectory
+    dtaddr_GetCurrentDirectoryA = dt_DuckGetKAddr(dtev_GetCurrentDirectoryA);
+    dtf_raw_GetCurrentDirectoryA = (aGetCurrentDirectoryA)dtaddr_GetCurrentDirectoryA;
+
+    // GetTempPathA
+    dtaddr_GetTempPathA = dt_DuckGetKAddr(dtev_GetTempPathA);
+    dtf_raw_GetTempPathA = (aGetTempPathA)dtaddr_GetTempPathA;
+}
+
+
+
+// -------------------------- READY FUNCTIONS ---------------------------------
+
+dt_DWORD dtfb_GetModuleBaseNameA(dt_HANDLE proc_handle, dt_HMODULE module, dt_LPSTR name_buff, dt_DWORD buff_len) {
+    return dtf_raw_GetModuleBaseNameA(proc_handle, module, name_buff, buff_len);
+}
+
+dt_LPSTR dtfb_PathCombineA(dt_LPSTR destBuff, dt_LPCSTR pathDir, dt_LPCSTR fileName) {
+    return dtf_raw_PathCombineA(destBuff, pathDir, fileName);
+}
+
+dt_DWORD dtfb_GetCurrentDirectoryA(dt_DWORD buffLen, dt_LPSTR buff) {
+    return dtf_raw_GetCurrentDirectoryA(buffLen, buff);
+}
+
+dt_DWORD dtfb_GetTempPathA(dt_DWORD buffLen, dt_LPSTR buff) {
+    return dtf_raw_GetTempPathA(buffLen, buff);
+}

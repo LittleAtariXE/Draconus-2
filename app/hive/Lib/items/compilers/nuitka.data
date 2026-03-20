@@ -1,0 +1,39 @@
+#!name##Nuitka
+#!itemType##compiler
+#!info##Nuitka compiler. Compiles a Python file into a Windows x64 EXE.
+#!compilerMCNAME##MinGW-x64
+#!Var##NUT_one_file##True##Using the '--onefile' flag. Compiles the program into a single EXE file.##str
+#!Var##NUT_gui##True##Specifies whether the program is run in a console 'False' or as a gui program 'True'.##str
+
+
+
+{% if _ICON_NAME %}
+    {% set __ICON_NAME = "--windows-icon-from-ico=%s" | format(_ICON_NAME) %}
+{% else %}
+    {% set __ICON_NAME = "" %}
+{% endif %}
+
+{% if not NUT_one_file %}
+    {% set __ONE_FILE = "" %}
+{% else %}
+    {% set __ONE_FILE = "--onefile" %}
+{% endif %}
+
+{% if NUT_gui %}
+    {% set __GUI_EXEC = "--windows-console-mode=disable" %}
+{% else %}
+    {% set __GUI_EXEC = "" %}
+{% endif %}
+
+
+{
+    "WORKING_DIR" : "{{__WORK_DIR_DOCKER}}",
+    "COMPILER_CMD" : [
+        "cd {{__WORK_DIR_DOCKER}} && wine python -m nuitka {{__ONE_FILE}} --mingw64 {{__ICON_NAME}} {{__GUI_EXEC}} {{__SRC_FILE_NAME}}",
+        "cd {{__WORK_DIR_DOCKER}} && rm -R {{__MODULE_NAME}}.build",
+        "cd {{__WORK_DIR_DOCKER}} && rm -R {{__MODULE_NAME}}.dist",
+        "cd {{__WORK_DIR_DOCKER}} && rm -R {{__MODULE_NAME}}.onefile-build",
+        "cd {{__WORK_DIR_DOCKER}} && chmod 777 {{__FINAL_OUTPUT_FNAME}}"
+    ]
+}
+

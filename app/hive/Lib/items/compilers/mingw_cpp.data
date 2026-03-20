@@ -1,0 +1,32 @@
+#!name##Basic-CPP
+#!itemType##compiler
+#!info##MinGW-x64 cross compiler. Compiler CPP code to exe windows.
+#!compilerMCNAME##MinGW-x64
+#!Var##BCPP_slink##True##Specifies whether to use additional static libraries for the linker: '-static-libstdc++ -static-libgcc'##str
+#!Var##BCPP_no_std##True##Avoid including the standard library in the linker. If 'True' parameter is: '-Os -s -Wl,--gc-sections'##str
+#!reqRC##BasicRes
+
+{% if BCPP_slink == 'True' or BCPP_slink == True %}
+    {% set _STATIC_LINK = "-static-libstdc++ -static-libgcc" %}
+{% else %}
+    {% set _STATIC_LINK = "" %}
+{% endif %}
+
+{% if BCPP_no_std == 'True' or BCPP_no_std == True %}
+    {% set NO_STD_LIB = "-Os -s -Wl,--gc-sections" %}
+{% else %}
+    {% set NO_STD_LIB = "" %}
+{% endif %}
+
+{% set DEFAULT_DLLS = pyTOOL.buildSortString([__DEFAULT_DLL_LIST], "-") %}
+
+{   
+    "WORKING_DIR" : "{{__WORK_DIR_DOCKER}}",
+    "COMPILER_CMD" : [
+        "cd {{__WORK_DIR_DOCKER}} && x86_64-w64-mingw32-g++ -o {{__FINAL_OUTPUT_FNAME}} {{__SRC_FILE_NAME}} {{__RC_OUTPUT_FILE_NAME}} {{__LINKER_EXTRA_FILE_STR}} {{__EXTRA_LIBRARY_STR}} {{DEFAULT_DLLS}} {{_STATIC_LINK}} {{NO_STD_LIB}}",
+        "cd {{__WORK_DIR_DOCKER}} && chmod 777 *"
+    ],
+    "BUILD_RES_OBJECT" : [
+        "cd {{__WORK_DIR_DOCKER}} && x86_64-w64-mingw32-windres {{__RC_SRC_FILE_NAME}} -O coff -o {{__RC_OUTPUT_FILE_NAME}}"
+    ]
+}

@@ -1,0 +1,11 @@
+#!name##Donald
+#!devItem##True
+#!itemType##worm
+#!info##Build DLL file.
+#!lang##c
+#!fileType##dll
+#!typeAccept##dll
+#!wormCompiler##Basic-C
+#!Wprocess##TestProc
+#!payloadSpace##DON_dll##DLL file
+

@@ -1,0 +1,9 @@
+#!name##BasicProc
+#!itemType##Wprocess
+#!info##Builds EXE including payloads and libraries.
+
+[PAYLOAD]
+[BUILD_LIB]
+[BUILD_CODE]
+[COMPILE]
+[DONE]

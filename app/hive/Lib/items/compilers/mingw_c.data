@@ -1,0 +1,49 @@
+#!name##oldBasic-C
+#!devItem##True
+#!itemType##compiler
+#!info##MinGW-x64 cross compiler. Compiler C code to exe windows.
+#!compilerMCNAME##MinGW-x64
+#!Var##BASC_slink##True##Specifies whether to use additional static libraries for the linker: '-static-libgcc'##str
+#!Var##BASC_no_std##True##Avoid including the standard library in the linker. If 'True' parameter is: '-Os -s -Wl,--gc-sections'##str
+#!Var##BASC_gui##True##If the value is "True", the program will run without a visible console, otherwise the program will run in a visible console.##str
+#!aareqRC##BasicRes
+#!typeAccept##RcExe
+
+{% if BASC_slink == 'True' or BASC_slink == True %}
+    {% set _STATIC_LINK = "-static-libgcc" %}
+{% else %}
+    {% set _STATIC_LINK = "" %}
+{% endif %}
+
+{% if BASC_no_std == 'True' or BASC_no_std == True %}
+    {% set NO_STD_LIB = "-Os -s -Wl,--gc-sections" %}
+{% else %}
+    {% set NO_STD_LIB = "" %}
+{% endif %}
+
+{% if BASC_gui == "True" or BASC_gui == True %}
+    {% set _BASC_GUI = "-mwindows" %}
+{% else %}
+    {% set _BASC_GUI = "" %}
+{% endif %}
+{% set DEFAULT_DLLS = pyTOOL.buildSortString([__DEFAULT_DLL_LIST], "-") %}
+
+
+
+{   
+    "WORKING_DIR" : "{{__WORK_DIR_DOCKER}}",
+    "COMPILER_CMD" : [
+        "cd {{__WORK_DIR_DOCKER}} && x86_64-w64-mingw32-gcc -o {{__FINAL_OUTPUT_FNAME}} {{__SRC_FILE_NAME}} {{__RC_OUTPUT_FILE_NAME}} {{__LINKER_EXTRA_FILE_STR}} {{__EXTRA_LIBRARY_STR}} {{DEFAULT_DLLS}} {{_STATIC_LINK}} {{NO_STD_LIB}} {{_BASC_GUI}}",
+        "cd {{__WORK_DIR_DOCKER}} && chmod 777 *"
+    ],
+    "BUILD_RES_OBJECT" : [
+        "cd {{__WORK_DIR_DOCKER}} && x86_64-w64-mingw32-windres {{__RC_SRC_FILE_NAME}} -O coff -o {{__RC_OUTPUT_FILE_NAME}}"
+    ],
+    "DLL_LIB" : [
+        "cd {{__WORK_DIR_DOCKER}} && x86_64-w64-mingw32-gcc -shared {{__SRC_FILE_NAME}} {{__DEF_FILE_NAME}} {{__LINKER_EXTRA_FILE_STR}} -o {{__FINAL_OUTPUT_FNAME}} {{NO_STD_LIB}} {{__EXTRA_LIBRARY_STR}} {{DEFAULT_DLLS}} {{__DLL_ENTRY_POINT}}"
+    ],
+    "BUILD_COFF" : [
+        "cd {{__WORK_DIR_DOCKER}} && x86_64-w64-mingw32-objcopy -I binary -O pe-x86-64 -B i386:x86-64 {{__FINAL_OUTPUT_FNAME}} {{__COFF_SRC_FILE_NAME}}",
+        "cd {{__WORK_DIR_DOCKER}} && chmod 777 *"
+    ]
+}

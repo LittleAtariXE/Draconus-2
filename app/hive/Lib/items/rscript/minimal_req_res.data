@@ -1,0 +1,8 @@
+#!name##MinimalRes
+#!itemType##rscript
+#!info##The minimal "rscript" that is required to add an icon.
+#!hiveType##RcExe
+
+{% if _ICON_NAME %}
+IDI_ICON1 ICON "{{_ICON_NAME}}"
+{% endif %}

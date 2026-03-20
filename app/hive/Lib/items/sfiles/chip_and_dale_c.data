@@ -1,0 +1,142 @@
+#!name##ChipDaleC_C
+#!itemType##sfile
+#!info##Chip And Dale C file.
+#!lang##c
+#!addNameComp##True
+
+{% set CHIP_AND_DALE_ENCODE_KEY = shTOOL.DaleBuildKey(CAD_eKEY) %}
+
+
+#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
+#include "chip_and_dale.h"
+
+
+#define CHIP_DALE_BUFF_TEXT_SIZE 256
+
+// LIB import
+extern void* ChipDaleInit(void);
+extern void* ChipDaleADDR_kernel32(void);
+extern void* ChipDaleADDR_ntdll(void);
+extern void* ChipFindTreasureSingle(char*);
+extern char* DaleShow(char*);
+extern void* ChipGetFunc(char*, void*);
+
+// ---------------- CONSTANSTS, FLAGS, ADDRESS, ETC -----------------------------
+void *CDV_ADDR_KERNEL32 = NULL;
+void *CDV_ADDR_NTDLL = NULL;
+void *CDV_ADDR_F_MultiByteToWideChar = NULL;
+
+UINT CDV_CONST_CODE_PAGE_UTF_8 = 65001;
+
+
+// Encoded functions name
+static char CD_ENC_RAW_LoadLibraryA[] = {
+    {{ shTOOL.DaleShadow("LoadLibraryA", CHIP_AND_DALE_ENCODE_KEY) }}
+};
+static char CD_ENC_RAW_LdrLoadDll[] = {
+    {{ shTOOL.DaleShadow("LdrLoadDll", CHIP_AND_DALE_ENCODE_KEY) }}
+};
+static char CD_ENC_RAW_MultiByteToWideChar[] = {
+    {{ shTOOL.DaleShadow("MultiByteToWideChar", CHIP_AND_DALE_ENCODE_KEY) }}
+}; // MultiByteToWideChar
+
+// Function def
+typedef HMODULE (*CDft_raw_lla_k32)(LPCSTR);
+typedef uint32_t (*CDft_raw_lld_ntdll)(PWSTR, PULONG, PUNICODE_STRING, HMODULE*);
+typedef int (*CDft_raw_mbtwc)(UINT, DWORD, const char*, int, LPWSTR, int);
+
+// BUFFers
+static char CDB_text_buff[CHIP_DALE_BUFF_TEXT_SIZE];
+static WCHAR CDB_wchar_buff[CHIP_DALE_BUFF_TEXT_SIZE];
+
+
+// -------------------------- ADDR Functions
+static void* CDSf_addrKernel32(void) {
+    return ChipDaleADDR_kernel32();
+}
+
+static void* CDSf_addrNtdll(void) {
+    return ChipDaleADDR_ntdll();
+}
+
+// INIT Library Function
+void CDF_Initialize(void) {
+    ChipDaleInit();
+    CDV_ADDR_KERNEL32 = CDSf_addrKernel32();
+    CDV_ADDR_NTDLL = CDSf_addrNtdll();
+    CDV_ADDR_F_MultiByteToWideChar = CDF_GetFuncEnc(CD_ENC_RAW_MultiByteToWideChar, CDV_ADDR_KERNEL32);
+}
+
+// ---------------------------- Decode Functions
+char* CDF_Decode(char *enc_string) {
+    return DaleShow(enc_string);
+}
+
+int CDFh_MultiByteToWideChar(UINT code_page, DWORD dwFlags, const char* lpText, int cbMultiByte, LPWSTR lpWideChar, int sizeWide) {
+    CDft_raw_mbtwc mbtwc = CDV_ADDR_F_MultiByteToWideChar;
+    return mbtwc(code_page, dwFlags, lpText, cbMultiByte, lpWideChar, sizeWide);
+}
+
+int CDFh_ConvertUtf8(const char* lpText, LPWSTR buffer, int buffer_size) {
+    CDft_raw_mbtwc mbtwc = CDV_ADDR_F_MultiByteToWideChar;
+    return mbtwc(CDV_CONST_CODE_PAGE_UTF_8, 0, lpText, -1, buffer, buffer_size);
+}
+
+
+// --------------------------- Find Functions    
+
+void* CDF_GetFunc(char *func_name, void *dll_addr) {
+    return ChipGetFunc(func_name, dll_addr);
+}
+
+void* CDF_GetFuncEnc(char *encoded_name, void *dll_addr) {
+    char *pBuff = CDF_Decode(encoded_name);
+    return ChipGetFunc(pBuff, dll_addr);
+}
+
+
+// Build Functions
+
+UNICODE_STRING CDFb_BuildUnicodeStruct(char text[], WCHAR buff[], int buff_size) {
+    int size = CDFh_ConvertUtf8(text, buff, buff_size);
+    UNICODE_STRING dInfo;
+    dInfo.Buffer = buff;
+    dInfo.Length = size;
+    dInfo.MaximumLength = size + sizeof(WCHAR);
+    return dInfo;
+}
+
+
+
+// ----------------------------- Load Functions
+
+HMODULE CDFw_LoadLibraryA(LPCSTR dll_name) {
+    char *pBuff = CDF_Decode(CD_ENC_RAW_LoadLibraryA);
+    CDft_raw_lla_k32 lla = CDF_GetFunc(pBuff, CDV_ADDR_KERNEL32);
+    return lla(dll_name);
+}
+
+HMODULE CDFwe_LoadLibraryA(char encoded_name[]) {
+    memset(CDB_text_buff, 0, CHIP_DALE_BUFF_TEXT_SIZE);
+    char *pBuff = CDF_Decode(encoded_name);
+    strcpy(CDB_text_buff, pBuff);
+    return CDFw_LoadLibraryA(CDB_text_buff);
+}
+
+NTSTATUS CDFw_LdrLoadDll(PWSTR dllPath, PULONG dllChar, char dllName[], HMODULE *mHandle) {
+    char *pBuff = CDF_Decode(CD_ENC_RAW_LdrLoadDll);
+    CDft_raw_lld_ntdll lld = CDF_GetFunc(pBuff, CDV_ADDR_NTDLL);
+    UNICODE_STRING dll_info = CDFb_BuildUnicodeStruct(dllName, CDB_wchar_buff, CHIP_DALE_BUFF_TEXT_SIZE);
+    return lld(dllPath, dllChar, &dll_info, mHandle);
+}
+
+NTSTATUS CDFwx_LdrLoadDll(char encode_dll_name[], HMODULE *mHandle) {
+    char *pBuff = CDF_Decode(encode_dll_name);
+    memset(CDB_text_buff, 0, CHIP_DALE_BUFF_TEXT_SIZE);
+    strcpy(CDB_text_buff, pBuff);
+    return CDFw_LdrLoadDll(0, 0, CDB_text_buff, mHandle);
+}
+
+

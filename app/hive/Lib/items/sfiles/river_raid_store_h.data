@@ -1,0 +1,15 @@
+#!name##RiverRaidStore_H
+#!itemType##sfile
+#!info##River Raid header file.
+#!lang##c
+
+#ifndef RR_STORE_H
+#define RR_STORE_H
+
+unsigned char* RR_GetFuel(void);
+char* RR_GetTarget(void);
+void RR_ResetTargets(void);
+int RR_GetFuelSize(void);
+
+
+#endif

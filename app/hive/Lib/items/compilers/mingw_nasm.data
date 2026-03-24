@@ -1,0 +1,46 @@
+#!name##Basic-Nasm
+#!itemType##compiler
+#!info##MinGW-x64 cross compiler. Compiler NASM code to exe, dll, lib windows.
+#!compilerMCNAME##MinGW-x64
+#!Var##BASM_no_std##-nostdlib -s##Parameters to avoid including the standard library in the linker. You can add additional parameters or remove them entirely, in which case the function will not be used.##str
+#!typeAccept##RcExe
+
+
+{% if __VAR_EXEC_SHOW %}
+    {% if __VAR_EXEC_SHOW == "console" %}
+        {% set _WORM_EXE_SHOW = "-Wl,-e,main" %}
+    {% else %}
+        {% set _WORM_EXE_SHOW = "-Wl,-e,WinMain -mwindows" %}
+    {% endif %}
+{% else %}
+    {% set _WORM_EXE_SHOW = "-Wl,-e,main" %}
+{% endif %}
+
+
+
+
+
+{% set _OUTPUT_OBJ_FILE = "%s.o" | format(__MODULE_NAME) %}
+{% set NASM_CMD = "nasm -f win64 %s -o %s" | format(__SRC_FILE_NAME, _OUTPUT_OBJ_FILE) %}
+{% set DEFAULT_DLLS = pyTOOL.buildSortString([__DEFAULT_DLL_LIST], "-") %}
+
+{
+    "WORKING_DIR" : "{{__WORK_DIR_DOCKER}}",
+    "COMPILER_CMD" : [
+        "cd {{__WORK_DIR_DOCKER}} && {{NASM_CMD}}",
+        "cd {{__WORK_DIR_DOCKER}} && x86_64-w64-mingw32-gcc -m64 {{BASM_no_std}} {{__RC_OUTPUT_FILE_NAME}} -o {{__FINAL_OUTPUT_FNAME}} {{__MODULE_NAME}}.o {{_WORM_EXE_SHOW}} {{__EXTRA_LIBRARY_STR}} {{DEFAULT_DLLS}}",
+        "cd {{__WORK_DIR_DOCKER}} && chmod 777 *"
+    ],
+    "BUILD_RES_OBJECT" : [
+        "cd {{__WORK_DIR_DOCKER}} && x86_64-w64-mingw32-windres {{__RC_SRC_FILE_NAME}} -O coff -o {{__RC_OUTPUT_FILE_NAME}}"
+    ],
+    "STATIC_LIB" : [
+        "cd {{__WORK_DIR_DOCKER}} && {{NASM_CMD}}",
+        "cd {{__WORK_DIR_DOCKER}} && x86_64-w64-mingw32-ar rcs {{__FINAL_OUTPUT_FNAME}} {{_OUTPUT_OBJ_FILE}} {{__EXTRA_LIBRARY_STR}}",
+        "cd {{__WORK_DIR_DOCKER}} && chmod 777 *"
+    ],
+    "DLL_LIB" : [
+        "cd {{__WORK_DIR_DOCKER}} && {{NASM_CMD}}",
+        "cd {{__WORK_DIR_DOCKER}} && x86_64-w64-mingw32-gcc -shared {{_OUTPUT_OBJ_FILE}} {{__DEF_FILE_NAME}} -o {{__FINAL_OUTPUT_FNAME}} {{BASM_no_std}} {{__EXTRA_LIBRARY_STR}} {{DEFAULT_DLLS}} {{__DLL_ENTRY_POINT}}"
+    ]
+}

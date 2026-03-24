@@ -1,0 +1,16 @@
+#!name##BanDirName
+#!itemType##food
+#!info##A default list of directory names that will be ignored. Primarily used by file-searching modules. Directory names on this list are skipped when building file search paths.
+#!loadType##list
+
+Windows
+windows
+temp
+Temp
+TEMP
+tmp
+TMP
+Program Files
+venv
+.venv
+__pycache__

@@ -1,0 +1,8 @@
+#!name##ExtractPayDLL
+#!itemType##Wprocess
+#!info##Allows you to save PAYLOAD as a ready-made, independent DLL
+
+[PAYLOAD]
+[BUILD_CODE]
+[BUILD_WORM]
+[DONE]

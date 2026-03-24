@@ -1,0 +1,21 @@
+#!name##DuckTalesText
+#!itemType##food
+#!info##Text for DuckTales Module. Contains all lowercase and uppercase letters, numbers and some special characters.
+#!loadType##clean_text
+#!e##------------------------------------------------------------------------------------------------------------------------------------------
+#!e##------------ This is the default obfuscation text for function names in the "DuckTales" module. You can add your own text. ---------------
+#!e##------------ IMPORTANT: The text must contain all lowercase and uppercase letters, all numbers, and all characters like ".", "_". --------
+#!e##------------------------------------------------------------------------------------------------------------------------------------------
+
+#Units standing idle for long periods will slowly recover stamina.
+New defensive structure: Watchtower that increases detection range.
+Improved pathfinding for large armies moving through narrow terrain.
+Supply shortages now reduce unit morale over time.
+Added banner customization for player factions.
+AI factions may now form temporary alliances against dominant players.
+New soundtrack tracks added for desert and winter biomes.
+Siege ladders can be destroyed while units are climbing them.
+Fixed issue where catapults occasionally launched projectiles into the void instead of the enemy.
+#qwertyuiopasdfghjklzxcvbnm
+QWERTYUIOPASDFGHJKLZXCVBNM_-
+1234567890.,$

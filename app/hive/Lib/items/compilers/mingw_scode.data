@@ -1,0 +1,16 @@
+#!name##SC_WIN64
+#!itemType##compiler
+#!info##Compiles and extracts shellcode Windows x64 from a module.
+#!compilerMCNAME##MinGW-SCode
+
+
+{
+    "WORKING_DIR" : "{{__WORK_DIR_DOCKER}}",
+    "COMPILER_CMD" : [
+        "cd {{__WORK_DIR_DOCKER}} && nasm -f bin {{__SRC_FILE_NAME}} -o {{__MODULE_NAME}}.o"
+    ],
+    "SCODE_EXTRACT" : [
+        "cd {{__WORK_DIR_DOCKER}} && objdump -D -b binary -mi386:x86-64 {{__MODULE_NAME}}.o > {{__MODULE_NAME}}_objdump.txt",
+        "cd {{__WORK_DIR_DOCKER}} && chmod 777 *"
+    ]
+}

@@ -1,0 +1,111 @@
+#!name##RAW_DALE_ASM
+#!itemType##sfile
+#!info##Chip and Dale lib part
+#!lang##nasm
+
+%ifndef RAW_DALE_ASM
+%define RAW_DALE_ASM
+
+
+section .data
+    
+section .bss
+    dale_buff_raw_name: resb DALE_BUFF_FUNC_NAME
+    dale_key_index: resb 1
+
+section .text
+
+DaleShow:
+; Decode string, return pointer to buffer
+; IN: RCX - encoded string
+; OUT: RAX - pointer to buffer
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx
+    push rdi
+    push rdx
+    push rbx
+    push r10
+    sub rsp, 32
+    
+    ; reset buffer
+    mov rcx, DALE_BUFF_FUNC_NAME
+    lea rdi, [dale_buff_raw_name]
+    xor rax, rax
+    cld
+    rep stosb
+
+    ;reset KEY index
+    lea rax, [dale_key_index]
+    xor rcx, rcx
+    mov byte [rax], cl
+    xor rax, rax
+    
+    mov rcx, [rbp-8]    ; encoded string
+    xor rdx, rdx    ; index
+    lea rbx, [dale_buff_raw_name]
+    xor rdi, rdi    ; temp
+    .dloop:
+        call DaleGetKey
+        mov byte dil, [rcx + rdx]
+        cmp dil, 0
+        je .return
+        sub dil, al
+        mov byte [rbx + rdx], dil
+        inc rdx
+        jmp .dloop    
+    
+    .return:
+        lea rax, [dale_buff_raw_name]
+        add rsp, 32
+        pop r10
+        pop rbx
+        pop rdx
+        pop rdi
+        add rsp, 16
+        pop rbp
+        ret
+
+
+
+DaleGetKey:
+; Get one byte of decode key
+; OUT: RAX - one byte
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push rcx
+    
+    .enter:
+        xor rax, rax
+        xor rcx, rcx
+        lea rbx, [dale_key_index]
+        mov byte cl, [rbx]
+        
+        lea rbx, [dale_KEY]
+        mov byte al, [rbx + rcx]
+        cmp al, 0
+        je .reset_index
+        
+        xor rcx, rcx
+        lea rbx, [dale_key_index]
+        mov byte cl, [rbx]
+        inc cl
+        mov byte [rbx], cl
+    
+    
+    .return:
+        pop rcx
+        pop rbx
+        pop rbp
+        ret
+
+    .reset_index:
+        lea rbx, [dale_key_index]
+        xor rcx, rcx
+        mov byte [rbx], cl
+        jmp .enter
+
+
+%endif

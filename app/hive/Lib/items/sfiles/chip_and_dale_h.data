@@ -1,0 +1,37 @@
+#!name##ChipDaleC_H
+#!itemType##sfile
+#!info##Chip And Dale header file.
+#!lang##c
+
+#ifndef CHIP_AND_DALE_H
+#define CHIP_AND_DALE_H
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <ntdef.h>
+
+// EXPORT ADDRESS
+extern void *CDV_ADDR_KERNEL32;
+extern void *CDV_ADDR_NTDLL;
+
+
+void CDF_Initialize(void);
+
+void* CDF_GetFunc(char *func_name, void *dll_addr);
+void* CDF_GetFuncEnc(char *encoded_name, void *dll_addr);
+
+char* CDF_Decode(char *enc_string);
+int CDFh_MultiByteToWideChar(UINT code_page, DWORD dwFlags, const char* lpText, int cbMultiByte, LPWSTR lpWideChar, int sizeWide);
+int CDFh_ConvertUtf8(const char* lpText, LPWSTR buffer, int buffer_size);
+
+
+UNICODE_STRING CDFb_BuildUnicodeStruct(char text[], WCHAR buff[], int buff_size);
+
+
+HMODULE CDFw_LoadLibraryA(LPCSTR dll_name);
+HMODULE CDFwe_LoadLibraryA(char encoded_name[]);
+NTSTATUS CDFw_LdrLoadDll(PWSTR dllPath, PULONG dllChar, char dllName[], HMODULE *mHandle);
+NTSTATUS CDFwx_LdrLoadDll(char encode_dll_name[], HMODULE *mHandle);
+
+
+#endif

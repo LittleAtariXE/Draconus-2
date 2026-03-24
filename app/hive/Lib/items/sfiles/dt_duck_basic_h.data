@@ -1,0 +1,24 @@
+#!name##DuckTalesC_BASIC_H
+#!itemType##sfile
+#!info##Duck Tales C version. Extra functions.
+#!lang##c
+
+#ifndef DUCK_BASIC_H
+#define DUCK_BASIC_H
+
+#include "duck_core.h"
+
+// --------------------- EXPORTED FUNCTIONS ----------------------------------
+
+// Init functions
+void dt_BasicFuncInit(void);
+
+
+// FULL Functions
+dt_DWORD dtfb_GetModuleBaseNameA(dt_HANDLE, dt_HMODULE, dt_LPSTR, dt_DWORD);
+dt_LPSTR dtfb_PathCombineA(dt_LPSTR, dt_LPCSTR, dt_LPCSTR);
+dt_DWORD dtfb_GetCurrentDirectoryA(dt_DWORD, dt_LPSTR);
+dt_DWORD dtfb_GetTempPathA(dt_DWORD, dt_LPSTR);
+
+
+#endif

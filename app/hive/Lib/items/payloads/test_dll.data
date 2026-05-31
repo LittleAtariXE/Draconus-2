@@ -1,0 +1,35 @@
+#!name##TestDll
+#!itemType##payload
+#!lang##c
+#!info##Creates a DLL written in C that displays a message using the MessageBoxA function when it is loaded and unloaded. Ideal for testing loaders, injectors, and similar mechanisms.
+#!fileType##dll
+#!modProcess##BUILD_CODE##COMPILE
+#!payloadCompiler##Basic-C
+#!payloadCodeWrite##True
+#!Var##TDLL_ptext##Draconus say Hello##The text that will be displayed in the pop-up window.##str
+
+
+#include <stdio.h>
+#include <windows.h>
+
+
+DWORD __stdcall enterDLL(LPVOID arg) {
+    MessageBoxA(0, "{{TDLL_ptext}}", "DRACONUS", 0);
+}
+
+
+BOOL DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
+    switch (reason) {
+        case DLL_PROCESS_ATTACH:
+            HANDLE hTh = CreateThread(0, 0, enterDLL, 0, 0, 0);
+            break;
+        case DLL_THREAD_ATTACH:
+            break;
+        case DLL_THREAD_DETACH:
+            break;
+        case DLL_PROCESS_DETACH:
+            MessageBoxA(0, "Bye Bye", "DRACONUS", 0);
+            break;
+    }
+    return TRUE;
+}

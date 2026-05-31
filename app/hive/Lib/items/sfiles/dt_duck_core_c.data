@@ -1,0 +1,177 @@
+#!name##DuckTalesC_CORE_C
+#!itemType##sfile
+#!info##Duck Tales C version.
+#!lang##c
+#!addNameComp##True
+
+
+
+#include <stdio.h>
+#include "duck_core.h"
+
+// ---------------- CONSTANSTS, FLAGS, ETC -----------------------------
+const dt_DWORD dtv_PROCESS_ALL_ACCESS = 0x1F0FFFu;
+const dt_DWORD dtv_MEM_COMMIT = 0x00001000;
+const dt_DWORD dtv_MEM_RESERVE = 0x00002000;
+const dt_DWORD dtv_MEM_COMMIT_RESERVE = 0x00001000 | 0x00002000;
+const dt_DWORD dtv_PAGE_EXECUTE_READWRITE = 0x40;
+const dt_DWORD dtv_THREAD_CREATE_SUSPENDED = 0x00000004;
+const dt_DWORD dtv_PROCESS_QUERY_INFORMATION = 0x0400;
+const dt_DWORD dtv_PROCESS_VM_READ = 0x0010;
+const dt_DWORD dtv_PROCESS_CREATE_NO_WINDOW = 0x08000000;
+const dt_DWORD dtv_PROCESS_CREATE_SUSPENDED = 0x00000004;
+const dt_DWORD dtv_PROCESS_CREATE_NEW_CONSOLE = 0x00000010;
+const dt_DWORD dtv_STARTUPINFO_FLAG_STARTF_USESTDHANDLES = 0x00000100;
+
+
+// LIB import
+extern void* DuckStartTales(void);
+extern const char* DuckIntro(void);
+extern const char* DuckShow(uint32_t*);
+extern void* DuckGetKFunc(uint32_t*);
+extern void* DuckGetAddr(char*);
+extern void* DuckGetChest(char*, char*);
+extern void* DuckGet(uint32_t*, uint32_t*);
+
+// ADDR Func Import
+extern dta_GetLastError addrGetLastError(void);
+extern dta_OpenProcess addrOpenProcess(void);
+extern dta_CloseHandle addrCloseHandle(void);
+extern dta_VirtualAllocEx addrVirtualAllocEx(void);
+extern dta_WriteProcessMemory addrWriteProcessMemory(void);
+extern dta_CreateRemoteThread addrCreateRemoteThread(void);
+extern dta_CreateThread addrCreateThread(void);
+extern dta_LoadLibraryA addrLoadLibraryA(void);
+extern dta_WaitForSingleObject addrWaitForSingleObject(void);
+extern dta_DisableThreadLibraryCalls addrDisableThreadLibraryCalls(void);
+extern dta_GetProcAddress addrGetProcAddress(void);
+extern dta_CreateProcessA addrCreateProcessA(void);
+
+
+// ---------------------- API ----------------------------------------
+
+// ---- Basic initialization -----
+void dt_DuckBasicInit(void) {
+    // Init basic core
+    DuckStartTales();
+}
+
+// DUCK TALES FUNCTIONS
+
+const char* dt_DuckInitIntro(void) {
+    // return text
+    return DuckIntro();
+}
+
+int dt_DuckInitTest(void) {
+    // Return 0 - DuckTales not initialized
+    // Return 1 - DuckTales is initialized
+    const char* obf_text = DuckIntro();
+    if (obf_text[0] == '\0') {
+        return 0;
+    }
+    else {
+        return 1;
+    }
+}
+
+const char* dt_DuckDecode(uint32_t *func_name) {
+    return DuckShow(func_name);
+}
+
+void* dt_DuckGetRawAddr(char *text_string) {
+    // Get function address from kernel32.dll
+    return DuckGetAddr(text_string);
+}
+
+void* dt_DuckGetKAddr(uint32_t *encoded_table) {
+    // Get function address from kernel32.dll
+    return DuckGetKFunc(encoded_table);
+}
+
+void* dt_DuckLoadRawAddr(char* func_name, char* dll_name) {
+    // Load DLL and Get Functions address
+    return DuckGetChest(func_name, dll_name);
+}
+
+void* dt_DuckLoadAddr(uint32_t* func_name, uint32_t* dll_name) {
+    // Load DLL and Get Functions address
+    return DuckGet(func_name, dll_name);
+}
+
+
+//Second Init
+void dt_DuckNextInit(void) {
+    // Second step initialize
+
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------
+
+// ----- RAW Address Functions -------
+dta_LoadLibraryA dtfra_LoadLibraryA(void) {
+    return addrLoadLibraryA();
+}
+
+
+// ----- FULL Functions -----
+
+dt_DWORD dtf_GetLastError(void) {
+    dta_GetLastError gle = addrGetLastError();
+    return gle();
+}
+
+dt_HANDLE dtf_OpenProcess(dt_DWORD dwDesiredAccess, dt_BOOL bInheritHandle, dt_DWORD pid) {
+    dta_OpenProcess op_proc = addrOpenProcess();
+    return op_proc(dwDesiredAccess, bInheritHandle, pid);
+}
+
+dt_BOOL dtf_CloseHandle(dt_HANDLE handle_object) {
+    dta_CloseHandle c_handle = addrCloseHandle();
+    return c_handle(handle_object);
+}
+
+dt_LPVOID dtf_VirtualAllocEx(dt_HANDLE proc, dt_LPVOID lpAddr, dt_SIZE_T mem_size, dt_DWORD flAllocationType, dt_DWORD flProtect) {
+    dta_VirtualAllocEx alloc_mem = addrVirtualAllocEx();
+    return alloc_mem(proc, lpAddr, mem_size, flAllocationType, flProtect);
+}
+
+dt_BOOL dtf_WriteProcessMemory(dt_HANDLE proc, dt_LPVOID base_addr, dt_LPCVOID lpBuffer, dt_SIZE_T nSize, dt_SIZE_T* lpNumBytes) {
+    dta_WriteProcessMemory proc_mem = addrWriteProcessMemory();
+    return proc_mem(proc, base_addr, lpBuffer, nSize, lpNumBytes);
+}
+
+dt_HANDLE dtf_CreateRemoteThread(dt_HANDLE proc, dt_LPVOID lpThAttr, dt_SIZE_T dwStackSize, dt_LPVOID mem_addr, dt_LPVOID thVar, dt_DWORD thFlag, dt_LPDWORD thID) {
+    dta_CreateRemoteThread crTH = addrCreateRemoteThread();
+    return crTH(proc, lpThAttr, dwStackSize, mem_addr, thVar, thFlag, thID);
+}
+
+dt_HANDLE dtf_CreateThread(dt_LPCVOID thAtrr, dt_SIZE_T dwStackSize, dt_LPVOID start_addr, dt_LPVOID thVar, dt_DWORD thFlag, dt_LPDWORD thID) {
+    dta_CreateThread crTH = addrCreateThread();
+    return crTH(thAtrr, dwStackSize, start_addr, thVar, thFlag, thID);
+}
+
+dt_HANDLE dtf_LoadLibraryA(dt_LPCSTR module_name) {
+    dta_LoadLibraryA duckLLA = addrLoadLibraryA();
+    return duckLLA(module_name);
+}
+
+dt_DWORD dtf_WaitForSingleObject(dt_HANDLE module_handle, dt_DWORD time_milisec) {
+    dta_WaitForSingleObject duckWFSO = addrWaitForSingleObject();
+    return duckWFSO(module_handle, time_milisec);
+}
+
+dt_BOOL dtf_DisableThreadLibraryCalls(dt_HANDLE module_handle) {
+    dta_DisableThreadLibraryCalls duckDTLC = addrDisableThreadLibraryCalls();
+    return duckDTLC(module_handle);
+}
+
+dt_FARPROC dtf_GetProcAddress(dt_HANDLE module_handle, dt_LPCSTR func_name) {
+    dta_GetProcAddress duckGPA = addrGetProcAddress();
+    return duckGPA(module_handle, func_name);
+}
+
+dt_BOOL dtf_CreateProcessA(dt_LPCSTR appName, dt_LPSTR cmdLine, dts_LPSECURITY_ATTRIBUTES procAttr, dts_LPSECURITY_ATTRIBUTES thAttr, dt_BOOL inHandle, dt_DWORD createFLAG, dt_LPVOID lpEnv, dt_LPCSTR lpCurrentDir, dts_LPSTARTUPINFOA sInfo, dts_LPPROCESS_INFORMATION pInfo) {
+    dta_CreateProcessA duckCPA = addrCreateProcessA();
+    return duckCPA(appName, cmdLine, procAttr, thAttr, inHandle, createFLAG, lpEnv, lpCurrentDir, sInfo, pInfo);
+}

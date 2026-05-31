@@ -1,0 +1,35 @@
+#!name##PyLoader
+#!itemType##module
+#!info##A Python module that analyzes the code assembled in Draconus and detects any non-standard libraries used. When such libraries are found, they are added to its internal list. PyLoader always places its code at the beginning of the file so it executes first, then attempts to download and install missing dependencies using PIP. In testing, it worked reliably and as intended.
+#!pyType##loader
+#!hiveType##PySM
+#!lang##python
+#!pyImportHold##True
+
+import sys
+import subprocess
+
+class Loader:
+    def __init__(self):
+        self.mods = {{_PY_PIP_IMPORT}}
+
+    def load_mods(self):
+        for mod in self.mods:
+            try:
+                exec(f"import {mod}")
+            except ModuleNotFoundError:
+                self.download_mods(mod)
+    
+    def download_mods(self, mod_name: str) -> None:
+        if mod_name.startswith("from") or mod_name.startswith("import"):
+            mod = mod_name.split(" ")[1]
+        else:
+            mod = mod_name
+        try:
+            subprocess.run([sys.executable, "-m", "pip", "install", mod])
+        except:
+            pass
+    
+
+LL = Loader()
+LL.load_mods()

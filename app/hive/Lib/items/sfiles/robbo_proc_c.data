@@ -1,0 +1,91 @@
+#!name##RobboProc_C
+#!itemType##sfile
+#!info##Robbo proc C file.
+#!lang##c
+#!addNameComp##True
+
+
+#include "robbo_base.h"
+#include "robbo_proc.h"
+#include <stdio.h>
+
+static int raw_name_Psapi_dll[] = {
+    {{_ROBBO.EncodeStr("Psapi.dll")}}
+};
+void *robbo_addr_psapi_dll = NULL;
+static int raw_name_EnumProcesses[] = {
+    {{_ROBBO.EncodeStr("EnumProcesses")}}
+};
+typedef BOOL (*Rtype_EnumProcesses)(DWORD[], DWORD, LPDWORD);
+static int raw_name_GetModuleBaseNameA[] = {
+    {{_ROBBO.EncodeStr("GetModuleBaseNameA")}}
+};
+typedef DWORD (*Rtype_GetModuleBaseNameA)(HANDLE, HMODULE, LPSTR, DWORD);
+
+// CreateProcessA
+static int raw_name_CreateProcessA[] = {
+    {{_ROBBO.EncodeStr("CreateProcessA")}}
+};
+typedef BOOL (*Rtype_CreateProcessA)(LPCSTR, LPSTR, LPSECURITY_ATTRIBUTES, LPSECURITY_ATTRIBUTES, BOOL, DWORD, LPVOID, LPCSTR, LPSTARTUPINFOA, LPPROCESS_INFORMATION);
+
+// CreateThread
+static int raw_name_CreateThread[] = {
+    {{_ROBBO.EncodeStr("CreateThread")}}
+};
+typedef HANDLE (*Rtype_CreateThread)(LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD);
+
+// User32.dll
+static int raw_name_User32_dll[] = {
+    {{_ROBBO.EncodeStr("User32.dll")}}
+};
+void *robbo_addr_user32_dll = NULL;
+    
+// MessageBoxA
+static int raw_name_MessageBoxA[] = {
+    {{_ROBBO.EncodeStr("MessageBoxA")}}
+};
+typedef int (*Rtype_MessageBoxA)(HWND, LPCSTR, LPCSTR, UINT);
+
+// GetCurrentProcess
+static int raw_name_GetCurrentProcess[] = {
+    {{_ROBBO.EncodeStr("GetCurrentProcess")}}
+};
+typedef HANDLE (*Rtype_GetCurrentProcess)(void);
+
+BOOL robbo_wapi_EnumProcesses(DWORD pid_list[], DWORD pid_list_size, LPDWORD bytes_writen) {
+    Rtype_EnumProcesses enum_proc = robbo_get_function(raw_name_EnumProcesses, robbo_addr_psapi_dll);
+    return enum_proc(pid_list, pid_list_size, bytes_writen);
+}
+
+DWORD robbo_wapi_GetModuleBaseNameA(HANDLE proc_handle, HMODULE mod_handle, LPSTR buff, DWORD buff_size) {
+    Rtype_GetModuleBaseNameA get_name = robbo_get_function(raw_name_GetModuleBaseNameA, robbo_addr_psapi_dll);
+    return get_name(proc_handle, mod_handle, buff, buff_size);
+}
+
+BOOL robbo_wapi_CreateProcessA(LPCSTR appName, LPSTR cmdLine, LPSECURITY_ATTRIBUTES procAttr, LPSECURITY_ATTRIBUTES thAttr, BOOL inhFlag, DWORD createFlag, LPVOID envPointer, LPCSTR currentDir, LPSTARTUPINFOA startInfo, LPPROCESS_INFORMATION procInfo) {
+    Rtype_CreateProcessA new_proc = robbo_get_function(raw_name_CreateProcessA, robbo_addr_kernel32);
+    return new_proc(appName, cmdLine, procAttr, thAttr, inhFlag, createFlag, envPointer, currentDir, startInfo, procInfo);
+}
+
+HANDLE robbo_wapi_CreateThread(LPSECURITY_ATTRIBUTES lpSecAttr, SIZE_T stack_size, LPTHREAD_START_ROUTINE startFunc, LPVOID funArgs, DWORD createFlag, LPDWORD thID) {
+    Rtype_CreateThread new_th = robbo_get_function(raw_name_CreateThread, robbo_addr_kernel32);
+    return new_th(lpSecAttr, stack_size, startFunc, funArgs, createFlag, thID);
+}
+
+int robbo_wapi_MessageBoxA(HWND hWnd, LPCSTR msgText, LPCSTR title, UINT buttons) {
+    Rtype_MessageBoxA msgb = robbo_get_function(raw_name_MessageBoxA, robbo_addr_user32_dll);
+    return msgb(hWnd, msgText, title, buttons);
+}
+
+HANDLE robbo_wapi_GetCurrentProcess(void) {
+    Rtype_GetCurrentProcess gproc = robbo_get_function(raw_name_GetCurrentProcess, robbo_addr_kernel32);
+    return gproc();
+}
+
+void robbo_proc_initialize(void) {
+    robbo_addr_psapi_dll = robbo_load_dll_ldr(raw_name_Psapi_dll);
+    robbo_addr_user32_dll = robbo_load_dll_ldr(raw_name_User32_dll);
+    printf("PSAPI.DLL addr: 0x%p\n", robbo_addr_psapi_dll);
+    printf("user32.dll addr: 0x%p\n", robbo_addr_user32_dll);
+    printf("ROBBO Module Proc Initialize\n");
+}

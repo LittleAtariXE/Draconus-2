@@ -1,0 +1,22 @@
+#!name##Robbo_H
+#!itemType##sfile
+#!info##Robbo header file.
+#!lang##c
+
+
+
+
+#ifndef ROBBO_H
+#define ROBBO_H
+
+#include "robbo_base.h"
+
+#ifdef ROBBO_MODULE_PROC
+    #include "robbo_proc.h"
+#endif
+
+#ifdef ROBBO_MODULE_SOCK
+    #include "robbo_sock.h"
+#endif
+
+#endif

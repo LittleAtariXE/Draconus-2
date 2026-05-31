@@ -1,0 +1,59 @@
+#!name##RiverRaid_H
+#!itemType##sfile
+#!info##River Raid header file.
+#!lang##c
+
+
+#include "chip_and_dale.h"
+
+// MACROS
+#define RRM_InitializeObjectAttributes(p, n, a, r, s) \
+{ \
+	(p)->Length = sizeof(OBJECT_ATTRIBUTES); \
+	(p)->RootDirectory = r; \
+	(p)->Attributes = a; \
+	(p)->ObjectName = n; \
+	(p)->SecurityDescriptor = s; \
+	(p)->SecurityQualityOfService = NULL; \
+}
+
+
+// structures
+typedef struct _CLIENT_ID
+{
+	PVOID UniqueProcess;
+	PVOID UniqueThread;
+} CLIENT_ID, *PCLIENT_ID;
+
+
+typedef struct _INITIAL_TEB
+{
+    struct
+    {
+        PVOID OldStackBase;     // Pointer to the base address of the previous stack.
+        PVOID OldStackLimit;    // Pointer to the limit address of the previous stack.
+    } OldInitialTeb;
+    PVOID StackBase;            // Pointer to the base address of the new stack.
+    PVOID StackLimit;           // Pointer to the limit address of the new stack.
+    PVOID StackAllocationBase;  // Pointer to the base address where the stack was allocated.
+} INITIAL_TEB, *PINITIAL_TEB;
+
+
+// functions
+
+
+extern void *river_ADDR_PSAPI_DLL;
+
+void RiverRaidInit(void);
+BOOL raid_EnumProc(DWORD pidList[], DWORD size, LPDWORD retBytes);
+HANDLE raid_OpenProcInfo(DWORD pid);
+HANDLE raid_OpenProcFull(DWORD pid);
+NTSTATUS raid_CloseHandle(HANDLE procHandle);
+DWORD raid_GetModuleBaseNameA(HANDLE hproc, HMODULE mhand, LPSTR buff, DWORD buff_size);
+DWORD raid_FindProcessPID(char proc_name[]);
+NTSTATUS raid_AllocMemory(HANDLE proc_handle, PVOID mem_addr, PSIZE_T mem_size);
+NTSTATUS raid_AllocMemoryWrite(HANDLE proc_handle, PVOID mem_addr, PSIZE_T mem_size);
+NTSTATUS raid_WriteMemory(HANDLE proc_handle, PVOID base_addr, PVOID buffer, SIZE_T byte_size);
+NTSTATUS raid_CreateTh(PHANDLE th_handle, HANDLE proc_handle, PVOID start_func, PVOID func_args);
+DWORD raid_GetTempDirPath(LPSTR buffer, DWORD buff_size);
+LPSTR raid_MergePath(LPSTR dest_buff, LPCSTR dir_name, LPCSTR file_name);

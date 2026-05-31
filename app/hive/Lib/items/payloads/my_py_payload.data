@@ -1,0 +1,9 @@
+#!name##MyPyPayload
+#!itemType##payload
+#!info##A placeholder for your own Python payload. Go to the 'OUTPUT/links' directory, open the MyPyPayload file, and paste your code there. You will then be able to use it in Draconus projects.
+#!itemTags##PyS
+#!modProcess##BUILD_CODE
+#!e##---------------------------------------------------------------------------------------------------------------------------------------
+#!e##--- Paste your Python code below the headers. IMPORTANT: Do not remove the Draconus headers. ---
+#!e##---------------------------------------------------------------------------------------------------------------------------------------
+

@@ -1,0 +1,185 @@
+#!name##ChipAndDale
+#!itemType##support
+#!info##A library written in C and NASM. It retrieves the addresses of kernel32 and ntdll from memory, manually imports functions by scanning the Import Table, and encrypts function names. Allows silent importing of NT functions.
+#!lang##nasm
+#!fileType##lib
+#!hiveType##lib
+#!addNameComp##True
+#!modProcess##BUILD_CODE##COMPILE
+#!modCompiler##Basic-Nasm
+#!inFile##RAW_CHIP_ASM##raw_chip.asm
+#!inFile##RAW_DALE_ASM##raw_dale.asm
+#!Var##CAD_eKEY##abcd##XOR key used to encrypt function names for low-level DLL operations used by the ChipAndDale module. ex: 'sGHrtks' ex: 'AbCd12'##str
+
+
+
+
+{% set CHIP_AND_DALE_ENCODE_KEY = shTOOL.DaleBuildKey(CAD_eKEY) %}
+
+
+bits 64
+default rel
+
+%define BUFF_MODULE_NAME_LEN 128
+%define CHIP_DALE_FIND_STEP 3
+%define DALE_BUFF_FUNC_NAME 128
+
+%include "raw_chip.asm"
+%include "raw_dale.asm"
+
+global ChipDaleInit     ; Initialize function
+global ChipDaleADDR_kernel32    ; return KERNEL32.DLL Address
+global ChipDaleADDR_ntdll       ; return NTDLL.DLL Address
+global ChipDaleFindDLL      ; IN: encoded table. Return: DLL address
+global ChipDaleFdll     ; IN: encdoed string. Return: DLL address
+global DaleShow     ; Decode string, return pointer to buffer
+global ChipFindTreasureSingle   ; find DLL base address
+global ChipFindTreasure     ; find DLL base addres. IN: table with strings
+global ChipGetFunc  ; Get function address from module. IN: RCX - function name ; RDX - Dll Base Address
+
+
+section .data
+    en_k32_1: db {{ shTOOL.DaleShadow("kernel32.dll", CHIP_AND_DALE_ENCODE_KEY) }}
+    en_k32_2: db {{ shTOOL.DaleShadow("KERNEL32.dll", CHIP_AND_DALE_ENCODE_KEY) }}
+    en_k32_3: db {{ shTOOL.DaleShadow("Kernel32.dll", CHIP_AND_DALE_ENCODE_KEY) }}
+    en_k32_4: db {{ shTOOL.DaleShadow("KERNEL32.DLL", CHIP_AND_DALE_ENCODE_KEY) }}
+    en_kernel32: dq en_k32_1, en_k32_2, en_k32_3, en_k32_4, 0
+    
+    en_ntdll_1: db {{ shTOOL.DaleShadow("ntdll.dll", CHIP_AND_DALE_ENCODE_KEY) }}
+    en_ntdll_2: db {{ shTOOL.DaleShadow("NTDLL.DLL", CHIP_AND_DALE_ENCODE_KEY) }}
+    en_ntdll: dq en_ntdll_1, en_ntdll_2, 0
+    
+    en_kernelb_1: db {{ shTOOL.DaleShadow("kernelbase.dll", CHIP_AND_DALE_ENCODE_KEY) }}
+    en_kernelb_2: db {{ shTOOL.DaleShadow("Kernelbase.dll", CHIP_AND_DALE_ENCODE_KEY) }}
+    en_kernelb_3: db {{ shTOOL.DaleShadow("KERNELBASE.DLL", CHIP_AND_DALE_ENCODE_KEY) }}
+    en_kernel_base: dq en_kernelb_1, en_kernelb_2, en_kernelb_3, 0
+    
+    dale_KEY: db {{ shTOOL.DaleKey(CHIP_AND_DALE_ENCODE_KEY) }}
+    
+
+section .bss
+    addr_kernel32: resq 1   ; kernel32.dll address
+    addr_ntdll: resq 1      ; ntndll.dll address
+    addr_kernelb: resq 1    ; kernel_base.dll address
+    
+
+section .text
+    global main
+
+
+
+ChipDaleInit:
+; Init functions
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push rax
+    
+    ; clear key index
+    lea rbx, [dale_key_index]
+    xor rax, rax
+    mov [rbx], rax
+    
+    sub rsp, 32
+    ; Find ntdll.dll
+    mov rcx, en_ntdll
+    call ChipDaleFindDLL
+    lea rbx, [addr_ntdll]
+    mov qword [rbx], rax
+    
+    ; find kernel32.dll
+    mov rcx, en_kernel32
+    call ChipDaleFindDLL
+    lea rbx, [addr_kernel32]
+    mov qword [rbx], rax
+    
+    ; find kernelbase.dll
+    mov rcx, en_kernel_base
+    call ChipDaleFindDLL
+    lea rbx, [addr_kernelb]
+    mov qword [rbx], rax
+    
+    add rsp, 32
+    
+    pop rax
+    pop rbx
+    pop rbp
+    ret
+
+ChipDaleADDR_kernel32:
+; return kernel32.dll address
+; OUT: RAX - kernel32.dll address or '0'
+    push rbp
+    mov rbp, rsp
+    
+    lea rax, [addr_kernel32]
+    mov rax, [rax]
+    
+    pop rbp
+    ret
+
+ChipDaleADDR_ntdll:
+; return ntdll.dll address
+; OUT: RAX - ntdll.dll address or '0'
+    push rbp
+    mov rbp, rsp
+    
+    lea rax, [addr_ntdll]
+    mov rax, [rax]
+    
+    pop rbp
+    ret
+
+
+ChipDaleFindDLL:
+; find DLL base address
+; IN: RCX - table with encoded string
+; OUT: RAX - dll base address or '0'
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx
+    push rdi
+    push rbx
+    
+    xor rdi, rdi    ; index
+    .find_loop:
+        mov rbx, [rbp-8]
+        mov rcx, [rbx + 8 * rdi]
+        ; check if end of table
+        cmp rcx, 0
+        je .return_FALSE
+        call ChipDaleFdll
+        cmp rax, 0
+        jne .return
+        inc rdi ; index + 1
+        jmp .find_loop
+    
+    
+    .return:
+        pop rbx
+        pop rdi
+        add rsp, 16
+        pop rbp
+        ret
+
+    .return_FALSE:
+        xor rax, rax
+        jmp .return
+
+ChipDaleFdll:
+; find DLL base address
+; IN: RCX - encoded str
+; OUT: RAX - dll address or '0'
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    call DaleShow
+    mov rcx, rax
+    call ChipFindTreasureSingle
+    add rsp, 32
+    
+    .return:
+        pop rbp
+        ret

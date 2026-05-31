@@ -1,0 +1,32 @@
+#!name##Robbo2_H
+#!itemType##sfile
+#!info##Robbo2 Main header file.
+#!lang##c
+#!Var##robbo_key##abcd##Encode key##str
+#!Var##robbo_power##34##Encode power key##str
+#!preRT##_ROBBO##RobboShadow##robbo_key##robbo_power
+
+
+#ifndef ROBBO_H
+#define ROBBO_H
+
+#include "robbo2_base.h"
+
+#ifdef ROBBO_DEBUG
+    #include "robbo2_debug.h"
+#endif
+
+#ifdef ROBBO_LOCUST
+    #include "robbo2_locust.h"
+#endif
+
+#ifdef ROBBO_TCP
+    #include "robbo2_tcp.h"
+#endif
+
+#ifdef ROBBO_PROC
+    #include "robbo2_proc.h"
+#endif
+
+
+#endif

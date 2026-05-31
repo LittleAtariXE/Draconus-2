@@ -1,0 +1,162 @@
+#!name##DuckTalesC_CORE_H
+#!itemType##sfile
+#!info##Duck Tales C version.
+#!lang##c
+
+
+
+#ifndef DUCK_CORE_H
+#define DUCK_CORE_H
+
+#include <stdint.h>
+
+
+// ---------------- BASIC DEF --------------------------------------------
+
+//A Boolean variable (should be TRUE or FALSE).
+typedef int dt_BOOL;
+
+//A 32-bit unsigned integer. The range is 0 through 4294967295 decimal.
+typedef uint32_t dt_DWORD;
+
+//The maximum number of bytes to which a pointer can point. Use for a count that must span the full range of a pointer.
+typedef uint64_t dt_SIZE_T;
+
+// A handle to an object.
+typedef void *dt_HANDLE;
+
+// A handle to a module. This is the base address of the module in memory.
+typedef void *dt_HMODULE;
+
+//A pointer to any type.
+typedef void *dt_LPVOID;
+
+//A pointer to a constant of any type.
+typedef const void *dt_LPCVOID;
+
+// A pointer to a constant null-terminated string of 8-bit Windows (ANSI) characters.
+typedef const char *dt_LPCSTR;
+
+// A pointer to a null-terminated string of 8-bit Windows (ANSI) characters.
+typedef char *dt_LPSTR;
+
+// A pointer to a DWORD.
+typedef dt_DWORD *dt_LPDWORD;
+
+// A pointer to Function
+typedef void *dt_FARPROC;
+
+// A 16-bit unsigned integer. The range is 0 through 65535 decimal.
+typedef uint16_t dt_WORD;
+
+//A pointer to a BYTE.
+typedef char *dt_LPBYTE;
+
+
+// -----------------------------------------------------------------------
+
+
+// ---------------- STRUCT DEF --------------------------------
+
+typedef struct dt_raw_STARTUPINFOA {
+  dt_DWORD  cb;
+  dt_LPSTR  lpReserved;
+  dt_LPSTR  lpDesktop;
+  dt_LPSTR  lpTitle;
+  dt_DWORD  dwX;
+  dt_DWORD  dwY;
+  dt_DWORD  dwXSize;
+  dt_DWORD  dwYSize;
+  dt_DWORD  dwXCountChars;
+  dt_DWORD  dwYCountChars;
+  dt_DWORD  dwFillAttribute;
+  dt_DWORD  dwFlags;
+  dt_WORD   wShowWindow;
+  dt_WORD   cbReserved2;
+  dt_LPBYTE lpReserved2;
+  dt_HANDLE hStdInput;
+  dt_HANDLE hStdOutput;
+  dt_HANDLE hStdError;
+} dts_STARTUPINFOA, *dts_LPSTARTUPINFOA;
+
+
+typedef struct dt_raw_PROCESS_INFORMATION {
+  dt_HANDLE hProcess;
+  dt_HANDLE hThread;
+  dt_DWORD dwProcessId;
+  dt_DWORD dwThreadId;
+} dts_PROCESS_INFORMATION, *dts_PPROCESS_INFORMATION, *dts_LPPROCESS_INFORMATION;
+
+
+typedef struct dt_raw_SECURITY_ATTRIBUTES {
+  dt_DWORD  nLength;
+  dt_LPVOID lpSecurityDescriptor;
+  dt_BOOL bInheritHandle;
+} dts_SECURITY_ATTRIBUTES, *dts_PSECURITY_ATTRIBUTES, *dts_LPSECURITY_ATTRIBUTES;
+
+
+
+
+// ----------------------- FUNCTION DEF ----------------------------------------------
+
+typedef dt_DWORD (*dta_GetLastError)(void);
+typedef dt_HANDLE (*dta_OpenProcess)(dt_DWORD, dt_BOOL, dt_DWORD);
+typedef dt_BOOL (*dta_CloseHandle)(dt_HANDLE);
+typedef dt_LPVOID (*dta_VirtualAllocEx)(dt_HANDLE, dt_LPVOID, dt_SIZE_T, dt_DWORD, dt_DWORD);
+typedef dt_BOOL (*dta_WriteProcessMemory)(dt_HANDLE, dt_LPVOID, dt_LPCVOID, dt_SIZE_T, dt_SIZE_T*);
+typedef dt_HANDLE (*dta_CreateRemoteThread)(dt_HANDLE, dt_LPVOID, dt_SIZE_T, dt_LPVOID, dt_LPVOID, dt_DWORD, dt_LPDWORD);
+typedef dt_HANDLE (*dta_CreateThread)(dt_LPCVOID, dt_SIZE_T, dt_LPVOID, dt_LPVOID, dt_DWORD, dt_LPDWORD);
+typedef dt_HANDLE (*dta_LoadLibraryA)(dt_LPCSTR);
+typedef dt_DWORD (*dta_WaitForSingleObject)(dt_HANDLE, dt_DWORD);
+typedef dt_BOOL (*dta_DisableThreadLibraryCalls)(dt_HANDLE);
+typedef dt_FARPROC (*dta_GetProcAddress)(dt_HMODULE, dt_LPCSTR);
+typedef dt_BOOL (*dta_CreateProcessA)(dt_LPCSTR, dt_LPSTR, dts_LPSECURITY_ATTRIBUTES, dts_LPSECURITY_ATTRIBUTES, dt_BOOL, dt_DWORD, dt_LPVOID, dt_LPCSTR, dts_LPSTARTUPINFOA, dts_LPPROCESS_INFORMATION);
+
+// --------------------- EXPORTED FUNCTIONS ----------------------------------
+
+// Init functions
+void dt_DuckBasicInit(void);
+int dt_DuckInitTest(void);
+const char* dt_DuckInitIntro(void);
+
+// Duck Tales Functions
+const char* dt_DuckDecode(uint32_t*);
+void * dt_DuckGetRawAddr(char*);
+void * dt_DuckGetKAddr(uint32_t*);
+void * dt_DuckLoadRawAddr(char*, char*);
+void* dt_DuckLoadAddr(uint32_t* func_name, uint32_t* dll_name);
+
+// Build Functions
+
+
+// RAW Address Functions
+dta_LoadLibraryA dtfra_LoadLibraryA(void);
+
+// FULL Functions
+dt_DWORD dtf_GetLastError(void);
+dt_HANDLE dtf_OpenProcess(dt_DWORD, dt_BOOL, dt_DWORD);
+dt_BOOL dtf_CloseHandle(dt_HANDLE);
+dt_LPVOID dtf_VirtualAllocEx(dt_HANDLE, dt_LPVOID, dt_SIZE_T, dt_DWORD, dt_DWORD);
+dt_BOOL dtf_WriteProcessMemory(dt_HANDLE, dt_LPVOID, dt_LPCVOID, dt_SIZE_T, dt_SIZE_T*);
+dt_HANDLE dtf_CreateRemoteThread(dt_HANDLE, dt_LPVOID, dt_SIZE_T, dt_LPVOID, dt_LPVOID, dt_DWORD, dt_LPDWORD);
+dt_HANDLE dtf_CreateThread(dt_LPCVOID, dt_SIZE_T, dt_LPVOID, dt_LPVOID, dt_DWORD, dt_LPDWORD);
+dt_HANDLE dtf_LoadLibraryA(dt_LPCSTR);
+dt_DWORD dtf_WaitForSingleObject(dt_HANDLE, dt_DWORD);
+dt_BOOL dtf_DisableThreadLibraryCalls(dt_HANDLE);
+dt_FARPROC dtf_GetProcAddress(dt_HANDLE, dt_LPCSTR);
+dt_BOOL dtf_CreateProcessA(dt_LPCSTR, dt_LPSTR, dts_LPSECURITY_ATTRIBUTES, dts_LPSECURITY_ATTRIBUTES, dt_BOOL, dt_DWORD, dt_LPVOID, dt_LPCSTR, dts_LPSTARTUPINFOA, dts_LPPROCESS_INFORMATION);
+
+// ----------------------- EXPORTED CONST, FLAGS -------------------------------
+extern const dt_DWORD dtv_PROCESS_ALL_ACCESS;
+extern const dt_DWORD dtv_MEM_COMMIT;
+extern const dt_DWORD dtv_MEM_RESERVE;
+extern const dt_DWORD dtv_MEM_COMMIT_RESERVE;
+extern const dt_DWORD dtv_PAGE_EXECUTE_READWRITE;
+extern const dt_DWORD dtv_PROCESS_QUERY_INFORMATION;
+extern const dt_DWORD dtv_PROCESS_VM_READ;
+extern const dt_DWORD dtv_PROCESS_CREATE_NO_WINDOW;
+extern const dt_DWORD dtv_PROCESS_CREATE_SUSPENDED;
+extern const dt_DWORD dtv_PROCESS_CREATE_NEW_CONSOLE;
+extern const dt_DWORD dtv_STARTUPINFO_FLAG_STARTF_USESTDHANDLES;
+
+#endif

@@ -1,0 +1,39 @@
+#!name##Robbo2Debug_H
+#!itemType##sfile
+#!info##Robbo Debug header file.
+#!lang##c
+
+
+#ifndef ROBBO_DEBUG_H
+#define ROBBO_DEBUG_H
+
+#ifdef ROBBO_DEBUG
+    #include <stdio.h>
+    #define RPRINT(...) \
+        do { \
+            printf(__VA_ARGS__); \
+        } while (0)
+    #define RLPRINT(...) \
+        do { \
+            printf("====********* "); \
+            printf(__VA_ARGS__); \
+            printf(" *********====\n"); \
+        } while (0)
+    
+        #define RAPRINT(name, addr) \
+        do { \
+            printf("[ADDRESS] %s : 0x%p\n", (name), (void*)(addr)); \
+        } while (0)
+
+        #define RSPRINT(name, status) \
+        do { \
+            printf("FUNCTION -- %s -- Status: %x\n"), (name), (status); \
+        } while (0)
+#else
+    #define RPRINT(...) do { } while (0)
+    #define RLPRINT(...) do { } while (0)
+    #define RAPRINT(name, addr) do { } while (0)
+#endif
+
+
+#endif

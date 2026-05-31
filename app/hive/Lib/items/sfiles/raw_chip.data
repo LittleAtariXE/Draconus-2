@@ -1,0 +1,412 @@
+#!name##RAW_CHIP_ASM
+#!itemType##sfile
+#!info##Chip and Dale lib part
+#!lang##nasm
+
+%ifndef RAW_CHIP_ASM
+%define RAW_CHIP_ASM
+
+
+
+section .data
+    chip_fake_data1: db "This game tells the adventures of two squirrels who are looking for nuts.", 10, 0
+    chip_fake_data2: db "Need more nuts.", 10, 0
+
+section .bss
+   buff_mod_name: resb BUFF_MODULE_NAME_LEN
+   buff_entry_list: resq 1
+
+
+section .text
+ChipGetFunc:
+; Get function address from module
+; IN: RCX - function name
+; IN: RDX - Dll Base Address
+; OUT: RAX - function address or '0'
+    push rbp
+    mov rbp, rsp
+    sub rsp, 64
+    mov [rbp-8], rcx
+    mov [rbp-16], rdx
+    push r12
+    push r13
+    push r14
+    push rbx
+    
+    ; Get RVA Export Table
+    mov rcx, rdx
+    call GetExpTable
+    mov [rbp-24], rax   ; save EXP Table
+    
+    ; Get number of functions
+    mov r12d, [rax+0x14]
+    mov [rbp-32], r12
+    
+    ; get VA function name table
+    mov r12d, [rax+0x20]
+    mov r13, [rbp-16]
+    add r12, r13    ; RVA func name table
+    mov [rbp-40], r12
+
+    
+    ; [rbp-8] - func name
+    ; [rbp-16] - dll addr
+    ; [rbp-24] - EXP table VA
+    ; [rbp-32] - function counter
+    ; [rbp-40] - RVA function name table
+    
+    xor r12, r12    ; counter
+    mov rbx, [rbp-16]
+    mov r13, [rbp-40]
+    
+    sub rsp, 32
+    
+    .find_func:
+        ; check limit
+        mov r10, [rbp-32]
+        cmp r12, r10
+        je .return_FALSE
+        
+        mov edx, [r13 + 4 * r12]
+        add rdx, rbx
+        mov rcx, [rbp-8]
+        call StrComp
+        cmp rax, 1
+        je .finded_func
+        inc r12
+        jmp .find_func
+        
+    
+    .return_FALSE:
+        xor rax, rax
+        jmp .return
+    
+    .finded_func:
+        mov r14, [rbp-24]
+        mov edx, [r14+0x24] ; get RVA AddressOfNameOrdinals (dword)
+        add rdx, rbx    ; RVA AddressOfNameOrdinals + VA Dll
+        xor rcx, rcx
+        mov cx, [rdx + 2 * r12]     ; get function index (counter) to function address (word)
+        mov edx, [r14+0x1c]     ; get RVA table 'AddressOfFunctions'
+        add rdx, rbx    ; RVA table 'AddressOfFunctions' + VA Dll
+        xor rax, rax
+        mov eax, [rdx + 4 * rcx]    ; get RVA func addr
+        add rax, rbx    ; RVA func addr + VA Dll
+        
+    
+    .return:
+        add rsp, 32
+        pop rbx
+        pop r14
+        pop r13
+        pop r12
+        add rsp, 64
+        pop rbp
+        ret
+        
+    
+    
+GetExpTable:
+; get module DLL VA Export Table
+; IN: RCX - DLL base address
+; OUT: RAX - VA Export Table
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx    ; save addr
+    push rbx
+    push rdx
+    
+    xor rbx, rbx
+    mov ebx, [rcx + 0x3c]   ; RVA PE file signature
+    add rbx, rcx    ; RVA PE + DLL VA addr
+    add rbx, 0x88   ; 0x88 bytes after the PE signature is the RVA for the Export Table
+    mov ebx, [rbx]  ; get RVA Export Table
+    add rbx, rcx    ; RVA Export Table + VA Dll addr
+    
+    mov rax, rbx
+    
+    .return:
+        pop rdx
+        pop rbx
+        add rsp, 16
+        pop rbp
+        ret
+        
+
+ChipFindTreasure:
+; find DLL base address
+; IN: RCX - names table
+; OUT: RAX - DLL address or '0'
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx    ; pNamesTable
+    xor rax, rax
+    mov [rbp-16], rax   ; counter
+    push rdx
+    push rbx
+    
+    sub rsp, 32
+    
+    .find_loop:
+        mov rdx, [rbp-16]
+        mov rcx, [rbp-8]
+        mov rcx, [rcx + 8 * rdx]    ; next string from table
+        cmp rcx, 0  ; check end of table
+        je .return_FALSE
+        call ChipFindTreasureSingle
+        cmp rax, 0
+        jne .return
+        mov rax, [rbp-16]
+        inc rax
+        mov [rbp-16], rax
+        jmp .find_loop
+
+    .return_FALSE:
+        xor rax, rax
+        jmp .return
+    
+    .return:
+        add rsp, 32
+        pop rdx
+        pop rbx
+        add rsp, 16
+        pop rbp
+        ret
+        
+
+ChipFindTreasureSingle:
+; find DLL base address
+; IN: RCX - DLL name
+; OUT: RAX - DLL address or '0'
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    push rbx
+    push rdx
+    push r8
+    push r9
+    sub rsp, 32
+    
+    mov qword [rbp-16], rcx     ; DLL name
+    
+    ; reset buffer
+    lea rax, [buff_entry_list]
+    mov qword [rax], 0
+    
+    ; get InMemoryOrderModuleList
+    call ChipGetPEB
+    lea rbx, [buff_entry_list]
+    mov [rbx], rax
+    
+    xor r8, r8  ; find step counter
+    mov qword [rbp-8], r8
+    
+    .find_chest:
+        mov r8, [rbp-8]
+        cmp r8, CHIP_DALE_FIND_STEP
+        je .return_FALSE
+        lea rax, [buff_entry_list]
+        mov rbx, [rax]
+        
+        xor rcx, rcx
+        ; start address is 0x10
+        mov rcx, [rbx+0x48 + 0x08]  ; UNICODE_STRING BaseDllName ->  PWSTR  Buffer;
+        call CorrectName
+        mov rcx, [rbp-16]
+        lea rdx, [buff_mod_name]
+        call StrComp
+        cmp rax, 1
+        je .return_addr
+        
+        mov r8, [rbp-8]
+        inc r8
+        mov qword [rbp-8], r8
+        ; next step
+        lea rax, [buff_entry_list]
+        mov rbx, [rax]
+        mov rbx, [rbx]
+        mov [rax], rbx  ; save next entry list
+        jmp .find_chest
+        
+    .return_addr:
+        ; return DLL_BASE
+        lea rax, [buff_entry_list]
+        mov rax, [rax]
+        mov rax, [rax+0x20] ; DLL_BASE
+        jmp .return
+    
+    .return_FALSE:
+        xor rax, rax
+        jmp .return
+      
+    .return:
+        add rsp, 32
+        pop r9
+        pop r8
+        pop rdx
+        pop rbx
+        add rsp, 16
+        pop rbp
+        ret
+  
+
+ChipGetPEB:
+; GET PEB_LDR_DATA address : InMemoryOrderModuleList
+; OUT: RAX - InMemoryOrderModuleList
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    push rbx
+    push rcx
+    push rdx
+    push r8
+    
+    xor rbx, rbx
+    xor rcx, rcx
+    xor rdx, rdx
+    lea rdx, [chip_fake_data1]
+    .loop_me:
+        mov rbx, [rdx+rcx]
+        cmp rcx, 0x30
+        je .end_loop_me
+        inc rcx
+        jmp .loop_me
+    
+    .end_loop_me:
+        xor rbx, rbx
+        add rcx, 0x30
+        
+    mov rbx, gs:[rcx]  ; Get address of PEB struct
+    sub rcx, 0x50
+    add rcx, 0x08
+    mov rbx, [rbx+rcx] ; Get PEB_LDR_DATA address
+    mov rbx, [rbx+0x20] ; Get InMemoryOrderModuleList
+    mov rbx, [rbx]
+    mov rax, rbx
+    
+    
+    .return:
+        pop r8
+        pop rdx
+        pop rcx
+        pop rbx
+        add rsp, 32
+        pop rbp
+        ret
+        
+; ------------------------- STRING FUNCTIONS ------------------------------------------
+
+StrLen:
+;   IN: RCX - string
+;   OUT: RAX - char number
+    push rbp
+    mov rbp, rsp
+    push rbx
+    
+    xor rax, rax
+    xor rbx, rbx
+    .loop:
+        mov bl, [rcx + rax]
+        cmp bl, 0
+        je .return
+        inc rax
+        jmp .loop
+
+    .return:
+        pop rbx
+        pop rbp
+        ret
+
+StrComp:
+;   IN: RCX - string1
+;   IN: RDX - string2
+;   OUT: RAX - '1' - this same. '0' - diffrent
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov [rbp-8], rcx
+    mov [rbp-16], rdx
+    xor rax, rax
+    mov [rbp-24], rax
+    mov [rbp-32], rax
+    push rsi
+    push rdi
+    push rbx
+    
+    
+    sub rsp, 40
+    
+    ; match length string1
+    call StrLen
+    mov [rbp-24], rax   ; save len
+    ; match length string2
+    mov rcx, [rbp-16]
+    call StrLen
+    mov rbx, [rbp-24]
+    cmp rax, rbx
+    jne .return_FALSE
+    
+    mov rsi, [rbp-8]    ; string1
+    mov rdi, [rbp-16]   ; string2
+    mov rcx, rax    ; str len
+    cld
+    repe cmpsb
+    je .return_TRUE
+    
+    .return_FALSE:
+        xor rax, rax
+        jmp .return
+
+    .return_TRUE:
+        xor rax, rax
+        mov rax, 1
+        jmp .return
+    
+    .return:
+        add rsp, 40
+        pop rbx
+        pop rdi
+        pop rsi
+        add rsp, 32
+        pop rbp
+        ret
+
+CorrectName:
+;   IN: RCX - pointer to module name
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx
+    mov [rbp-16], rbx
+    
+    push rdi
+    push rax
+    
+    mov rcx, BUFF_MODULE_NAME_LEN
+    lea rdi, [buff_mod_name]
+    xor rax, rax
+    rep stosb
+    
+    mov rcx, [rbp-8]
+    lea rdi, [buff_mod_name]
+    xor rbx, rbx
+    .loop:
+        mov byte al, [rcx + 2 * rbx]
+        cmp al, 0
+        je .end
+        mov byte [rdi + rbx], al
+        inc rbx
+        jmp .loop
+        
+    .end:
+        pop rax
+        pop rdi
+        mov rbx, [rbp-16]
+        add rsp, 16
+        pop rbp
+        ret
+
+
+%endif

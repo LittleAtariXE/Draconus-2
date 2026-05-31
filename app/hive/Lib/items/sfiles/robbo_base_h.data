@@ -1,0 +1,81 @@
+#!name##RobboBase_H
+#!itemType##sfile
+#!info##Robbo Base header file.
+#!lang##c
+
+#ifndef ROBBO_BASE_H
+#define ROBBO_BASE_H
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <ntdef.h>
+
+// ------------------------------------------------- MACROS -------------------------------------------------------------
+
+#define ROBBO_INITIALIZE_OBJECT_ATTRIBUTES(p, n, a, r, s) \
+{ \
+	(p)->Length = sizeof(OBJECT_ATTRIBUTES); \
+	(p)->RootDirectory = r; \
+	(p)->Attributes = a; \
+	(p)->ObjectName = n; \
+	(p)->SecurityDescriptor = s; \
+	(p)->SecurityQualityOfService = NULL; \
+}
+
+
+
+// ------------------------------------------------- STRUCT -------------------------------------------------
+typedef struct _CLIENT_ID
+{
+	PVOID UniqueProcess;
+	PVOID UniqueThread;
+} CLIENT_ID, *PCLIENT_ID;
+
+typedef struct _IO_STATUS_BLOCK {
+  union {
+    NTSTATUS Status;
+    PVOID    Pointer;
+  };
+  ULONG_PTR Information;
+} IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
+
+
+
+// ------------------------------------------------- EXPORTS --------------------------------------------------------------------------------------------------
+extern void *robbo_addr_kernel32;
+extern void *robbo_addr_ntdll;
+
+
+void robbo_initialize(void);
+void robbo_init_test(void);
+
+char* robbo_decode(int encode_table[]);
+void robbo_decode2(int encode_table[], char buff[], int buff_size);
+void* robbo_get_function_raw(char *func_name, void *dll_address);
+void* robbo_get_function(int encoded_table[], void *dll_address);
+
+HMODULE robbo_load_dll_raw_lla(LPCSTR dll_name);
+HMODULE robbo_load_dll_lla(int encoded_name[]);
+HMODULE robbo_load_dll_raw_ldr_ldll(char dll_name[]);
+HMODULE robbo_load_dll_ldr(int encoded_name[]);
+
+INT robbo_convert_utf16(const char* src_str, LPWSTR buffer, int buff_size);
+UNICODE_STRING robbo_build_unicode_struct(char text[], WCHAR buff[], int buff_size);
+
+// WINAPI
+NTSTATUS robbo_wapi_NtOpenProcess(PHANDLE proc_handle, ACCESS_MASK access_mask, POBJECT_ATTRIBUTES objAttr, PCLIENT_ID client_id);
+NTSTATUS robbo_wapi_NtAllocateVirtualMemory(HANDLE proc_handle, PVOID mem_addr, ULONG_PTR zero_bits, PSIZE_T mem_size, ULONG allocation_type, ULONG protect_flag);
+NTSTATUS robbo_wapi_NtWriteVirtualMemory(HANDLE proc_handle, PVOID mem_addr, PVOID buffer, SIZE_T bytes_num, PSIZE_T bytes_written);
+NTSTATUS robbo_wapi_NtCreateThreadEx(PHANDLE th_handle, ACCESS_MASK accMask, POBJECT_ATTRIBUTES objAttr, HANDLE proc_handle, PVOID start_func, PVOID func_args, ULONG create_flag, SIZE_T zero_bits, SIZE_T stack_size, SIZE_T max_stack_size, PVOID attr_list);
+void robbo_wapi_RtlInitUnicodeString(PUNICODE_STRING dest_str, PCWSTR source_str);
+void robbo_wapi_Sleep(DWORD milisec);
+NTSTATUS robbo_wapi_NtCreateFile(PHANDLE file_handle, ACCESS_MASK acc_mask, POBJECT_ATTRIBUTES obj_attr, PIO_STATUS_BLOCK io_status_block, PLARGE_INTEGER alloc_size, ULONG file_attr, ULONG share_access, ULONG create_dispotion, ULONG create_options, PVOID ea_buffer, ULONG ea_length);
+NTSTATUS robbo_wapi_NtWriteFile(HANDLE file_handle, HANDLE event_obj, PVOID apc_routine, PVOID apc_context, PIO_STATUS_BLOCK io_status, PVOID buffer, ULONG length, PLARGE_INTEGER byte_offset, PULONG key);
+
+
+// ADDRESS FUNCTIONS
+void* robbo_addr_LdrLoadDll(void);
+void* robbo_addr_RtlInitUnicodeString(void);
+
+
+#endif

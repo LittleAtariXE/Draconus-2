@@ -1,0 +1,32 @@
+#!name##RobboSock_H
+#!itemType##sfile
+#!info##Robbo SOCK header file.
+#!lang##c
+
+#ifndef ROBBO_SOCK_H
+#define ROBBO_SOCK_H
+#include <winsock2.h>
+
+typedef int (*Rtype_WSAStartup)(WORD, LPWSADATA);
+typedef SOCKET (*Rtype_WSASocketA)(int, int, int, LPWSAPROTOCOL_INFOA, GROUP, DWORD);
+typedef int (*Rtype_closesocket)(SOCKET);
+
+extern void* robbo_addr_Ws2_32_dll;
+
+extern Rtype_WSAStartup robbo_sock_faddr_WSAStartup;
+extern Rtype_WSASocketA robbo_sock_faddr_WSASocketA;
+extern Rtype_closesocket robbo_sock_faddr_closesocket;
+
+void robbo_sock_initialize(void);
+int robbo_sock_WSAStartup(WORD sock_ver, LPWSADATA wsdata);
+SOCKET robbo_sock_WSASocketA(int af, int stype, int protocol, LPWSAPROTOCOL_INFOA protocol_info, GROUP s_group, DWORD dwFlags);
+SOCKET robbo_sock_build_WSASocketA(void);
+int robbo_sock_connect(SOCKET sock, SOCKADDR *sock_name, int namelen);
+int robbo_sock_WSACleanup(void);
+int robbo_sock_closesocket(SOCKET sock);
+int robbo_sock_recv(SOCKET sock, char* buff, int buff_size, int sock_flags);
+int robbo_sock_send(SOCKET sock, char* buff, int buff_size, int sock_flags);
+u_long robbo_sock_ntohl(u_long netlong);
+unsigned long robbo_sock_inet_addr(char *ip_addr);
+u_short robbo_sock_htons(u_short number);
+#endif

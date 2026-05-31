@@ -1,0 +1,63 @@
+#!name##DrMarioHelp_C
+#!itemType##sfile
+#!info##Dr Mario help C file.
+#!lang##c
+#!addNameComp##True
+#!foodAdd##DrMarioHelp##DRM_help_text
+
+#include "drMario_help.h"
+
+// ***** Welcome to <<< Dr Mario >>> console. ******** Put 'help' to command list.
+int drm_help_intro[] = {
+    {{_ROBBO.EncodeStr("***** Welcome to <<< Dr Mario >>> console. ******** Put 'help' to command list.")}}
+};
+
+// Unknown Command. Put 'help' for command list.
+int drm_help_unknown_command[] = {
+    {{_ROBBO.EncodeStr("Unknown Command. Put 'help' for command list.")}}
+};
+
+// ------ List of processes that were successfully opened ---------
+int drm_help_proc_list[] = {
+    {{_ROBBO.EncodeStr("------ List of processes that were successfully opened ---------")}}
+};
+
+// Injected Process:
+int drm_help_injected_proc[] = {
+    {{_ROBBO.EncodeStr("Injected Process:")}}
+};
+
+// Start injection...
+int drm_help_start_injection[] = {
+    {{_ROBBO.EncodeStr("Start injection...")}}
+};
+
+// Target PID:
+int drm_help_target_pid[] = {
+    {{_ROBBO.EncodeStr("Target PID:")}}
+};
+
+// DLL injected successfull.
+int drm_help_dll_inject_succ[] = {
+    {{_ROBBO.EncodeStr("DLL injected successfull.")}}
+};
+
+// ERROR: file does not exist.
+int drm_help_file_not_exist[] = {
+    {{_ROBBO.EncodeStr("ERROR: file does not exist.")}}
+};
+
+// Command is incomplete.
+int drm_help_incomplete_cmd[] = {
+    {{_ROBBO.EncodeStr("Command is incomplete.")}}
+};
+
+// Injection complete.
+int drm_help_inject_complete[] = {
+    {{_ROBBO.EncodeStr("Injection complete.")}}
+};
+
+// MAIN HELP
+int drm_help_main[] = {
+    {{_ROBBO.EncodeStr(DRM_help_text)}}
+};

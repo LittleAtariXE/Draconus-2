@@ -1,0 +1,8 @@
+#!name##TinyProc
+#!itemType##Wprocess
+#!info##The easiest way to build an EXE.
+
+
+[BUILD_CODE]
+[COMPILE]
+[DONE]

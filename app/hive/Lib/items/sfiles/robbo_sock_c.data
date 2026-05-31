@@ -1,0 +1,150 @@
+#!name##RobboSock_C
+#!itemType##sfile
+#!info##Robbo SOCK C file.
+#!lang##c
+#!addNameComp##True
+
+#include "robbo_base.h"
+#include "robbo_sock.h"
+#include <stdio.h>
+
+
+void* robbo_addr_Ws2_32_dll = NULL;
+// Ws2_32.dll
+static int raw_name_Ws2_32_dll[] = {
+    {{_ROBBO.EncodeStr("Ws2_32.dll")}}
+};
+
+// WSAStartup
+static int raw_name_WSAStartup[] = {
+    {{_ROBBO.EncodeStr("WSAStartup")}}
+};
+
+
+// WSASocketA
+static int raw_name_WSASocketA[] = {
+    {{_ROBBO.EncodeStr("WSASocketA")}}
+};
+
+
+// connect
+static int raw_name_connect[] = {
+    {{_ROBBO.EncodeStr("connect")}}
+};
+typedef int (*Rtype_connect)(SOCKET, SOCKADDR*, int);
+
+// WSACleanup
+static int raw_name_WSACleanup[] = {
+    {{_ROBBO.EncodeStr("WSACleanup")}}
+};
+typedef int (*Rtype_WSACleanup)(void);
+
+// closesocket
+static int raw_name_closesocket[] = {
+    {{_ROBBO.EncodeStr("closesocket")}}
+};
+
+
+// recv
+static int raw_name_recv[] = {
+    {{_ROBBO.EncodeStr("recv")}}
+};
+typedef int (*Rtype_recv)(SOCKET, char*, int, int);
+
+// send
+static int raw_name_send[] = {
+    {{_ROBBO.EncodeStr("send")}}
+};
+typedef int (*Rtype_send)(SOCKET, const char*, int, int);
+
+// ntohl
+static int raw_name_ntohl[] = {
+    {{_ROBBO.EncodeStr("ntohl")}}
+};
+typedef u_long (*Rtype_ntohl)(u_long);
+
+// inet_addr
+static int raw_name_inet_addr[] = {
+    {{_ROBBO.EncodeStr("inet_addr")}}
+};
+typedef unsigned long (*Rtype_inet_addr)(char*);
+
+// htons
+static int raw_name_htons[] = {
+    {{_ROBBO.EncodeStr("htons")}}
+};
+typedef u_short (*Rtype_htons)(u_short);
+
+// Function Address
+Rtype_WSAStartup robbo_sock_faddr_WSAStartup;
+Rtype_WSASocketA robbo_sock_faddr_WSASocketA;
+Rtype_closesocket robbo_sock_faddr_closesocket;
+
+
+int robbo_sock_WSAStartup(WORD sock_ver, LPWSADATA wsdata) {
+    Rtype_WSAStartup wsas = robbo_get_function(raw_name_WSAStartup, robbo_addr_Ws2_32_dll);
+    return wsas(sock_ver, wsdata);
+}
+
+SOCKET robbo_sock_WSASocketA(int af, int stype, int protocol, LPWSAPROTOCOL_INFOA protocol_info, GROUP s_group, DWORD dwFlags) {
+    Rtype_WSASocketA sock = robbo_get_function(raw_name_WSASocketA, robbo_addr_Ws2_32_dll);
+    return sock(af, stype, protocol, protocol_info, s_group, dwFlags);
+}
+
+// make tcp socket
+SOCKET robbo_sock_build_WSASocketA(void) {
+    Rtype_WSASocketA sock = robbo_get_function(raw_name_WSASocketA, robbo_addr_Ws2_32_dll);
+    return sock(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, 0);
+}
+
+int robbo_sock_connect(SOCKET sock, SOCKADDR *sock_name, int namelen) {
+    Rtype_connect sock_conn = robbo_get_function(raw_name_connect, robbo_addr_Ws2_32_dll);
+    return sock_conn(sock, sock_name, namelen);
+}
+
+int robbo_sock_WSACleanup(void) {
+    Rtype_WSACleanup wsaclean = robbo_get_function(raw_name_WSACleanup, robbo_addr_Ws2_32_dll);
+    return wsaclean();
+}
+
+int robbo_sock_closesocket(SOCKET sock) {
+    Rtype_closesocket close_sock = robbo_get_function(raw_name_closesocket, robbo_addr_Ws2_32_dll);
+    return close_sock(sock);
+}
+
+int robbo_sock_recv(SOCKET sock, char* buff, int buff_size, int sock_flags) {
+    Rtype_recv sock_recv = robbo_get_function(raw_name_recv, robbo_addr_Ws2_32_dll);
+    return sock_recv(sock, buff, buff_size, sock_flags);
+}
+
+int robbo_sock_send(SOCKET sock, char* buff, int buff_size, int sock_flags) {
+    Rtype_send sock_send = robbo_get_function(raw_name_send, robbo_addr_Ws2_32_dll);
+    return sock_send(sock, buff, buff_size, sock_flags);
+}
+
+u_long robbo_sock_ntohl(u_long netlong) {
+    Rtype_ntohl ntohl_func = robbo_get_function(raw_name_ntohl, robbo_addr_Ws2_32_dll);
+    return ntohl_func(netlong);
+}
+
+unsigned long robbo_sock_inet_addr(char *ip_addr) {
+    Rtype_inet_addr iaddr = robbo_get_function(raw_name_inet_addr, robbo_addr_Ws2_32_dll);
+    return iaddr(ip_addr);
+}
+
+u_short robbo_sock_htons(u_short number) {
+    Rtype_htons htons_func = robbo_get_function(raw_name_htons, robbo_addr_Ws2_32_dll);
+    return htons_func(number);
+}
+
+void robbo_sock_initialize(void) {
+    robbo_addr_Ws2_32_dll = robbo_load_dll_ldr(raw_name_Ws2_32_dll);
+    robbo_sock_faddr_WSAStartup = robbo_get_function(raw_name_WSAStartup, robbo_addr_Ws2_32_dll);
+    robbo_sock_faddr_WSASocketA = robbo_get_function(raw_name_WSASocketA, robbo_addr_Ws2_32_dll);
+    robbo_sock_faddr_closesocket = robbo_get_function(raw_name_closesocket, robbo_addr_Ws2_32_dll);
+    printf("ROBBO SOCK INITIALIZE\n");
+    printf("ws2_32.dll addr: 0x%p\n", robbo_addr_Ws2_32_dll);
+    // void *waddr = robbo_get_function(raw_name_WSAStartup, robbo_addr_Ws2_32_dll);
+    // printf("WSAStartup addr: 0x%p\n", waddr);
+}
+

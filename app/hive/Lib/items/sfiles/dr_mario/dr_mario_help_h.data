@@ -1,0 +1,23 @@
+#!name##DrMarioHelp_H
+#!itemType##sfile
+#!info##Dr Mario help header file.
+#!lang##c
+
+#ifndef DR_MARIO_HELP_H
+#define DR_MARIO_HELP_H
+
+#define DRM_HELP_CMD_SIZE 8192
+
+extern int drm_help_intro[];
+extern int drm_help_unknown_command[];
+extern int drm_help_main[];
+extern int drm_help_proc_list[];
+extern int drm_help_injected_proc[];
+extern int drm_help_start_injection[];
+extern int drm_help_target_pid[];
+extern int drm_help_dll_inject_succ[];
+extern int drm_help_file_not_exist[];
+extern int drm_help_incomplete_cmd[];
+extern int drm_help_inject_complete[];
+
+#endif

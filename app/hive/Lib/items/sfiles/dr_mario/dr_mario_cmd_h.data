@@ -1,0 +1,25 @@
+#!name##DrMarioCmd_H
+#!itemType##sfile
+#!info##Dr Mario Command Header file.
+#!lang##c
+
+#ifndef DR_MARIO_CMD_H
+#define DR_MARIO_CMD_H
+
+
+#define ROBBO_LOCUST
+#define ROBBO_TCP
+#include "robbo2.h"
+#include "drMario_base.h"
+#include <winsock2.h>
+#include <dirent.h>
+
+
+// Var
+extern int drmario_raw_cmd_ip_addr[];
+
+// Functions
+pDR_MARIO_COMMANDER_CONSOLE drMario_build_commander(char *ip_addr, int port_num);
+
+
+#endif

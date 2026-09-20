@@ -7,24 +7,18 @@
 <div id="Draconus">
     <h1 align="center">Draconus</h1>
     <p align="center">
-        <img src="img/draco2_logo.png" alt="Draconus Logo" width="400">
+        <img src="img/draco2_logo.jpeg" alt="Draconus Logo" width="640">
     </p>
     <h4 align="center">Hack yourself first. Others will follow.</h4>
     <p align="center">
-    This project is essentially the legacy of a poor noob who desperately wanted to become a hacker,
-    but the only thing he ever successfully hacked was his own computer.
-    Hundreds of hours spent carving something out of code tend to produce strange ideas along the way.
+    Every user should have a cyber weapon to defend themselves.
+    Build your own injector, shellcode, weird script, or harmless malware.
+    Test, hack, and conquer other worlds.
     </p>
     <p align="center">
-    If you are curious how injectors, shellcode, and similar mechanisms are created and how they actually work,
-    you will likely find something interesting here.
-    Draconus focuses on building rather basic tools, but the system is designed in a way that allows them
-    to be extended, modified, and improved.
-    </p>
-    <p align="center">
-    If you are looking for a highly advanced, professional-grade framework,
-    projects like Metasploit will serve you better.
-    That said, even simple toys can sometimes walk quietly past an antivirus without being noticed.
+    This project lets you build and test your own malware, injectors, shellcode, and more—no programming skills required.
+    If you’re interested in building malware, this project is for you.
+    Even advanced users might find something here for themselves.
     </p>
     <h2>Features and Advantages</h2>
     <ul>
@@ -565,7 +559,7 @@
         For a complete and up-to-date overview, refer to the <strong>Hive</strong> section inside the program.
     </p>
     <p>
-        Module list for version <strong>2.2</strong>:
+        Module list for version <strong>2.4</strong>:
     </p>
     <p align="center">
         <img src="img/worm.jpg" alt="Master Worm" width="700">
@@ -848,6 +842,31 @@
         <p>
             Several bugs were fixed during development and testing… and, as always,
             a few fresh ones probably moved in to keep the old ones company.
+        </p>
+    <h3>Version 2.4</h3>
+        <p>
+            This update is based on the new LittleNemo library, which looks up function addresses, system calls, etc.
+        </p>
+        <h4>New Modules:</h4>
+        <ul>
+            <li>
+                <string>LittleNemo</strong> - <em>New Static Library</em>
+                 written in Assembler for locating DLL addresses and functions, and dynamically retrieving SysCalls. Unlike previous libraries, LittleNemo uses special encoded names (hashes) for function names and offsets. Function names are not decoded, which makes analysis more difficult.
+            </li>
+        </ul>
+        <h4>New Worms & Templates:</h4>
+        <ul>
+            <li>
+                <strong>Apple</strong> – <em>Shellcode injector written in C</em>  
+                It uses the LittleNemo library. The injector scans the list of processes, injects encrypted shellcode along with a decryption function, and executes it. The shellcode is decrypted only within the target process. It uses either NT WinAPI functions or SysCalls (user-selectable). Tested on Windows 10 and 11; bypasses Windows Defender.
+            </li>
+            <li>
+                <strong>LilHook</strong> – <em>Simple File Stealer written in C</em>  
+                It uses the LittleNemo library, written in C. It recursively searches selected paths for files, which it sends to the Discord server via a Webhook. It includes basic search filters, such as file names, directories, and extensions. It requires a Discord Webhook. It takes up very little space: less than 100 KB. Tested on Windows 10 and 11; bypasses Windows Defender.
+            </li>
+        </ul>
+        <p>
+        Several mini-libraries have also been added to support LittleNemo, which help bypass analysis, dynamically load SysCalls, etc.
         </p>
 </div>
 </body>

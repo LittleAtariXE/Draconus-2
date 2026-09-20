@@ -1,0 +1,404 @@
+#!name##LilNemo_Bag_C
+#!itemType##sfile
+#!info##LittleNemo Bag C file.
+#!lang##c
+#!addNameComp##True
+
+
+
+#include "little_nemo_bag.h"
+
+
+
+static void lil_nemo_bag_clear(pLIL_NEMO_BAG bag) {
+    if (bag->FLAG_balloc_mem == 1) {
+        free(bag->balloc->ptr);
+    }
+    free(bag->balloc);
+    if (bag->FLAG_str_buff == 1) {
+        free(bag->str_buff);
+    }
+    if (bag->FLAG_wstr_buff == 1) {
+        free(bag->wstr_buff);
+    }
+    if (bag->FLAG_tmp_buff == 1) {
+        free(bag->tmp_buff);
+    }
+    free(bag);
+}
+
+static int lil_nemo_fbag_check_key_len(uint16_t *ekey) {
+    int key_id = 0;
+    while (ekey[key_id] != 0) {
+        key_id++;
+    }
+    return key_id;
+}
+
+static void lil_nemo_bag_key_update(uint16_t *ekey, pLIL_NEMO_BAG bag) {
+    int key_len = lil_nemo_fbag_check_key_len(ekey);
+    memset(bag->ekey, 0, bag->default_buff_size * sizeof(uint16_t));
+    memcpy(bag->ekey, ekey, key_len * sizeof(uint16_t));
+}
+
+static void lil_nemo_fbag_empty_balloc(pLIL_NEMO_BAG bag) {
+    BALLOC_empty_memory(bag->balloc);
+}
+
+static void lil_nemo_fbag_get_raw(uint16_t *dest, NNType_NemoFoodBasic raw_name, pLIL_NEMO_BAG bag) {
+    raw_name(dest, bag->default_buff_size);
+}
+
+static void lil_nemo_bag_set_str_key(uint16_t *str_key, pLIL_NEMO_BAG bag) {
+    int key_len = lil_nemo_fbag_check_key_len(str_key);
+    memset(bag->str_key, 0, bag->default_buff_size * sizeof(uint16_t));
+    memcpy(bag->str_key, str_key, key_len * sizeof(uint16_t));
+}
+
+static int lil_nemo_bag_decode_char(NNType_NemoFoodFuncText food_text_func, pLIL_NEMO_BAG bag) {
+    if (bag->str_key[0] == 0 || bag->str_buff == NULL) {
+        return 0;
+    }
+    pLIL_NEMO_FOOD_TEXT ftext = food_text_func();
+    if (ftext->size > bag->str_buff_size) {
+        ftext->clear(ftext);
+        return 0;
+    }
+    int key_id = 0;
+    memset(bag->str_buff, 0, bag->str_buff_size);
+    for (int i=0; i<( ftext->size / sizeof(uint16_t) ) ; i++) {
+        if (bag->str_key[key_id] == 0) {
+            key_id = 0;
+        }
+        bag->str_buff[i] = ftext->text[i] - bag->str_key[key_id];
+        key_id++;
+    }
+    ftext->clear(ftext);
+    return 1;
+}
+
+static int lil_nemo_bag_decode_wchar(NNType_NemoFoodFuncText food_text_func, pLIL_NEMO_BAG bag) {
+    if (bag->str_key[0] == 0 || bag->wstr_buff == NULL) {
+        return 0;
+    }
+    if (bag->raw_k32[0] == 0 || bag->raw_multi_byte == 0) {
+        return 0;
+    }
+    pLIL_NEMO_FOOD_TEXT ftext = food_text_func();
+    if (ftext->size > bag->wstr_buff_size / sizeof(wchar_t)) {
+        ftext->clear(ftext);
+        return 0;
+    }
+    char *cbuff = malloc(ftext->size);
+    memset(cbuff, 0, ftext->size);
+    int key_id = 0;
+    for (int i=0; i<( ftext->size / sizeof(uint16_t) ); i++) {
+        if (bag->str_key[key_id] == 0) {
+            key_id = 0;
+        }
+        cbuff[i] = ftext->text[i] - bag->str_key[key_id];
+        key_id++;
+    }
+    memset(bag->wstr_buff, 0, bag->wstr_buff_size);
+    NTypeMultiByteToWideChar multib = bag->find_func(bag->raw_multi_byte, bag->raw_k32, bag);
+    if (!multib) {
+        ftext->clear(ftext);
+        free(cbuff);
+        return 0;
+    }
+    multib(65001, 0, cbuff, -1, bag->wstr_buff, bag->wstr_buff_size);
+    ftext->clear(ftext);
+    free(cbuff);
+    return 1;
+}
+
+
+
+
+static void* lil_nemo_bag_find_dll(uint16_t* dll_name, pLIL_NEMO_BAG bag) {
+    lil_nemo_fbag_empty_balloc(bag);
+    void *addr = NemoFindDll(bag->ekey, bag->mod_list, dll_name, bag->balloc);
+    lil_nemo_fbag_empty_balloc(bag);
+    return addr;
+}
+
+static uint16_t* lil_nemo_bag_raw_find_dll(pLIL_NEMO_FOOD_LIST flist, pLIL_NEMO_BAG bag) {
+    void *dll_addr = NULL;
+    int cid = 0;
+    while (flist->list_ptr[cid] != 0) {
+        dll_addr = bag->find_dll(flist->list_ptr[cid], bag);
+        if (!dll_addr) {
+            cid++;
+            continue;
+        }
+        break;
+    }
+    if (!dll_addr) {
+        return 0;
+    }
+    flist->target = flist->list_ptr[cid];
+    flist->target_size = flist->size[cid];
+    // clear 
+    int clear_id = 0;
+    while (flist->list_ptr[clear_id] != 0) {
+        if (flist->list_ptr[clear_id] == flist->target) {
+            clear_id++;
+            continue;
+        }
+        free(flist->list_ptr[clear_id]);
+        clear_id++;
+    }
+    uint16_t *ret_ptr = flist->target;
+    return ret_ptr;
+}
+
+static int lil_nemo_bag_get_raw_dll(NNType_NemoFoodFuncList food_raw_dll, uint16_t *bag_dest, pLIL_NEMO_BAG bag) {
+    uint16_t** buff = malloc(bag->default_ptr_buff_size * sizeof(uint16_t*));
+    memset(buff, 0, bag->default_ptr_buff_size * sizeof(uint16_t*));
+    pLIL_NEMO_FOOD_LIST flist = food_raw_dll(buff, bag->default_ptr_buff_size);
+    lil_nemo_bag_raw_find_dll(flist, bag);
+    memset(bag_dest, 0, bag->default_buff_size);
+    if (!flist->target) {
+        flist->clear(flist);
+        return 0;
+    }
+    memcpy(bag_dest, flist->target, flist->target_size);
+    free(flist->target);
+    flist->clear(flist);
+    return 1;
+}
+
+
+static void* lil_nemo_bag_get_func(uint16_t *func_name, void *dll_addr, pLIL_NEMO_BAG bag) {
+    lil_nemo_fbag_empty_balloc(bag);
+    void *func_addr = NemoFindFunc(func_name, dll_addr, bag->ekey, bag->rva_exp_tab, bag->balloc);
+    lil_nemo_fbag_empty_balloc(bag);
+    return func_addr;
+}
+
+static void* lil_nemo_bag_find_func(uint16_t *func_name, uint16_t *dll_name, pLIL_NEMO_BAG bag) {
+    lil_nemo_fbag_empty_balloc(bag);
+    void *func_addr = NemoFindFunc2(func_name, dll_name, bag->ekey, bag->rva_exp_tab, bag->mod_list, bag->balloc);
+    lil_nemo_fbag_empty_balloc(bag);
+    return func_addr;
+}
+
+static void lil_nemo_bag_update_str_data(char *str_buff, int buff_size, pLIL_NEMO_BAG bag) {
+    if (str_buff == 0) {
+        bag->str_buff = malloc(buff_size);
+        memset(bag->str_buff, 0, buff_size);
+        bag->FLAG_str_buff = 1;
+    }
+    else {
+        bag->str_buff = str_buff;
+        bag->FLAG_str_buff = 0;
+        memset(bag->str_buff, 0, buff_size);
+    }
+    bag->str_buff_size = buff_size;
+}
+
+static void lil_nemo_bag_update_wstr_data(wchar_t *wstr_buff, int buff_size, pLIL_NEMO_BAG bag) {
+    if (wstr_buff == 0) {
+        bag->wstr_buff = malloc(buff_size * sizeof(wchar_t));
+        memset(bag->wstr_buff, 0, buff_size * sizeof(wchar_t));
+        bag->FLAG_wstr_buff = 1;
+    }
+    else {
+        bag->wstr_buff = wstr_buff;
+        bag->FLAG_wstr_buff = 0;
+        memset(bag->wstr_buff, 0, buff_size * sizeof(wchar_t));
+    }
+    bag->wstr_buff_size = buff_size * sizeof(wchar_t);
+}
+
+static HMODULE lil_nemo_bag_load_liba_std(char *dll_name, pLIL_NEMO_BAG bag) {
+    if (bag->raw_k32[0] == 0 || bag->raw_load_lib[0] == 0) {
+        return 0;
+    }
+    NTypeLoadLibraryA lla = bag->find_func(bag->raw_load_lib, bag->raw_k32, bag);
+    if (!lla) {
+        return 0;
+    }
+    return lla(dll_name);
+}
+
+
+static HMODULE lil_nemo_bag_load_ldr_dll_std(char *dll_name, pLIL_NEMO_BAG bag) {
+    if (bag->raw_ntdll[0] == 0 || bag->raw_load_ldr_lib[0] == 0 || bag->raw_multi_byte[0] == 0) {
+        return 0;
+    }
+    NTypeMultiByteToWideChar multib = bag->find_func(bag->raw_multi_byte, bag->raw_k32, bag);
+    if (!multib) {
+        return 0;
+    }
+    multib(65001, 0, dll_name, -1, bag->wstr_buff, bag->wstr_buff_size);
+    UNICODE_STRING unstr;
+    unstr.Buffer = bag->wstr_buff;
+    unstr.Length = strlen(dll_name) * sizeof(wchar_t);
+    unstr.MaximumLength = bag->wstr_buff_size;
+    NTypeLdrLoadDll lld = bag->find_func(bag->raw_load_ldr_lib, bag->raw_ntdll, bag);
+    if (!lld) {
+        return 0;
+    }
+    HMODULE dll_handle = NULL;
+    bag->last_ntstatus = lld(0, 0, &unstr, &dll_handle);
+    memset(bag->wstr_buff, 0, bag->wstr_buff_size);
+    return dll_handle;
+
+}
+
+static HMODULE lil_nemo_bag_load_liba(NNType_NemoFoodFuncText food_dll_name, pLIL_NEMO_BAG bag) {
+    int result = bag->decode_char(food_dll_name, bag);
+    if (result == 0) {
+        return 0;
+    }
+    HMODULE mdll = bag->load_lib_char(bag->str_buff, bag);
+    memset(bag->str_buff, 0, bag->str_buff_size);
+    return mdll;
+}
+
+static HMODULE lil_nemo_bag_load_ldr_dll(NNType_NemoFoodFuncText food_dll_name, pLIL_NEMO_BAG bag) {
+    int result = bag->decode_wchar(food_dll_name, bag);
+    if (result == 0) {
+        return 0;
+    }
+    UNICODE_STRING unstr;
+    unstr.Buffer = bag->wstr_buff;
+    unstr.Length = wcslen(bag->wstr_buff) * sizeof(wchar_t);
+    unstr.MaximumLength = bag->wstr_buff_size;
+    NTypeLdrLoadDll lld = bag->find_func(bag->raw_load_ldr_lib, bag->raw_ntdll, bag);
+    if (!lld) {
+        return 0;
+    }
+    HMODULE dll_handle = NULL;
+    bag->last_ntstatus = lld(0, 0, &unstr, &dll_handle);
+    memset(bag->wstr_buff, 0, bag->wstr_buff_size);
+    return dll_handle;
+}
+
+static uint32_t lil_nemo_bag_get_syscall(uint16_t *nt_func_name, pLIL_NEMO_BAG bag) {
+    if (bag->raw_ntdll[0] == 0) {
+        return 0;
+    }
+    void *faddr = bag->find_func(nt_func_name, bag->raw_ntdll, bag);
+    if (!faddr) {
+        return 0;
+    }
+    unsigned char byte4 = ((unsigned char*)faddr)[4];
+    unsigned char byte5 = ((unsigned char*)faddr)[5];
+    if (byte5 == 0) {
+        return (uint32_t)byte4;
+    }
+    unsigned char *pfaddr = (unsigned char*)faddr;
+    uint16_t sys_byte = (uint16_t)((pfaddr[5] << 8 ) | pfaddr[4]);
+    return (uint32_t)sys_byte;
+}
+
+static uint32_t lil_nemo_bag_get_syscall2(void *nt_func_addr) {
+    unsigned char byte4 = ((unsigned char*)nt_func_addr)[4];
+    unsigned char byte5 = ((unsigned char*)nt_func_addr)[5];
+    if (byte5 == 0) {
+        return (uint32_t)byte4;
+    }
+    unsigned char *pfaddr = (unsigned char*)nt_func_addr;
+    uint16_t sys_byte = (uint16_t)((pfaddr[5] << 8 ) | pfaddr[4]);
+    return (uint32_t)sys_byte;
+}
+
+static void* lil_nemo_bag_get_peb(pLIL_NEMO_BAG bag) {
+    void *peb = NemoGetPeb(bag->mod_list, bag->ekey, bag->balloc);
+    return peb;
+}
+
+static void* lil_nemo_bag_get_func2(NNType_NemoFoodBasic food_func_name, void *dll_addr, pLIL_NEMO_BAG bag) {
+    food_func_name(bag->tmp_buff, bag->tmp_buff_size);
+    lil_nemo_fbag_empty_balloc(bag);
+    void *faddr = NemoFindFunc(bag->tmp_buff, dll_addr, bag->ekey, bag->rva_exp_tab, bag->balloc);
+    lil_nemo_fbag_empty_balloc(bag);
+    return faddr;
+}
+
+
+
+
+
+
+pLIL_NEMO_BAG lil_nemo_bag_make(uint16_t *ekey, NNType_NemoFoodBasic mod_list, NNType_NemoFoodBasic rva_exp, uint16_t *buffer, uint16_t balloc_memory_size, uint16_t *tmp_buff, uint16_t tmp_buff_size) {
+    pLIL_NEMO_BAG bag = malloc(sizeof(LIL_NEMO_BAG));
+    memset(bag, 0, sizeof(LIL_NEMO_BAG));
+    if (!buffer) {
+        bag->FLAG_balloc_mem = 1;
+    }
+    bag->balloc = lil_nemo_balloc_init_memory(buffer, balloc_memory_size, LIL_NEMO_BAG_DEFAULT_BALLOC_PART_SIZE);
+    if (!bag->balloc) {
+        free(bag);
+        return 0;
+    }
+    
+    if (tmp_buff == 0) {
+        bag->tmp_buff = malloc(tmp_buff_size * sizeof(uint16_t));
+        bag->tmp_buff_size = tmp_buff_size * sizeof(uint16_t);
+        memset(bag->tmp_buff, 0, bag->tmp_buff_size);
+        bag->FLAG_tmp_buff = 1;
+    }
+    else {
+        bag->tmp_buff = tmp_buff;
+        bag->tmp_buff_size = tmp_buff_size;
+        bag->FLAG_tmp_buff = 0;
+    }
+    bag->default_buff_size = LIL_NEMO_BAG_BUFF_SIZE;
+    bag->default_ptr_buff_size = LIL_NEMO_BAG_PTR_BUFF_SIZE;
+    bag->str_buff = NULL;
+    bag->str_buff_size = 0;
+    bag->wstr_buff = NULL;
+    bag->wstr_buff_size = 0;
+    int ekey_len = lil_nemo_fbag_check_key_len(ekey);
+    memcpy(bag->ekey, ekey, ekey_len * sizeof(uint16_t));
+    mod_list(bag->mod_list, bag->default_buff_size);
+    rva_exp(bag->rva_exp_tab, bag->default_buff_size);
+
+
+    bag->addr_k32 = NULL;
+    bag->addr_kbase = NULL;
+    bag->addr_ntdll = NULL;
+    bag->addr_multi_byte = NULL;
+    bag->addr_ldr_load = NULL;
+
+    bag->clear = lil_nemo_bag_clear;
+    bag->update_key = lil_nemo_bag_key_update;
+    bag->find_dll = lil_nemo_bag_find_dll;
+    bag->get_func = lil_nemo_bag_get_func;
+    bag->find_func = lil_nemo_bag_find_func;
+    bag->update_raw = lil_nemo_fbag_get_raw;
+    bag->get_raw_dll = lil_nemo_bag_get_raw_dll;
+    bag->set_str_key = lil_nemo_bag_set_str_key;
+    bag->update_str_data = lil_nemo_bag_update_str_data;
+    bag->update_wstr_data = lil_nemo_bag_update_wstr_data;
+    bag->decode_char = lil_nemo_bag_decode_char;
+    bag->load_lib_char = lil_nemo_bag_load_liba_std;
+    bag->decode_wchar = lil_nemo_bag_decode_wchar;
+    bag->load_ldr_dll_char = lil_nemo_bag_load_ldr_dll_std;
+    bag->load_lib = lil_nemo_bag_load_liba;
+    bag->load_ldr_dll = lil_nemo_bag_load_ldr_dll;
+    bag->get_syscall = lil_nemo_bag_get_syscall;
+    bag->get_syscall2 = lil_nemo_bag_get_syscall2;
+    bag->peb = lil_nemo_bag_get_peb;
+    bag->get_func2 = lil_nemo_bag_get_func2;
+    return bag;
+}
+
+pLIL_NEMO_BAG lil_nemo_bag_prepareNemo(uint16_t *ekey, uint16_t *str_key, uint16_t *balloc_buff, uint16_t buff_size, char *str_buff, int str_buff_size, wchar_t *wchar_buff, int wchar_buff_size, uint16_t *tmp_buff, uint16_t tmp_buff_size) {
+    pLIL_NEMO_BAG bag = lil_nemo_bag_make(ekey, lil_nemo_food_inMemModList, lil_nemo_food_rvaExpTab, balloc_buff, buff_size, tmp_buff, tmp_buff_size);
+    bag->get_raw_dll(lil_nemo_food_kernel32, bag->raw_k32, bag);
+    bag->get_raw_dll(lil_nemo_food_ntdll, bag->raw_ntdll, bag);
+    bag->update_raw(bag->raw_multi_byte, lil_nemo_food_MultiByteToWideChar, bag);
+    bag->update_raw(bag->raw_load_lib, lil_nemo_food_loadlibrarya, bag);
+    bag->update_raw(bag->raw_load_ldr_lib, lil_nemo_food_LdrLoadDll, bag);
+    bag->update_str_data(str_buff, str_buff_size, bag);
+    bag->update_wstr_data(wchar_buff, wchar_buff_size, bag);
+    if (str_key != 0) {
+        bag->set_str_key(str_key, bag);
+    }
+    return bag;
+}
+

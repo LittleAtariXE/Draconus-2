@@ -1,0 +1,7 @@
+#!name##LilNemo_Candy_C
+#!itemType##sfile
+#!info##LittleNemo Candy C file.
+#!lang##c
+#!addNameComp##True
+
+#include "little_nemo_candy.h"

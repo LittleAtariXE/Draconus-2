@@ -1,0 +1,71 @@
+#!name##LilNemo_Food_H
+#!itemType##sfile
+#!info##LittleNemo FOOD header file.
+#!lang##c
+
+#ifndef LITTLE_NEMO_FOOD_H
+#define LITTLE_NEMO_FOOD_H
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct _LIL_NEMO_FOOD_LIST {
+    uint16_t** list_ptr;
+    uint16_t* size;
+    uint16_t* target;
+    uint16_t target_size;
+    void (*clear)(struct _LIL_NEMO_FOOD_LIST *flist);
+} LIL_NEMO_FOOD_LIST, *pLIL_NEMO_FOOD_LIST;
+
+typedef struct _LIL_NEMO_FOOD_TEXT {
+    uint16_t *text;
+    uint16_t size;
+    void (*clear)(struct _LIL_NEMO_FOOD_TEXT *ftext);
+} LIL_NEMO_FOOD_TEXT, *pLIL_NEMO_FOOD_TEXT;
+
+typedef pLIL_NEMO_FOOD_LIST (*NNType_NemoFoodFuncList)(uint16_t** buff, uint16_t buff_size);
+typedef pLIL_NEMO_FOOD_TEXT (*NNType_NemoFoodFuncText)(void);
+
+pLIL_NEMO_FOOD_LIST lil_nemo_food_make(void);
+pLIL_NEMO_FOOD_TEXT lil_nemo_food_text_make(void);
+
+uint16_t* lil_nemo_food_inMemModList(uint16_t *buff, uint16_t buff_size);
+uint16_t* lil_nemo_food_rvaExpTab(uint16_t *buff, uint16_t buff_size);
+
+pLIL_NEMO_FOOD_LIST lil_nemo_food_kernel32(uint16_t **buff, uint16_t buff_size);
+pLIL_NEMO_FOOD_LIST lil_nemo_food_ntdll(uint16_t **buff, uint16_t buff_size);
+
+uint16_t* lil_nemo_food_MultiByteToWideChar(uint16_t *buff, uint16_t buff_size);
+uint16_t* lil_nemo_food_loadlibrarya(uint16_t *buff, uint16_t buff_size);
+uint16_t* lil_nemo_food_LdrLoadDll(uint16_t *buff, uint16_t buff_size);
+uint16_t* lil_nemo_food_NtOpenProcess(uint16_t *buff, uint16_t buff_size);
+uint16_t* lil_nemo_food_NtAllocateVirtualMemory(uint16_t *buff, uint16_t buff_size);
+uint16_t* lil_nemo_food_NtWriteVirtualMemory(uint16_t *buff, uint16_t buff_size);
+uint16_t* lil_nemo_food_NtCreateThreadEx(uint16_t *buff, uint16_t buff_size);
+uint16_t* lil_nemo_food_NtClose(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_EnumProcesses(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_GetModuleBaseNameA(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_GetCurrentProcess(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_CreateToolhelp32Snapshot(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_Process32First(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_Process32Next(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_CloseHandle(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_Thread32First(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_Thread32Next(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_SuspendThread(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_ResumeThread(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_GetThreadContext(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_SetThreadContext(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_NtOpenThread(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_GetActiveProcessorCount(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_Sleep(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_FindFirstFileA(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_FindNextFileA(uint16_t *buff, uint16_t buff_size);
+uint16_t *lil_nemo_food_PathFindExtensionA(uint16_t *buff, uint16_t buff_size);
+
+pLIL_NEMO_FOOD_TEXT lil_nemo_food_Psapi_dll(void);
+pLIL_NEMO_FOOD_TEXT lil_nemo_food_Shlwapi_dll(void);
+
+pLIL_NEMO_FOOD_TEXT lil_nemo_food_hello_world(void);
+#endif

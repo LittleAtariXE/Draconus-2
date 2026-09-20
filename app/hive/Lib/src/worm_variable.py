@@ -37,6 +37,14 @@ class WormVariable:
                 return True
         return False
     
+    def show_owner(self) -> str:
+        if self.owner.owner == None:
+            return self.owner.name
+        else:
+            if self.owner.itemType == "sfile":
+                return self.owner.owner.name
+            else:
+                return self.owner.name
 
     def _convert2int(self, value: str) -> Union[str, int]:
         try:

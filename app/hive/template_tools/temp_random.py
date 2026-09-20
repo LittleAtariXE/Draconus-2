@@ -29,4 +29,6 @@ class RandomTemplate:
             ret_str += choice(database)
         return ret_str
 
-
+    def randomNumber(self, min_value: int, max_value: int) -> int:
+        return randint(min_value, max_value);
+        

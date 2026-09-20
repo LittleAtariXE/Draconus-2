@@ -406,7 +406,7 @@ class RawWormBuilder:
 
     
     def check_depediences(self, raw_mod: RawLibItem, payload_var_name: str = None) -> None:
-        self.msg("msg", "Check depediences....", sender=self.name)
+        # self.msg("msg", "Check depediences....", sender=self.name)
         self.msg("dev", f"Check: {raw_mod.name}", sender=self.name)
         # check req mods
         for rmod in raw_mod.reqMod:
@@ -556,7 +556,8 @@ class RawWormBuilder:
                 continue
             # prevent ERROR textwrap (munge_white_space)
             value = f" {var.show_value()} "
-            tab["data"].append([var.name, f"<< {var.owner.name} >>", value, var.info])
+            # tab["data"].append([var.name, f"<< {var.owner.name} >>", value, var.info])
+            tab["data"].append([var.name, f"<< {var.show_owner()} >>", value, var.info])
         if len(tab["data"]) == 0:
             return
         # show foods

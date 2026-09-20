@@ -1,3 +1,4 @@
+import base64
 from typing import Union
 
 class CTemplate:
@@ -16,3 +17,8 @@ class CTemplate:
         return out
     
     
+    def binaryToHex(self, data: bytes, decode_base: bool = True) -> str:
+        if decode_base:
+            data = base64.b64decode(data.encode("ascii"))
+        hex_list = [hex(b) for b in data]
+        return ", ".join(hex_list)

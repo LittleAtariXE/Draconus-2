@@ -1,0 +1,406 @@
+#!name##LilNemo_Food_C
+#!itemType##sfile
+#!info##LittleNemo FOOD C file.
+#!lang##c
+#!addNameComp##True
+
+{% set _K32DLL = ["KERNEL32.dll", "Kernel32.dll", "KERNEL32.DLL", "kernel32.dll"] %}
+{% set _NTDLL = ["ntdll.dll"] %}
+
+
+#include "little_nemo_food.h"
+
+
+
+static void lil_nemo_food_clear(pLIL_NEMO_FOOD_LIST flist) {
+    free(flist->size);
+    free(flist);
+}
+
+pLIL_NEMO_FOOD_LIST lil_nemo_food_make(void) {
+    pLIL_NEMO_FOOD_LIST flist = malloc(sizeof(LIL_NEMO_FOOD_LIST));
+    memset(flist, 0, sizeof(LIL_NEMO_FOOD_LIST));
+    flist->clear = lil_nemo_food_clear;
+    flist->list_ptr = NULL;
+    flist->size = NULL;
+    flist->target = NULL;
+    flist->target_size = 0;
+    return flist;
+}
+
+static void lil_nemo_food_text_clear(pLIL_NEMO_FOOD_TEXT ftext) {
+    free(ftext->text);
+    free(ftext);
+}
+
+pLIL_NEMO_FOOD_TEXT lil_nemo_food_text_make(void) {
+    pLIL_NEMO_FOOD_TEXT ftext = malloc(sizeof(LIL_NEMO_FOOD_TEXT));
+    memset(ftext, 0, sizeof(LIL_NEMO_FOOD_TEXT));
+    ftext->size = 0;
+    ftext->text = NULL;
+    ftext->clear = lil_nemo_food_text_clear;
+    return ftext;
+}
+
+uint16_t* lil_nemo_food_inMemModList(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.genInMemModList()}}
+    };
+    memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+uint16_t* lil_nemo_food_rvaExpTab(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.genRvaExpTab()}}
+    };
+    memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+pLIL_NEMO_FOOD_LIST lil_nemo_food_kernel32(uint16_t **buff, uint16_t buff_size) {
+{{ _LNSHADOW.shadowList(_K32DLL) }}
+
+    
+    pLIL_NEMO_FOOD_LIST flist = lil_nemo_food_make();
+    flist->size = malloc(sizeof(all_size));
+    memset(flist->size, 0, sizeof(all_size));
+    memcpy(flist->size, all_size, sizeof(all_size));
+    memset(buff, 0, buff_size * sizeof(uint16_t*));
+    memcpy(buff, all_addr, sizeof(all_addr));
+    flist->list_ptr = buff;
+    return flist;
+}
+
+
+
+pLIL_NEMO_FOOD_LIST lil_nemo_food_ntdll(uint16_t **buff, uint16_t buff_size) {
+{{ _LNSHADOW.shadowList(_NTDLL) }}
+
+    pLIL_NEMO_FOOD_LIST flist = lil_nemo_food_make();
+    flist->size = malloc(sizeof(all_size));
+    memset(flist->size, 0, sizeof(all_size));
+    memcpy(flist->size, all_size, sizeof(all_size));
+    memset(buff, 0, buff_size * sizeof(uint16_t*));
+    memcpy(buff, all_addr, sizeof(all_addr));
+    flist->list_ptr = buff;
+    return flist;
+}
+
+// LoadLibraryA
+uint16_t* lil_nemo_food_loadlibrarya(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("LoadLibraryA")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// LdrLoadDll
+uint16_t* lil_nemo_food_LdrLoadDll(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("LdrLoadDll")}}
+    };
+    memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+
+}
+
+// MultiByteToWideChar
+uint16_t* lil_nemo_food_MultiByteToWideChar(uint16_t *buff, uint16_t buff_size) {
+	uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("MultiByteToWideChar")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// NtOpenProcess
+uint16_t* lil_nemo_food_NtOpenProcess(uint16_t *buff, uint16_t buff_size) {
+	uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("NtOpenProcess")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// NtAllocateVirtualMemory
+uint16_t* lil_nemo_food_NtAllocateVirtualMemory(uint16_t *buff, uint16_t buff_size) {
+	uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("NtAllocateVirtualMemory")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// NtWriteVirtualMemory
+uint16_t* lil_nemo_food_NtWriteVirtualMemory(uint16_t *buff, uint16_t buff_size) {
+	uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("NtWriteVirtualMemory")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// NtCreateThreadEx
+uint16_t* lil_nemo_food_NtCreateThreadEx(uint16_t *buff, uint16_t buff_size) {
+	uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("NtCreateThreadEx")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// NtClose
+uint16_t* lil_nemo_food_NtClose(uint16_t *buff, uint16_t buff_size) {
+	uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("NtClose")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// GetCurrentProcess
+uint16_t *lil_nemo_food_GetCurrentProcess(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("GetCurrentProcess")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// EnumProcesses
+uint16_t *lil_nemo_food_EnumProcesses(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("EnumProcesses")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// GetModuleBaseNameA
+uint16_t *lil_nemo_food_GetModuleBaseNameA(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("GetModuleBaseNameA")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// CreateToolhelp32Snapshot
+uint16_t *lil_nemo_food_CreateToolhelp32Snapshot(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("CreateToolhelp32Snapshot")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// Process32First
+uint16_t *lil_nemo_food_Process32First(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("Process32First")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// Process32Next
+uint16_t *lil_nemo_food_Process32Next(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("Process32Next")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// CloseHandle
+uint16_t *lil_nemo_food_CloseHandle(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("CloseHandle")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// Thread32First
+uint16_t *lil_nemo_food_Thread32First(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("Thread32First")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// Thread32Next
+uint16_t *lil_nemo_food_Thread32Next(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("Thread32Next")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// SuspendThread 
+uint16_t *lil_nemo_food_SuspendThread(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("SuspendThread")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// ResumeThread 
+uint16_t *lil_nemo_food_ResumeThread(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("ResumeThread")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// GetThreadContext
+uint16_t *lil_nemo_food_GetThreadContext(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("GetThreadContext")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// SetThreadContext
+uint16_t *lil_nemo_food_SetThreadContext(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("SetThreadContext")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// NtOpenThread
+uint16_t *lil_nemo_food_NtOpenThread(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("NtOpenThread")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// GetActiveProcessorCount
+uint16_t *lil_nemo_food_GetActiveProcessorCount(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+         {{_LNSHADOW.shadowStr("GetActiveProcessorCount")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// Sleep
+uint16_t *lil_nemo_food_Sleep(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("Sleep")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// FindFirstFileA
+uint16_t *lil_nemo_food_FindFirstFileA(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("FindFirstFileA")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// FindNextFileA
+uint16_t *lil_nemo_food_FindNextFileA(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("FindNextFileA")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// PathFindExtensionA
+uint16_t *lil_nemo_food_PathFindExtensionA(uint16_t *buff, uint16_t buff_size) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.shadowStr("PathFindExtensionA")}}
+    };
+	memset(buff, 0, buff_size);
+    memcpy(buff, raddr, sizeof(raddr));
+    return buff;
+}
+
+// --------------------------------------- This Functions uses STR_KEY ------------------------------------------------------
+
+
+// Psapi.dll
+pLIL_NEMO_FOOD_TEXT lil_nemo_food_Psapi_dll(void) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.encodeString("Psapi.dll")}}
+    };
+    pLIL_NEMO_FOOD_TEXT ftext = lil_nemo_food_text_make();
+    ftext->size = sizeof(raddr);
+    ftext->text = malloc(ftext->size);
+    memset(ftext->text, 0, ftext->size);
+    memcpy(ftext->text, raddr, ftext->size);
+    return ftext;
+}
+
+// Shlwapi.dll
+pLIL_NEMO_FOOD_TEXT lil_nemo_food_Shlwapi_dll(void) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.encodeString("Shlwapi.dll")}}
+    };
+    pLIL_NEMO_FOOD_TEXT ftext = lil_nemo_food_text_make();
+    ftext->size = sizeof(raddr);
+    ftext->text = malloc(ftext->size);
+    memset(ftext->text, 0, ftext->size);
+    memcpy(ftext->text, raddr, ftext->size);
+    return ftext;
+}
+
+
+
+// Hello World
+pLIL_NEMO_FOOD_TEXT lil_nemo_food_hello_world(void) {
+    uint16_t raddr[] = {
+        {{_LNSHADOW.encodeString("Hello World.")}}
+    };
+    pLIL_NEMO_FOOD_TEXT ftext = lil_nemo_food_text_make();
+    ftext->size = sizeof(raddr);
+    ftext->text = malloc(ftext->size);
+    memset(ftext->text, 0, ftext->size);
+    memcpy(ftext->text, raddr, ftext->size);
+    return ftext;
+}
+

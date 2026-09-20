@@ -1,0 +1,102 @@
+#!name##LittleNemoCandy
+#!itemType##support
+#!info##The LittleNemo extension library. It helps dynamically retrieve system calls from functions.
+#!lang##nasm
+#!fileType##lib
+#!hiveType##lib
+#!addNameComp##True
+#!modProcess##BUILD_CODE##COMPILE
+#!modCompiler##Basic-Nasm
+
+
+
+bits 64
+default rel
+
+
+; Functions
+global NemoCandy_ntcreatefile
+global NemoCandy_NtClose;
+global NemoCandy_NtOpenProcess
+global NemoCandy_NtAllocateVirtualMemory
+global NemoCandy_NtWriteVirtualMemory
+global NemoCandy_NtCreateThreadEx
+
+; SysCall number variables
+global nemo_ssn_ntcreatefile
+global nemo_ssn_ntwritefile
+global nemo_ssn_ntclose
+global nemo_ssn_ntopenprocess
+global nemo_ssn_NtAllocateVirtualMemory
+global nemo_ssn_NtWriteVirtualMemory
+global nemo_ssn_NtCreateThreadEx
+
+
+section .data
+
+section .bss
+    nemo_ssn_ntcreatefile: resd 1
+    nemo_ssn_ntwritefile: resd 1
+    nemo_ssn_ntclose: resd 1
+    nemo_ssn_ntopenprocess: resd 1
+    nemo_ssn_NtAllocateVirtualMemory: resd 1
+    nemo_ssn_NtWriteVirtualMemory: resd 1
+    nemo_ssn_NtCreateThreadEx: resd 1
+    
+section .text
+
+NemoCandy_ntcreatefile:
+    xor rax, rax
+    mov r10, rcx
+    lea rax, [nemo_ssn_ntcreatefile]
+    mov dword eax, [rax]
+    syscall
+    ret
+
+NemoCandy_ntwritefile:
+    xor rax, rax
+    mov r10, rcx
+    lea rax, [nemo_ssn_ntwritefile]
+    mov dword eax, [rax]
+    syscall
+    ret
+    
+NemoCandy_NtClose:
+    xor rax, rax
+    mov r10, rcx
+    lea rax, [nemo_ssn_ntclose]
+    mov dword eax, [rax]
+    syscall
+    ret
+    
+NemoCandy_NtOpenProcess:
+    xor rax, rax
+    mov r10, rcx
+    lea rax, [nemo_ssn_ntopenprocess]
+    mov dword eax, [rax]
+    syscall
+    ret
+
+NemoCandy_NtAllocateVirtualMemory:
+    xor rax, rax
+    mov r10, rcx
+    lea rax, [nemo_ssn_NtAllocateVirtualMemory]
+    mov dword eax, [rax]
+    syscall
+    ret
+
+NemoCandy_NtWriteVirtualMemory:
+    xor rax, rax
+    mov r10, rcx
+    lea rax, [nemo_ssn_NtWriteVirtualMemory]
+    mov dword eax, [rax]
+    syscall
+    ret
+    
+NemoCandy_NtCreateThreadEx:
+    xor rax, rax
+    mov r10, rcx
+    lea rax, [nemo_ssn_NtCreateThreadEx]
+    mov dword eax, [rax]
+    syscall
+    ret

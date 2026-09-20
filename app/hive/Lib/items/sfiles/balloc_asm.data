@@ -1,0 +1,146 @@
+#!name##BallocAsm
+#!itemType##sfile
+#!info##Buffer memory management.
+#!lang##nasm
+
+
+%ifndef BALLOC_LIB_ASM
+%define BALLOC_LIB_ASM
+
+; SIZE in BYTE (1 byte)
+%define BALLOC_BUFF_SEPARATOR_SIZE 4
+
+; BALLOC_init_memory -> initialize BuffMemory struct.
+; BALLOC_set_memory -> Set pointer to allocated memory in buffer.
+; BALLOC_clear_memory -> Clear memory in allocated memory in buffer.
+; BALLOC_empty_memory -> Clear all memory in struct.
+
+struc BuffMemory
+    .ptr resq 1
+    .index resw 1
+    .size resw 1
+    .part_size resw 1
+        resb 2
+endstruc
+
+section .data
+
+section .bss
+
+section .text
+
+BALLOC_empty_memory:
+; Clear all memory in struct
+; IN: RCX - pointer to BuffMemory struct
+; OUT: RAX - pointer to BuffMemory struct
+    push rbp
+    mov rbp, rsp
+    push rdi
+    push rbx
+    mov rbx, rcx
+    
+    xor rcx, rcx
+    xor rax, rax
+    mov rdi, [rbx + BuffMemory.ptr]
+    mov cx, [rbx + BuffMemory.size]
+    cld
+    rep stosw
+    
+    mov word [rbx + BuffMemory.index], 0
+    mov rax, rbx
+    
+    pop rbx
+    pop rdi
+    pop rbp
+    ret
+
+BALLOC_set_memory:
+; Set pointer to allocated memory in buffer
+; IN: RCX - pointer to BuffMemory struct
+; IN: RDX - memory size
+; OUT: RAX - pointer to allocated memory
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx    ; pBuffMemory
+    push r10
+    push r11
+    push rsi
+    push rdi
+    push rbx
+    
+    xor rsi, rsi
+    mov rsi, [rcx + BuffMemory.ptr]
+    xor r10, r10
+    mov r10w, [rcx + BuffMemory.index]
+    add rsi, r10    ; mem index
+    
+    xor rbx, rbx
+    xor rax, rax
+    mov ax, dx
+    mov bx, 2
+    mul bx
+    add ax, BALLOC_BUFF_SEPARATOR_SIZE  ; add separator
+    xor rbx, rbx
+    add ax, r10w
+    mov word [rcx + BuffMemory.index], ax
+    mov rax, rsi
+    
+    .return:
+        pop rbx
+        pop rdi
+        pop rsi
+        pop r11
+        pop r10
+        add rsp, 16
+        pop rbp
+        ret
+
+BALLOC_clear_memory:
+; Clear memory in allocated memory in buffer
+; IN: RCX - pointer to allocated memory
+; IN: RDX - size 'word'
+; OUT: RAX - pointer to allocated memory
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], rcx    ; pointer
+    push rdi
+    
+    xor rax, rax
+    mov rdi, rcx
+    xor rcx, rcx
+    mov cx, dx
+    cld
+    rep stosw
+    
+    mov rax, [rbp-8]
+    
+    pop rdi
+    add rsp, 16
+    pop rbp
+    ret
+
+BALLOC_init_memory:
+; initialize BuffMemory struct
+; IN: RCX - pointer to BuffMemory empty struct
+; IN: RDX - Pointer to buffer 'word'
+; IN: R8 - Buffer size 'word'
+; IN: R9 - Part buffer size 'word'
+; OUT: RAX - pointer to BuffMemory
+    push rbp
+    mov rbp, rsp
+    
+    xor rax, rax
+    
+    mov qword [rcx + BuffMemory.ptr], rdx
+    mov word [rcx + BuffMemory.index], 0
+    mov word [rcx + BuffMemory.size], r8w
+    mov word [rcx + BuffMemory.part_size], r9w
+    mov rax, rcx
+    
+    .return:
+        pop rbp
+        ret
+
+%endif

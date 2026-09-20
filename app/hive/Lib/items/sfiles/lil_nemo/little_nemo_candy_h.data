@@ -1,0 +1,29 @@
+#!name##LilNemo_Candy_H
+#!itemType##sfile
+#!info##LittleNemo Candy header file.
+#!lang##c
+
+
+#ifndef LITTLE_NEMO_CANDY_H
+#define LITTLE_NEMO_CANDY_H
+
+#include "little_nemo_bag.h"
+
+#ifdef LITTLE_NEMO_CANDY_INJECTOR
+    #include "lil_nemo_candy_injector.h"
+#endif
+
+#ifdef LITTLE_NEMO_CANDY_ANTI
+    #include "lil_nemo_candy_anti.h"
+#endif
+
+#ifdef LITTLE_NEMO_CANDY_DCHOOK
+    #include "lil_nemo_candy_dchook.h"
+#endif
+
+#ifdef LITTLE_NEMO_CANDY_FILE
+    #include "lil_nemo_candy_file.h"
+#endif
+
+#endif
+

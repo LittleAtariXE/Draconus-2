@@ -7,10 +7,13 @@ from pathlib import Path
 
 
 class Builder:
-    def __init__(self):
+    def __init__(self, conf_fname: str = None):
         self.DIR_MAIN = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
         self.DIR_HIVE = os.path.join(self.DIR_MAIN, "app", "hive")
-        self.DEFAULT_CONFIG = os.path.join(self.DIR_MAIN, "CONFIG.ini")
+        if not conf_fname:
+            self.DEFAULT_CONFIG = os.path.join(self.DIR_MAIN, "CONFIG.ini")
+        else:
+            self.DEFAULT_CONFIG = os.path.join(self.DIR_MAIN, conf_fname)
         self.DEFAULT_DEV_CONFIG = os.path.join(self.DIR_MAIN, "dev_conf.ini")
         self.DIR_SYS_FILES = os.path.join(self.DIR_MAIN, "app", "_sys_files")
         self.FD_SOCKET_DRACO_MSG = os.path.join(self.DIR_SYS_FILES, "draco.msg")
@@ -73,15 +76,40 @@ class Builder:
 
         ### DEV SETTINGS
         dev = conf["DEV"]
+        task_pause_clean = dev.get("task_pause_clean")
+        if not task_pause_clean:
+            task_pause_clean = 1
+        dev_msg = dev.getboolean("dev_msg")
+        if not dev_msg:
+            dev_msg = False
+        tcp_sock_to_listening = dev.get("tcp_socket_timeout_listening")
+        if not tcp_sock_to_listening:
+            tcp_sock_to_listening = 1
+        unix_sock_to_recive = dev.get("unix_socket_timeout_recive")
+        if not unix_sock_to_recive:
+            unix_sock_to_recive = 1
+        tcp_sock_to_recive = dev.get("tcp_socket_timeout_recive")
+        if not tcp_sock_to_recive:
+            tcp_sock_to_recive = 1
+        central_clean_pause = dev.get("central_cleaner_time_pause")
+        if not central_clean_pause:
+            central_clean_pause = 1
+        msg_color_dev = dev.get("DEV_MSG_COLOR")
+        if not msg_color_dev:
+            msg_color_dev = "blue"
+        dev_mode = dev.getboolean("DEV_MODE")
+        if not dev_mode:
+            dev_mode = False
+        
         dconf = {
-            "task_pause_clean" : float(dev.get("task_pause_clean")),
-            "dev_msg" : dev.getboolean("dev_msg"),
-            "tcp_sock_to_listening" : int(dev.get("tcp_socket_timeout_listening")),
-            "unix_sock_to_recive" : int(dev.get("unix_socket_timeout_recive")),
-            "tcp_sock_to_recive" : int(dev.get("tcp_socket_timeout_recive")),
-            "central_clean_pause" : int(dev.get("central_cleaner_time_pause")),
-            "msg_color_dev" : dev.get("DEV_MSG_COLOR"),
-            "dev_mode" : dev.getboolean("DEV_MODE")
+            "task_pause_clean" : float(task_pause_clean),
+            "dev_msg" : dev_msg,
+            "tcp_sock_to_listening" : int(tcp_sock_to_listening),
+            "unix_sock_to_recive" : int(unix_sock_to_recive),
+            "tcp_sock_to_recive" : int(tcp_sock_to_recive),
+            "central_clean_pause" : int(central_clean_pause),
+            "msg_color_dev" : msg_color_dev,
+            "dev_mode" : dev_mode
         }
 
         ### update directories

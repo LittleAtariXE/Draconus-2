@@ -1,0 +1,43 @@
+#!name##LilNemo_Core_H
+#!itemType##sfile
+#!info##LittleNemo Core header file.
+#!lang##c
+
+
+#ifndef LITTLE_NEMO_CORE_H
+#define LITTLE_NEMO_CORE_H
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+// NEMO.LIB Functions
+
+typedef struct _NEMO_BALLOC_MEM {
+    uint16_t *ptr;
+    uint16_t index;
+    uint16_t size;
+    uint16_t part_size;
+} NEMO_BALLOC_MEM, *pNEMO_BALLOC_MEM;
+
+extern pNEMO_BALLOC_MEM BALLOC_init_memory(pNEMO_BALLOC_MEM buff_mem, uint16_t* buffer, uint16_t buff_size, uint16_t part_buff_size);
+extern pNEMO_BALLOC_MEM BALLOC_clear_memory(uint16_t* buff, uint16_t mem_size);
+extern pNEMO_BALLOC_MEM BALLOC_empty_memory(pNEMO_BALLOC_MEM buff_mem);
+extern uint16_t* BALLOC_set_memory(pNEMO_BALLOC_MEM buff_mem, uint16_t mem_size);
+
+extern uint16_t* NemoExtractName(uint16_t* enc_table, uint16_t* ekey, pNEMO_BALLOC_MEM buff_mem);
+extern uint16_t* NemoConvertWstr(wchar_t* wide_str, uint16_t* ekey, pNEMO_BALLOC_MEM buff_mem);
+extern uint16_t* NemoConvertStr(char* text_str, uint16_t* ekey, pNEMO_BALLOC_MEM buff_mem);
+extern int NemoCompareBag(uint16_t* enc_table, uint16_t* sec_enc_table);
+extern void* NemoFindDll(uint16_t* ekey, uint16_t* in_memory_mod_list, uint16_t* dll_name, pNEMO_BALLOC_MEM buff_mem);
+extern void* NemoFindFunc(uint16_t* fun_name, void* dll_addr, uint16_t* ekey, uint16_t* enc_exp_tab, pNEMO_BALLOC_MEM buff_mem);
+extern void* NemoFindFunc2(uint16_t* fun_name, uint16_t* dll_name, uint16_t* ekey, uint16_t* enc_exp_tab, uint16_t* in_memory_mod_list, pNEMO_BALLOC_MEM buff_mem);
+extern void* f_find_dll2(uint16_t* ekey, uint16_t* in_memory_mod_list, uint16_t* dll_name, pNEMO_BALLOC_MEM buff_mem);
+extern void* NemoGetPeb(uint16_t* peb_offset, uint16_t* ekey, pNEMO_BALLOC_MEM buff_mem);
+
+// C Functions
+pNEMO_BALLOC_MEM lil_nemo_balloc_init_memory(uint16_t *buffer, uint16_t buff_size, uint16_t part_size);
+
+
+
+#endif

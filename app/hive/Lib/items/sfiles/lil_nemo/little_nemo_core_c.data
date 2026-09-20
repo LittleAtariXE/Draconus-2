@@ -1,0 +1,24 @@
+#!name##LilNemo_Core_C
+#!itemType##sfile
+#!info##LittleNemo Core C file.
+#!lang##c
+#!addNameComp##True
+
+
+#include "little_nemo_core.h"
+
+
+pNEMO_BALLOC_MEM lil_nemo_balloc_init_memory(uint16_t *buffer, uint16_t buff_size, uint16_t part_size) {
+    if (buffer == 0) {
+        buffer = malloc(buff_size * sizeof(uint16_t));
+        if (buffer == NULL) {
+            return 0;
+        }
+        memset(buffer, 0, buff_size * sizeof(uint16_t));
+    }
+    pNEMO_BALLOC_MEM bmem = malloc(sizeof(NEMO_BALLOC_MEM));
+    memset(bmem, 0, sizeof(NEMO_BALLOC_MEM));
+    BALLOC_init_memory(bmem, buffer, buff_size, part_size);
+    return bmem;
+}
+

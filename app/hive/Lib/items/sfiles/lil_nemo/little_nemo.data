@@ -1,0 +1,21 @@
+#!name##LilNemo
+#!itemType##sfile
+#!info##LittleNemo Main header file.
+#!lang##c
+
+
+#ifndef LITTLE_NEMO_H
+#define LITTLE_NEMO_H
+
+#include "little_nemo_core.h"
+
+#ifdef LITTLE_NEMO_BAG
+    #include "little_nemo_bag.h"
+    #include "little_nemo_food.h"
+#endif
+
+#ifdef LITTLE_NEMO_CANDY
+    #include "little_nemo_candy.h"
+#endif
+
+#endif

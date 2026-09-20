@@ -1,0 +1,1089 @@
+#!name##LittleNemo
+#!itemType##support
+#!info##A library for dynamically retrieving PEB addresses, functions, DLLs, etc. It searches for function names and offsets using special hashes without revealing their actual names. 
+#!lang##nasm
+#!fileType##lib
+#!hiveType##lib
+#!addNameComp##True
+#!modProcess##BUILD_CODE##COMPILE
+#!modCompiler##Basic-Nasm
+#!inFile##BallocAsm##balloc.asm
+
+
+%define LIL_NEMO_LDR_LIMIT 0x00000fffffffffff
+%define LIL_NEMO_DEFAULT_BUFF_SIZE 256
+%define LIL_NEMO_OFF_DLL_NAME 0x48 + 0x08
+
+bits 64
+default rel
+
+%include "balloc.asm"
+
+; BALLOC
+global BALLOC_init_memory
+global BALLOC_set_memory
+global BALLOC_clear_memory
+global BALLOC_empty_memory
+
+global NemoExtractName
+global NemoConvertWstr
+global NemoConvertStr
+global NemoCompareBag
+global NemoFindDll
+global NemoFindFunc
+global NemoFindFunc2
+global NemoGetPeb
+
+global f_find_dll_inMemList
+global f_find_dll2
+
+section .data
+
+section .bss
+
+section .text
+
+; --------------------------------------------------------------------------------------------------------------
+
+; --------------------------------------------------------------------------------------------------------------
+
+; --------------------------------------------------------------------------------------------------------------
+
+NemoGetPeb:
+; Get PEB
+; IN: RCX - Encoded PEB offset
+; IN: RDX - Key
+; IN: R8 - pointer to BuffMemory struct
+; OUT: RAX - pointer to PEB
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov [rbp-8], rcx
+    mov [rbp-16], rdx
+    mov [rbp-24], r8
+    
+    sub rsp, 32
+    call NemoExtractName
+    
+    xor rcx, rcx
+    mov cx, [rax]
+    xor rax, rax
+    mov rax, [rbp-16]
+    xor rdx, rdx
+    mov dx, [rax]
+    xor rax, rax
+    call f_raw_check_key_part
+    xor rcx, rcx
+    mov cx, ax
+    xor rax, rax
+    mov rax, gs:[rcx]
+    
+    
+    add rsp, 32
+    
+    
+    add rsp, 32
+    pop rbp
+    ret
+
+; --------------------------------------------------------------------------------------------------------------
+
+NemoFindFunc2:
+; Find function address in DLL
+; IN: RCX - Encoded function name
+; IN: RDX - Encoded DLL name
+; IN: R8 - Key
+; IN: R9 - Encoded pointer offset (Export Table)
+; IN: [RSP+40] - Encoded pointer offset (mod list)
+; IN: [RSP+48] - pointer to BuffMemory struct
+; OUT: RAX - function address or 0
+    mov rax, [rsp+40]
+    mov r10, [rsp+48]
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+    mov [rbp-8], r10
+    
+    sub rsp, 32
+    mov r10, rax
+    mov r11, [rbp-8]
+    call f_find_func_addr2
+    add rsp, 32
+    
+    add rsp, 16
+    pop rbp
+    ret
+    
+    
+
+
+f_find_func_addr2:
+; Find function address in DLL
+; IN: RCX - Encoded function name
+; IN: RDX - Encoded DLL name
+; IN: R8 - Key
+; IN: R9 - Encoded pointer offset (Export Table)
+; IN: R10 - Encoded pointer offset (mod list)
+; IN: R11 - pointer to BuffMemory struct
+; OUT: RAX - function address or 0
+    push rbp
+    mov rbp, rsp
+    sub rsp, 64
+    mov [rbp-8], rcx    ; fname
+    mov [rbp-16], rdx   ; dll name
+    mov [rbp-24], r8    ; key
+    mov [rbp-32], r9    ; exp tab
+    mov [rbp-40], r10   ; mod list
+    mov [rbp-48], r11   ; buffMem
+    
+    sub rsp, 32
+    
+    ;get dll
+    mov rcx, [rbp-24]
+    mov rdx, [rbp-40]
+    mov r8, [rbp-16]
+    mov r9, [rbp-48]
+    call NemoFindDll
+    cmp rax, 0
+    je .return
+    
+    ; get function
+    mov rcx, [rbp-8]
+    mov rdx, rax
+    mov r8, [rbp-24]
+    mov r9, [rbp-32]
+    mov r10, [rbp-48]
+    call f_find_func_addr
+    
+    
+    .return:
+        add rsp, 32
+        add rsp, 64
+        pop rbp
+        ret
+
+; --------------------------------------------------------------------------------------------------------------
+
+NemoFindFunc:
+; Find function address in DLL
+; IN: RCX - Encoded function name
+; IN: RDX - Dll address
+; IN: R8 - Key
+; IN: R9 - Encoded pointer offset (Export Table)
+; IN: [rsp+40] - pointer to BuffMemory struct
+; OUT: RAX - function address or 0
+    mov rax, [rsp+40]
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    
+    mov r10, rax
+    call f_find_func_addr
+    
+    add rsp, 32
+    
+    pop rbp
+    ret
+
+
+
+f_find_func_addr:
+; Find function address in DLL
+; IN: RCX - Encoded function name
+; IN: RDX - Dll address
+; IN: R8 - Key
+; IN: R9 - Encoded pointer offset (Export Table)
+; IN: R10 - pointer to BuffMemory struct
+; OUT: RAX - function address or 0
+    push rbp
+    mov rbp, rsp
+    sub rsp, 96
+    mov [rbp-8], rcx    ; fname
+    mov [rbp-16], rdx   ; dll addr
+    mov [rbp-24], r8    ; key
+    mov [rbp-32], r9    ; ExpTab
+    mov [rbp-40], r10   ; BuffMem
+    push rbx
+    push rdi
+    push rsi
+    push r15
+    
+    sub rsp, 32
+    
+    ; get Exp table
+    mov rcx, [rbp-16]
+    mov rdx, [rbp-24]
+    mov r8, [rbp-32]
+    mov r9, [rbp-40]
+    call f_get_export_table
+    mov [rbp-48], rax   ; save Exp Tab
+    
+    xor rbx, rbx
+    xor rsi, rsi
+    xor rdi, rdi
+    xor r15, r15
+    
+    ; get number of functions
+    mov r15d, [rax + 0x14]
+    mov [rbp-56], r15   ; number of functions
+    
+    ; get VA function name table
+    xor r15, r15
+    mov r15d, [rax + 0x20] ; get RVA
+    mov rbx, [rbp-16]   ; dll addr
+    add r15, rbx    ; get VA func name table
+    mov [rbp-64], r15   ; VA func name table
+    
+    ; extract encoded func name
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-24]
+    mov r8, [rbp-40]
+    call NemoExtractName
+    mov [rbp-72], rax   ; extracted fname
+    
+    ; prepare buff for function name
+    mov rcx, [rbp-40]
+    xor rdx, rdx
+    mov dx, 256
+    call BALLOC_set_memory
+    mov [rbp-80], rax   ; pointer to buffer
+    
+    xor r15, r15    ; counter
+    mov rbx, [rbp-16]   ; dll addr
+    mov rsi, [rbp-64]   ; VA func name tab
+    .find_loop:
+        xor rax, rax
+        mov rax, [rbp-56]
+        cmp r15, rax
+        jg .return_false
+        
+        xor rcx, rcx
+        mov ecx, [rsi + 4 * r15]    ; get RVA func name
+        add rcx, rbx    ; get VA func name
+        mov rdx, [rbp-24]
+        mov r8, [rbp-80]
+        xor r9, r9
+        mov r9w, 256
+        call f_raw_convert_func_name
+        
+        mov rcx, rax
+        mov rdx, [rbp-72]
+        call f_compare_bag
+        cmp rax, 1
+        je .return_func
+        inc r15
+        jmp .find_loop
+        
+    
+    .return_func:
+        xor rax, rax
+        xor rcx, rcx
+        xor rdx, rdx
+        xor rbx, rbx
+        xor rsi, rsi
+        xor rdi, rdi
+        mov rbx, [rbp-16]   ; dll addr
+        mov rsi, [rbp-48]   ; Exp Table
+        
+        mov ecx, [rsi + 0x24]   ; get RVA AddressOfNameOrdinals (dword)
+        add rcx, rbx    ; RVA AddressOfNameOrdinals + VA Dll
+        mov dx, [rcx + 2 * r15]     ; get function index (counter) to function address (word)
+        mov edi, [rsi + 0x1c]   ; ; get RVA table 'AddressOfFunctions'
+        add rdi, rbx    ; RVA table 'AddressOfFunctions' + VA Dll
+        mov eax, [rdi + 4 * rdx]    ; get RVA func addr
+        add rax, rbx    ; RVA func addr + VA Dll
+        jmp .return
+    
+    .return:
+        add rsp, 32
+        pop r15
+        pop rsi
+        pop rdi
+        pop rbx
+        add rsp, 96
+        pop rbp
+        ret
+    
+    .return_false:
+        xor rax, rax
+        jmp .return
+    
+    
+f_get_export_table:
+; Find Export Table in DLL
+; IN: RCX - Dll address
+; IN: RDX - Key
+; IN: R8 - Encoded pointer offset (Export Table)
+; IN: R9 - pointer to BuffMemory struct
+; OUT: RAX - Export Table address
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48
+    mov [rbp-8], rcx    ; dll
+    mov [rbp-16], rdx   ; key
+    mov [rbp-24], r8    ; exp tab
+    mov [rbp-32], r9    ; BuffMem
+    push rbx
+    push rsi
+    push rdi
+    push r12
+    
+    sub rsp, 32
+    ;extract offset
+    mov rcx, [rbp-24]
+    mov rdx, [rbp-16]
+    mov r8, [rbp-32]
+    call NemoExtractName
+    mov [rbp-40], rax   ; exp tab
+    
+    xor rcx, rcx
+    xor rdx, rdx
+    mov rbx, [rbp-40]
+    mov rsi, [rbp-16]   ; key
+    mov rdi, [rbp-8]    ; dll
+    xor rax, rax
+    mov word cx, [rbx]
+    mov word dx, [rsi]
+    call f_raw_check_key_part
+    xor r12, r12
+    mov r12d, [rdi + rax]   ; get RVA
+    add r12, rdi    ; get VA
+    mov word cx, [rbx + 2]
+    mov word dx, [rsi + 2]
+    xor rax, rax
+    call f_raw_check_key_part
+    add r12, rax    ; 
+    xor r9, r9
+    mov r9d, [r12]  ; get RVA
+    add r9, rdi ; get VA
+    xor rax, rax
+    mov rax, r9 ; return VA Export Table
+    
+    add rsp, 32
+    
+    .return:
+        pop r12
+        pop rdi
+        pop rsi
+        pop rbx
+        add rsp, 48
+        pop rbp
+        ret
+        
+
+; --------------------------------------------------------------------------------------------------------------
+
+f_find_dll2:
+; Find DLL Address
+; IN: RCX - Key
+; IN: RDX - Encoded pointer offset (mod list)
+; IN: R8 - pointer to Encoded DLL name
+; IN: R9 - pointer to BuffMemory struct
+; OUT: RAX - DLL address or 0
+    push rbp
+    mov rbp, rsp
+    sub rsp, 64
+    mov [rbp-8], rcx    ; key
+    mov [rbp-16], rdx   ; offset
+    mov [rbp-24], r8    ; dll name
+    mov [rbp-32], r9    ; BuffMemory
+    push rbx
+    push r15
+    sub rsp, 32
+    
+    ; extract dll name
+    mov rcx, [rbp-24]
+    mov rdx, [rbp-8]
+    mov r8, [rbp-32]
+    call NemoExtractName
+    mov [rbp-40], rax   ; dll name  
+    
+    ; Get ModuleOrderList
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-16]
+    mov r8, [rbp-32]
+    call f_get_InMemoryOrderModuleList
+    mov [rbp-48], rax   ; InMemoryOrderModuleList
+    
+    ; prepare buff for dll name
+    mov rcx, [rbp-32]
+    xor rdx, rdx
+    mov rdx, 64
+    call BALLOC_set_memory
+    mov [rbp-56], rax   ; find dll buff
+    
+    mov rbx, [rbp-48]   ; InMemoryOrderModuleList
+    .find_loop:
+        ;cmp rbx, LIL_NEMO_LDR_LIMIT
+        ;jg .return_false
+        mov rcx, [rbx + LIL_NEMO_OFF_DLL_NAME]
+        mov rdx, [rbp-8]
+        mov r8, [rbp-56]
+        xor r9, r9
+        mov r9, 64
+        call f_raw_convert_wstr
+        mov rcx, rax
+        mov rdx, [rbp-40]
+        call f_compare_bag
+        cmp rax, 1
+        je .return_dll
+        mov rbx, [rbx]
+        mov r15, LIL_NEMO_LDR_LIMIT
+        cmp rbx, r15
+        jg .return_false
+        jmp .find_loop
+    
+    .return:
+        add rsp, 32
+        pop r15
+        pop rbx
+        add rsp, 64
+        pop rbp
+        ret
+    
+    .return_false:
+        xor rax, rax
+        jmp .return
+    
+    .return_dll:
+        mov rax, [rbx+0x20]
+        jmp .return
+    
+
+
+; --------------------------------------------------------------------------------------------------------------
+
+NemoFindDll:
+; Find DLL Address
+; IN: RCX - Key
+; IN: RDX - Encoded pointer offset (mod list)
+; IN: R8 - pointer to Encoded DLL name
+; IN: R9 - pointer to BuffMemory struct
+; OUT: RAX - DLL address or 0
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    call f_find_dll_inMemList
+    cmp rax, 0
+    je .return
+    xor rcx, rcx
+    mov rcx, rax
+    mov rax, [rcx+0x20]
+    
+    .return:
+        add rsp, 32
+        pop rbp
+        ret
+
+    
+f_find_dll_inMemList:
+; Finds the given structure 'InMemoryOrderModuleList'
+; IN: RCX - Key
+; IN: RDX - Encoded pointer offset (mod list)
+; IN: R8 - pointer to Encoded DLL name
+; IN: R9 - pointer to BuffMemory struct
+; OUT: RAX - pointer to InMemoryOrderModuleList or 0
+    push rbp
+    mov rbp, rsp
+    sub rsp, 64
+    mov [rbp-8], rcx    ; key
+    mov [rbp-16], rdx   ; offset
+    mov [rbp-24], r8    ; dll name
+    mov [rbp-32], r9    ; BuffMemory
+    push rbx
+    push r15
+    
+    sub rsp, 32
+    
+    ; extract dll name
+    mov rcx, [rbp-24]
+    mov rdx, [rbp-8]
+    mov r8, [rbp-32]
+    call NemoExtractName
+    mov [rbp-40], rax   ; dll name  
+    
+    ; Get ModuleOrderList
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-16]
+    mov r8, [rbp-32]
+    call f_get_InMemoryOrderModuleList
+    mov [rbp-48], rax   ; InMemoryOrderModuleList
+    
+    .find_loop:
+        mov rax, [rbp-48]   ; mod list
+        mov rcx, [rax + LIL_NEMO_OFF_DLL_NAME]
+        mov rdx, [rbp-8]   ; key
+        mov r8, [rbp-32]    ; buffmem
+        call NemoConvertWstr
+        mov rcx, rax
+        mov rdx, [rbp-40]
+        call f_compare_bag
+        cmp rax, 1
+        je .return_dll
+        mov rcx, [rbp-48]
+        call f_get_next_LDR
+        cmp rax, 0
+        je .return_false
+        mov [rbp-48], rax
+        jmp .find_loop
+        
+    
+    
+    
+    .return:
+        add rsp, 32
+        pop r15
+        pop rbx
+        add rsp, 64
+        pop rbp
+        ret
+    
+    .return_dll:
+        xor rax, rax
+        mov rax, [rbp-48]
+        jmp .return
+    
+    .return_false:
+        xor rax, rax
+        jmp .return
+
+
+; --------------------------------------------------------------------------------------------------------------
+
+f_get_next_LDR:
+; Get next LDR_DATA_TABLE_ENTRY
+; IN: RCX - LDR_DATA_TABLE_ENTRY
+; OUT: RAX - LDR_DATA_TABLE_ENTRY or 0
+    push rbp
+    mov rbp, rsp
+    
+    mov rax, [rcx]
+    xor rdx, rdx
+    mov rdx, LIL_NEMO_LDR_LIMIT
+    cmp rax, rdx
+    
+    ;jg .return_false
+    ja .return_false
+    
+    .return_ldr:
+        pop rbp
+        ret
+    
+    .return_false:
+        xor rax, rax
+        pop rbp
+        ret
+    
+f_get_InMemoryOrderModuleList:
+; Get ModuleOrderList
+; IN: RCX - Key
+; IN: RDX - Encoded pointer offset (mod list)
+; IN: R8 - Pointer to BuffMemory Struct
+; OUT: EAX - pointer to InMemoryOrderModuleList
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov [rbp-8], rcx
+    mov [rbp-16], rdx
+    mov [rbp-24], r8
+    
+    sub rsp, 32
+    mov rcx, r8
+    xor rdx, rdx
+    mov dx, [r8 + BuffMemory.part_size]
+    call BALLOC_set_memory
+    
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-16]
+    mov r8, rax
+    mov rax, [rbp-24]
+    xor r9, r9
+    mov r9w, [rax + BuffMemory.part_size]
+    call f_raw_get_InMemoryOrderModuleList
+    add rsp, 32
+    
+    add rsp, 32
+    pop rbp
+    ret
+
+f_raw_get_InMemoryOrderModuleList:
+; Get ModuleOrderList
+; IN: RCX - Key
+; IN: RDX - Encoded pointer offset (mod list)
+; IN: R8 - Buffer
+; IN: R9 - Buffer size
+; OUT: RAX - pointer to InMemoryOrderModuleList
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48
+    mov [rbp-8], rcx     ; key
+    mov [rbp-16], rdx    ; enc offset
+    mov [rbp-24], r8     ; buff
+    mov [rbp-32], r9     ; buff size
+    push rbx
+    push rdi
+    push rsi
+    push r10
+    push r14
+    push r15
+    
+    
+    sub rsp, 32
+    mov rcx, [rbp-16]
+    mov rdx, [rbp-8]
+    mov r8, [rbp-24]
+    mov r9, [rbp-32]
+    call f_raw_extract_name
+    
+    
+    xor rcx, rcx
+    xor rdx, rdx
+    xor rax, rax
+    xor rbx, rbx
+    xor rdi, rdi
+    
+    mov rbx, [rbp-8]     ; key
+    xor r10, r10     ; key index
+    mov rsi, [rbp-24]    ; buff
+    xor r9, r9   ; buff index
+    mov word cx, [rsi + 2 * r9]
+    mov word dx, [rbx + 2 * r10]
+    call f_raw_check_key_part
+    mov r15, gs:[rax]
+    inc r10
+    inc r9
+   
+    .loop:
+        mov word dx, [rbx + 2 * r10]
+        cmp dx, 0
+        je .reset_key           
+        mov word cx, [rsi + 2 * r9]
+        cmp cx, 0
+        je .return
+        call f_raw_check_key_part
+        mov r15, [r15 + rax]
+        inc r10
+        inc r9
+        jmp .loop
+   
+   
+    .return:
+        xor rax, rax
+        mov rax, [r15]
+        add rsp, 32
+        pop r15
+        pop r14
+        pop r10
+        pop rsi
+        pop rdi
+        pop rbx
+        add rsp, 48
+        pop rbp
+        ret     
+    
+    .reset_key:
+        xor r10, r10
+        jmp .loop
+  
+
+f_raw_check_key_part:
+; Get value from encoded part list
+; IN: RCX - Encoded part 'dword' list
+; IN: RDX - Part 'dword' of Key
+; OUT: RAX - Decoded byte
+    push rbp
+    mov rbp, rsp
+    push r8
+    push r9
+    
+    xor rax, rax    ; decoded byte
+    xor r8, r8  ; temp
+    .get_byte:
+        inc rax
+        mov word r8w, dx
+        add dx, 1
+        cmp cx, dx
+        je .return
+        jmp .get_byte
+        
+    
+    .return:
+        pop r9
+        pop r8
+        pop rbp
+        ret
+
+
+
+; --------------------------------------------------------------------------------------------------------------
+
+NemoCompareBag:
+; compare two encode table
+; IN: RCX - pointer to encode table
+; IN: RDX - pointer to encode table
+; OUT: RAX - '0' FALSE, '1' TRUE
+    push rbp
+    mov rbp, rsp
+    
+    sub rsp, 32
+    call f_compare_bag
+    add rsp, 32
+     
+    pop rbp
+    ret
+    
+f_compare_bag:
+; compare two encode table
+; IN: RCX - pointer to encode table
+; IN: RDX - pointer to encode table
+; OUT: RAX - '0' FALSE, '1' TRUE
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    push rsi
+    push rdi
+    push r10
+    push r11
+    
+    ; check length
+    xor r10, r10    ; index
+    xor rsi, rsi
+    .len_loop1:
+        mov word si, [rcx + 2 * r10]
+        cmp si, 0
+        je .end_len_loop1
+        inc r10
+        jmp .len_loop1
+
+    .end_len_loop1:
+        mov [rbp-8], r10
+    
+    xor r10, r10    ; index
+    xor rsi, rsi
+    .len_loop2:
+        mov word si, [rdx + 2 * r10]
+        cmp si, 0
+        je .check_len
+        inc r10
+        jmp .len_loop2
+
+    .check_len:
+        xor rdi, rdi
+        mov rdi, [rbp-8]
+        cmp rdi, r10
+        jne .return_false
+    
+    xor r11, r11
+    mov r11, [rbp-8]
+    xor r10, r10
+    xor rsi, rsi
+    xor rdi, rdi
+    .comp_loop:
+        cmp r10, r11
+        je .return_true
+        mov word si, [rcx + 2 * r10]
+        mov word di, [rdx + 2 * r10]
+        cmp si, di
+        jne .return_false
+        inc r10
+        jmp .comp_loop
+        
+    
+    .return:
+        pop r11
+        pop r10
+        pop rdi
+        pop rsi
+        add rsp, 32
+        pop rbp
+        ret
+
+    .return_false:
+        xor rax, rax
+        jmp .return
+
+    .return_true:
+        xor rax, rax
+        mov rax, 1
+        jmp .return
+
+; --------------------------------------------------------------------------------------------------------------
+
+NemoConvertStr:
+; convert function name 'char' to encoded 'word' list
+; IN: RCX - function name 'char'
+; IN: RDX - Key
+; IN: R8 - pointer to BuffMemory Struct
+; OUT: RAX - pointer to 'word' buffer.
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov [rbp-8], rcx
+    mov [rbp-16], rdx
+    mov [rbp-24], r8
+    
+    sub rsp, 32
+    mov rcx, r8
+    xor rdx, rdx
+    mov rdx, [r8 + BuffMemory.part_size]
+    call BALLOC_set_memory
+    
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-16]
+    mov r8, rax
+    mov rax, [rbp-24]
+    xor r9, r9
+    mov r9w, [rax + BuffMemory.part_size]
+    call f_raw_convert_func_name
+    add rsp, 32
+    
+    add rsp, 32
+    pop rbp
+    ret
+    
+
+f_raw_convert_func_name:
+; convert function name 'char' to encoded 'word' list
+; IN: RCX - function name 'char'
+; IN: RDX - Key
+; IN: R8 - Buffer
+; IN: R9 - Buffer size
+; OUT: RAX - pointer to Buffer
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48
+    mov [rbp-8], rcx    ; func name
+    mov [rbp-16], rdx   ; Key
+    mov [rbp-24], r8    ; Buff
+    mov [rbp-32], r9    ; Buff Size
+    push r10
+    push r11
+    push rsi
+    push rdi
+    
+    ; clear buff
+    xor rax, rax
+    mov rdi, [rbp-24]
+    mov rcx, [rbp-32]
+    cld
+    rep stosw
+    
+    mov rsi, [rbp-16]   ; key
+    xor r10, r10    ; key index
+    mov rdi, [rbp-24]   ; buff
+    xor r11, r11    ; buff index
+    xor rcx, rcx
+    xor rdx, rdx
+    mov r8, [rbp-8]     ; fname
+    .convert_loop:
+        mov cx, [rsi + 2 * r10]
+        cmp cx, 0
+        je .reset_key
+        mov byte dl, [r8 + r11]
+        cmp dl, 0
+        je .return
+        add cx, dx
+        mov word [rdi + 2 * r11], cx
+        inc r10
+        inc r11
+        jmp .convert_loop
+    
+    .return:
+        mov rax, rdi
+        pop rdi
+        pop rsi
+        pop r11
+        pop r10
+        add rsp, 48
+        pop rbp
+        ret
+    
+    .reset_key:
+        xor r10, r10
+        jmp .convert_loop
+
+; --------------------------------------------------------------------------------------------------------------
+
+NemoConvertWstr:
+; Convert WideString (LS) to encoded 'word' list
+; IN: RCX - pointer to WideString
+; IN: RDX - Key
+; IN: R8 - pointer to BuffMemory Struct
+; OUT: RAX - pointer to 'word' buffer.
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov [rbp-8], rcx
+    mov [rbp-16], rdx
+    mov [rbp-24], r8
+    
+    sub rsp, 32
+    mov rcx, r8
+    xor rdx, rdx
+    mov rdx, [r8 + BuffMemory.part_size]
+    call BALLOC_set_memory
+    
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-16]
+    mov r8, rax
+    mov rax, [rbp-24]
+    xor r9, r9
+    mov r9w, [rax + BuffMemory.part_size]
+    call f_raw_convert_wstr
+    add rsp, 32
+    
+    add rsp, 32
+    pop rbp
+    ret
+
+
+f_raw_convert_wstr:
+; Convert WideString (LS) to encoded 'word' list
+; IN: RCX - pointer to WideString
+; IN: RDX - Key
+; IN: R8 - Buffer
+; IN: R9 - Buffer size
+; OUT: RAX - pointer to buffer
+    push rbp
+    mov rbp, rsp
+    sub rsp, 48
+    mov [rbp-8], rcx    ; wstr
+    mov [rbp-16], rdx   ; key
+    mov [rbp-24], r8    ; buff
+    mov [rbp-32], r9    ; buff size
+    push rsi
+    push rdi
+    push r10
+    push r15
+    
+    ; clear buff
+    xor rax, rax
+    mov rdi, [rbp-24]
+    mov rcx, [rbp-32]
+    cld
+    rep stosw
+    
+    mov rsi, [rbp-8]    ; wstr
+    xor rcx, rcx    ; wstr index
+    mov rdi, [rbp-24]   ; buff
+    mov rdx, [rbp-16]   ; key
+    xor r15, r15    ; key index
+    xor r10, r10    ; key temp
+    xor r9, r9  ; temp
+    
+    .convert_loop:
+        mov r10w, [rdx + 2 * r15]
+        cmp r10, 0
+        je .key_reset
+        mov r9w, [rsi + 2 * rcx]
+        cmp r9w, 0
+        je .return
+        add r10w, r9w
+        mov word [rdi + 2 * rcx], r10w
+        inc rcx
+        inc r15
+        jmp .convert_loop
+    
+    
+    .return:
+        mov rax, rdi
+        pop r15
+        pop r10
+        pop rdi
+        pop rsi
+        add rsp, 48
+        pop rbp
+        ret
+
+    .key_reset:
+        xor r15, r15
+        jmp .convert_loop
+
+; --------------------------------------------------------------------------------------------------------------
+
+NemoExtractName:
+; Extract encoded 'word' list
+; IN: RCX - encoded table
+; IN: RDX - key
+; IN: R8 - pointer to BuffMemory Struct
+; OUT: RAX - pointer to 'word' buffer
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov [rbp-8], rcx
+    mov [rbp-16], rdx
+    mov [rbp-24], r8
+    
+    sub rsp, 32
+    mov rcx, r8
+    xor rdx, rdx
+    mov rdx, [r8 + BuffMemory.part_size]
+    call BALLOC_set_memory
+    
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-16]
+    mov r8, rax
+    mov rax, [rbp-24]
+    xor r9, r9
+    mov r9w, [rax + BuffMemory.part_size]
+    call f_raw_extract_name
+    add rsp, 32
+    
+    add rsp, 32
+    pop rbp
+    ret
+
+f_raw_extract_name:
+; Extract encoded 'word' list
+; IN: RCX - encoded table
+; IN: RDX - key
+; IN: R8 - pointer to buffer
+; IN: R9 - buffer size
+; OUT: RAX - pointer to buffer
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    mov [rbp-8], rcx
+    mov [rbp-16], rdx
+    mov [rbp-24], r8
+    mov [rbp-32], r9
+    push rbx
+    push rsi
+    push rdi
+
+    ; clear buffer
+    xor rax, rax
+    mov rdi, r8
+    mov rcx, r9
+    cld
+    rep stosw
+    
+    mov rax, [rbp-24]
+    xor rbx, rbx    
+    xor rsi, rsi    ; name length
+    xor rdi, rdi
+    mov rcx, [rbp-8]
+    mov rdx, [rbp-16]
+    
+    mov si, [rcx]
+    mov di, [rdx]
+    sub si, di
+    xor rdi, rdi    ; counter
+    xor r8, r8  ; temp
+    
+    .loop:
+        cmp rdi, rsi
+        je .return
+        mov r8w, [rcx + 2 + 2 * rdi]
+        mov word [rax, + 2 * rdi], r8w
+        inc rdi
+        jmp .loop
+    
+    .return:
+        pop rdi
+        pop rsi
+        pop rbx
+        add rsp, 32
+        pop rbp
+        ret

